@@ -1,0 +1,214 @@
+{
+  "alpha": 0.05,
+  "n_tests": 20,
+  "n_raw_sig": 8,
+  "n_holm": 6,
+  "n_bh": 8,
+  "lost_under_bh": [],
+  "lost_under_holm": [
+    "fewshot/B_n (p=0.004)",
+    "fewshot/gini (p=0.012)"
+  ],
+  "tests": [
+    {
+      "metric": "B_n",
+      "mode": "control",
+      "p": 3e-05,
+      "rb": 0.338,
+      "raw_sig_05": true,
+      "holm_survives": true,
+      "bh_survives": true,
+      "fragile": false
+    },
+    {
+      "metric": "B_n",
+      "mode": "fewshot",
+      "p": 0.00366,
+      "rb": 0.237,
+      "raw_sig_05": true,
+      "holm_survives": false,
+      "bh_survives": true,
+      "fragile": false
+    },
+    {
+      "metric": "B_n",
+      "mode": "instruction",
+      "p": 0.57212,
+      "rb": 0.046,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "B_n",
+      "mode": "plan",
+      "p": 0.07171,
+      "rb": 0.147,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "B_n",
+      "mode": "self_refine",
+      "p": 0.23804,
+      "rb": -0.096,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "M",
+      "mode": "control",
+      "p": 0.36077,
+      "rb": -0.075,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "M",
+      "mode": "fewshot",
+      "p": 0.87204,
+      "rb": 0.013,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "M",
+      "mode": "instruction",
+      "p": 0.37373,
+      "rb": 0.073,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "M",
+      "mode": "plan",
+      "p": 0.70524,
+      "rb": 0.031,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "M",
+      "mode": "self_refine",
+      "p": 0.07726,
+      "rb": 0.144,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "gini",
+      "mode": "control",
+      "p": 2e-05,
+      "rb": 0.348,
+      "raw_sig_05": true,
+      "holm_survives": true,
+      "bh_survives": true,
+      "fragile": false
+    },
+    {
+      "metric": "gini",
+      "mode": "fewshot",
+      "p": 0.01212,
+      "rb": 0.205,
+      "raw_sig_05": true,
+      "holm_survives": false,
+      "bh_survives": true,
+      "fragile": true
+    },
+    {
+      "metric": "gini",
+      "mode": "instruction",
+      "p": 0.84522,
+      "rb": -0.016,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "gini",
+      "mode": "plan",
+      "p": 0.33815,
+      "rb": 0.078,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "gini",
+      "mode": "self_refine",
+      "p": 0.17061,
+      "rb": -0.112,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "seg_entropy",
+      "mode": "control",
+      "p": 0.14016,
+      "rb": -0.12,
+      "raw_sig_05": false,
+      "holm_survives": false,
+      "bh_survives": false,
+      "fragile": false
+    },
+    {
+      "metric": "seg_entropy",
+      "mode": "fewshot",
+      "p": 0.00143,
+      "rb": -0.26,
+      "raw_sig_05": true,
+      "holm_survives": true,
+      "bh_survives": true,
+      "fragile": false
+    },
+    {
+      "metric": "seg_entropy",
+      "mode": "instruction",
+      "p": 0.0,
+      "rb": -0.469,
+      "raw_sig_05": true,
+      "holm_survives": true,
+      "bh_survives": true,
+      "fragile": false
+    },
+    {
+      "metric": "seg_entropy",
+      "mode": "plan",
+      "p": 1e-05,
+      "rb": -0.36,
+      "raw_sig_05": true,
+      "holm_survives": true,
+      "bh_survives": true,
+      "fragile": false
+    },
+    {
+      "metric": "seg_entropy",
+      "mode": "self_refine",
+      "p": 0.0,
+      "rb": -0.493,
+      "raw_sig_05": true,
+      "holm_survives": true,
+      "bh_survives": true,
+      "fragile": false
+    }
+  ]
+}

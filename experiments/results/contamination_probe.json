@@ -1,0 +1,70 @@
+{
+  "mode": "control",
+  "ngram_sizes": [
+    8,
+    13
+  ],
+  "models": {
+    "qwen3.6-27b": {
+      "8gram": {
+        "matched_mean": 0.00055,
+        "mismatched_mean": 0.0,
+        "matched_p95": 0.0,
+        "matched_max": 0.03604,
+        "matched_max_id": "11",
+        "n_gens": 600,
+        "frac_over_10pct": 0.0
+      },
+      "13gram": {
+        "matched_mean": 0.0001,
+        "mismatched_mean": 0.0,
+        "matched_p95": 0.0,
+        "matched_max": 0.01382,
+        "matched_max_id": "11",
+        "n_gens": 600,
+        "frac_over_10pct": 0.0
+      }
+    },
+    "deepseek-v4-pro": {
+      "8gram": {
+        "matched_mean": 0.00207,
+        "mismatched_mean": 0.0,
+        "matched_p95": 0.01302,
+        "matched_max": 0.10397,
+        "matched_max_id": "119",
+        "n_gens": 600,
+        "frac_over_10pct": 0.00167
+      },
+      "13gram": {
+        "matched_mean": 0.00064,
+        "mismatched_mean": 0.0,
+        "matched_p95": 0.0,
+        "matched_max": 0.06679,
+        "matched_max_id": "119",
+        "n_gens": 600,
+        "frac_over_10pct": 0.0
+      }
+    },
+    "grok-4.3": {
+      "8gram": {
+        "matched_mean": 0.00098,
+        "mismatched_mean": 0.0,
+        "matched_p95": 0.00662,
+        "matched_max": 0.06224,
+        "matched_max_id": "169",
+        "n_gens": 600,
+        "frac_over_10pct": 0.0
+      },
+      "13gram": {
+        "matched_mean": 0.00016,
+        "mismatched_mean": 0.0,
+        "matched_p95": 0.0,
+        "matched_max": 0.04237,
+        "matched_max_id": "169",
+        "n_gens": 600,
+        "frac_over_10pct": 0.0
+      }
+    }
+  },
+  "note": "R1-4 memorization bound. matched = generation vs its paired human article; mismatched = vs a fixed other article (topical-register baseline). Memorization shows as matched >> mismatched or runaway per-generation maxima, especially at 13-grams."
+}

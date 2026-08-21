@@ -1,0 +1,13 @@
+# Dependencies for experiments/activation_pilot.py (the B1 activation-steering pilot).
+#
+# ONLY needed for the activation_pilot real run.
+# burstiness_metrics.py and test_metrics.py are stdlib-only and need NOTHING here.
+#
+# Pin versions when you actually run the pilot; left open here for the scaffold.
+torch
+transformers
+accelerate
+numpy
+scipy
+
+sentence-transformers  # spec C4 content preservation (all-MiniLM)

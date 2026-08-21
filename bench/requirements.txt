@@ -1,0 +1,4 @@
+# Install only what you run; SDKs are imported lazily per provider.
+anthropic         # Opus 4.8
+openai            # GPT-5.5 (Responses API) + Kimi / DeepSeek / GLM (OpenAI-compatible)
+google-genai      # Gemini 3.1 Pro  (NOT the legacy google-generativeai)

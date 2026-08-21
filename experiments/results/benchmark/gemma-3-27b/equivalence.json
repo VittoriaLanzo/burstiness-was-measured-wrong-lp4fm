@@ -1,0 +1,67 @@
+{
+  "mode": "instruction",
+  "margins": [
+    0.03,
+    0.05,
+    0.08
+  ],
+  "by_metric": {
+    "B_n": {
+      "median_delta": 0.049,
+      "ci95": [
+        0.031,
+        0.067
+      ],
+      "tightest_equivalence_margin": 0.067,
+      "equivalent_at": {
+        "0.03": false,
+        "0.05": false,
+        "0.08": true
+      }
+    },
+    "M": {
+      "median_delta": 0.04,
+      "ci95": [
+        -0.008,
+        0.08
+      ],
+      "tightest_equivalence_margin": 0.08,
+      "equivalent_at": {
+        "0.03": false,
+        "0.05": false,
+        "0.08": true
+      }
+    },
+    "gini": {
+      "median_delta": 0.025,
+      "ci95": [
+        0.012,
+        0.033
+      ],
+      "tightest_equivalence_margin": 0.033,
+      "equivalent_at": {
+        "0.03": false,
+        "0.05": true,
+        "0.08": true
+      }
+    },
+    "seg_entropy": {
+      "median_delta": 0.086,
+      "ci95": [
+        0.036,
+        0.134
+      ],
+      "tightest_equivalence_margin": 0.134,
+      "equivalent_at": {
+        "0.03": false,
+        "0.05": false,
+        "0.08": false
+      }
+    }
+  },
+  "parity_dim_tightest_margin": {
+    "B_n": 0.067,
+    "gini": 0.033,
+    "seg_entropy": 0.134
+  }
+}

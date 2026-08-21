@@ -1,0 +1,67 @@
+{
+  "label": "para-v2",
+  "dims": {
+    "B_n": {
+      "instruction_v2": {
+        "n_pairs": 187,
+        "median_delta_h_minus_ai": -0.03,
+        "median_delta_95ci": [
+          -0.06,
+          -0.007
+        ],
+        "wilcoxon_z": -2.86,
+        "wilcoxon_p": 0.0042,
+        "matched_rank_biserial": -0.241,
+        "paired_dz": -0.19
+      }
+    },
+    "M": {
+      "instruction_v2": {
+        "n_pairs": 187,
+        "median_delta_h_minus_ai": -0.003,
+        "median_delta_95ci": [
+          -0.06,
+          0.062
+        ],
+        "wilcoxon_z": -0.13,
+        "wilcoxon_p": 0.89908,
+        "matched_rank_biserial": -0.011,
+        "paired_dz": -0.02
+      }
+    },
+    "gini": {
+      "instruction_v2": {
+        "n_pairs": 187,
+        "median_delta_h_minus_ai": -0.026,
+        "median_delta_95ci": [
+          -0.038,
+          -0.014
+        ],
+        "wilcoxon_z": -3.61,
+        "wilcoxon_p": 0.00031,
+        "matched_rank_biserial": -0.304,
+        "paired_dz": -0.247
+      }
+    },
+    "seg_entropy": {
+      "instruction_v2": {
+        "n_pairs": 187,
+        "median_delta_h_minus_ai": -0.119,
+        "median_delta_95ci": [
+          -0.168,
+          -0.083
+        ],
+        "wilcoxon_z": -3.92,
+        "wilcoxon_p": 9e-05,
+        "matched_rank_biserial": -0.331,
+        "paired_dz": -0.301
+      }
+    }
+  },
+  "consistency_B_n_rank_biserial": {
+    "instruction_v2": {
+      "it0": -0.241
+    }
+  },
+  "note": "Per headline: metric vector averaged across available seeds, then ONE paired Wilcoxon on independent headline pairs (pooling seeds as pairs would pseudo-replicate the human docs). delta = human - model."
+}

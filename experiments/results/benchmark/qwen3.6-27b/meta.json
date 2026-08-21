@@ -1,0 +1,55 @@
+{
+  "model_id": "qwen3.6-27b",
+  "display_name": "Qwen3.6-27B",
+  "family": "Qwen",
+  "openness": "open-weights",
+  "precision": "bf16",
+  "decoding": {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "reasoning_mode": "enabled",
+    "reasoning_stripped_before_scoring": true
+  },
+  "corpus": {
+    "name": "Wikinews",
+    "n_headlines": 200,
+    "years": "2016-2021",
+    "license": "CC BY 2.5",
+    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+  },
+  "design": {
+    "modes": [
+      "control",
+      "instruction",
+      "fewshot",
+      "plan",
+      "self_refine"
+    ],
+    "seeds": 3,
+    "cells_total": 3000,
+    "cells_completed": 2996,
+    "excluded": "4 cells exceeded the reasoning budget; affected headlines averaged over remaining seeds so every mode retains 200 matched pairs"
+  },
+  "released_artifacts": {
+    "hf_dataset": "ANONYMIZED/qwen36-news-gen",
+    "raw_generations": "data/qwen3.6-27b.jsonl",
+    "scored_eval": "eval/seed_avg_paired_qwen27b.json (raw protocol; normalized-protocol eval upload pending per HYGIENE-AUDIT step 4)"
+  },
+  "scoring": {
+    "script": "experiments/ablation/seed_avg_paired.py",
+    "test": "one paired Wilcoxon signed-rank per (mode, metric) over 200 seed-averaged headline pairs, delta = human - model",
+    "metric_revision": "post-R1-5 quote-normalized metric; input normalized per R1-6"
+  },
+  "run_date": "2026-07-03",
+  "provenance": "Generated on RunPod; compiled eval VERIFIED on HF. Carried into repo from ANONYMIZED/qwen36-news-gen. Normalized scoring adopted as canonical 2026-07-11 (author sign-off).",
+  "normalization": {
+    "script": "experiments/ablation/normalize_generation.py",
+    "why": "generation hygiene flagged 89% title lines in control docs, markdown scaffolding the plain-prose human baseline lacks; remark R1-6. Scoring input = normalized text (echoed headline block dropped, markdown unwrapped, all prose preserved).",
+    "raw_text_scoring": "archived in-repo at seed_avg_paired.raw-archive.json (post-R1-5 metric, raw text); the HF dataset carries the raw-protocol eval for transparency."
+  },
+  "generation": {
+    "driver": "bench/gen_vllm.py (local vLLM, open weights, bf16)",
+    "lane_note": "Local GPU lane, not the API runner, so there is no bench/results/qwen3.6-27b.jsonl and no per-cell token telemetry. Recorded 2026-07-13: the meta had no driver field at all, which made the leg look like an API leg whose results file had gone missing. Sourced from CLAUDE.md ('Qwen3.6 is now benchmarked locally via bench/gen_vllm.py') and the paper's Section on the six families, which describes Qwen and Gemma together as open-weights bf16 at temperature 0.7 and top-p 0.95."
+  },
+  "cost_usd": "NOT RECORDED. This leg ran on rented GPU time (the same lane as Gemma 3 27B, whose pod time was ~$2.30), but no figure was captured at run time. It is left blank rather than estimated after the fact, so any project total that includes this leg is a floor."
+}
