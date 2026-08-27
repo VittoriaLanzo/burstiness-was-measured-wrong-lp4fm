@@ -3,9 +3,7 @@
 Private artifact repository for the paper "Burstiness Was Measured Wrong, and
 Prompting Cannot Aim It" (TAE @ NeurIPS 2026 submission). Every script and
 evaluation artifact the paper relies on, in source-repository layout, so the
-scripts run from this directory as the working root. The anonymized review-time
-supplementary zips are generated from these same files by
-paper/tae/make_supplementary.py in the main research repo.
+scripts run from this directory as the working root.
 
 ## Paper source
 
