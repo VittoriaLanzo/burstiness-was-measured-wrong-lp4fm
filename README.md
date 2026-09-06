@@ -1,15 +1,16 @@
 # Burstiness Was Measured Wrong, and Prompting Cannot Aim It: code and evaluation artifacts
 
 Private artifact repository for the paper "Burstiness Was Measured Wrong, and
-Prompting Cannot Aim It" (TAE @ NeurIPS 2026 submission). Every script and
+Prompting Cannot Aim It" (LP4FM @ NeurIPS 2026 submission). Every script and
 evaluation artifact the paper relies on, in source-repository layout, so the
 scripts run from this directory as the working root.
 
 ## Paper source
 
-- paper/tae/main.tex: the unified LaTeX source of the submission (single assembled
-  file), with paper/tae/references.bib, paper/tae/neurips_2026.sty, and
-  paper/tae/build.sh (tectonic) alongside.
+- paper/lp4fm/main.tex: the unified LaTeX source of the submission (single assembled
+  file), with paper/lp4fm/references.bib, paper/lp4fm/neurips_2026.sty, and
+  paper/lp4fm/build.sh (tectonic) alongside. Figures 1 and 2 are PDF plots under
+  paper/lp4fm/figures/; paper/lp4fm/make_lp4fm_figures.py redraws them.
 
 ## Code (mirrors repository paths)
 
@@ -46,8 +47,8 @@ scripts run from this directory as the working root.
 - experiments/ablation/prompt_paraphrase.py: the instruction-wording robustness
   probe (Limitations).
 - experiments/ablation/rescore_all.py: rescores every leg raw and normalized.
-- paper/gen_bench_table.py: regenerates Table 1 and Figure 1 from the released
-  evals; no hand-transcribed values.
+- paper/gen_bench_table.py: regenerates Table 1 and the figure fragments from the
+  released evals; no hand-transcribed values.
 
 ## Data
 

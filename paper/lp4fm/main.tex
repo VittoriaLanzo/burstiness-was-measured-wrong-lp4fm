@@ -1,7 +1,7 @@
 \documentclass{article}
 \usepackage[dblblindworkshop]{neurips_2026}
 % Camera-ready after acceptance: \usepackage[dblblindworkshop, final]{neurips_2026}
-\workshoptitle{TAE (Trust-AI-Eval): Can We Trust AI Evaluation?}
+\workshoptitle{Linguistic Principles for Foundation Models}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -11,8 +11,7 @@
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
+\usepackage{graphicx}
 
 \usepackage{listings}
 \lstset{
@@ -47,111 +46,144 @@ the Goh--Barab\'asi coefficient under the Kim--Jo finite-$n$ correction:
 bounded and scale-free, no model in the loop, screened by a Goodhart guard
 and a coherence gate. The protocol is paired evaluation on $200$ era-,
 topic-, and register-matched Wikinews articles dated 2016--2021: five prompting
-modes, nine families, three seeds, uniform normalization before scoring. Scored raw, markdown scaffolding
-manufactures dispersion and produces a parity verdict that normalization
-reverses into a significant $0.028$ deficit ($p=3\times10^{-5}$); the
-uninstructed dispersion gap more than doubles ($0.043$ to $0.097$). Of the forty-five family-by-mode
-cells, thirty-two land significantly flatter than the human articles,
-eight show no significant difference, and five land significantly more
-dispersed. The same instruction leaves four families short, lands two on
-the human level (CI-bounded equivalence), moves one further away, and
-pushes two past it, and few-shot exemplars of typical human rhythm are
-the flattest mode in seven of nine families.
-We model human rhythm; we do not build detector evasion.
+modes, nine model families, three seeds, uniform normalization of generated
+text before scoring. Scored raw, markdown scaffolding manufactures
+dispersion and produces a parity verdict that normalization reverses
+(instruction-mode $0.005$, $p=0.10$, becomes a significant $0.028$ deficit,
+$p=3\times10^{-5}$), and the uninstructed dispersion gap more than doubles
+($0.043$ to $0.097$). Of the forty-five family-by-mode cells, thirty-two
+land significantly flatter than the human articles, eight show no significant
+difference, and five land significantly more dispersed: machine flatness is a
+strong central tendency that prompting moves without targeting. The same instruction
+leaves four families short, lands two on the human level (CI-bounded
+equivalence), moves one further away, pushes two past, and few-shot
+exemplars of typical human rhythm are the flattest mode by rank-biserial in seven of nine
+families. We model human rhythm; we do not build detector evasion.
 \end{abstract}
 
 \section{Introduction}
 
-Burstiness, sentence-length variation that gives human prose its rhythm,
-is one of the most cited signals separating human writing from machine
-writing~\citep{arxiv2024detecting, arxiv2025detecting}. The deployed
-operational definition traces to an unreviewed detector technical
-note~\citep{arxiv2024detecting, arxiv2025training}, and its statistic,
-raw sentence-length variance, is confounded with absolute length:
-uniformly long sentences can score burstier than genuinely varied short
-ones. This is a measurement-validity failure in an evaluation signal
-already deployed at scale. The paper's first subject is the evaluation
-signal; the models come second. Sentence-length dispersion has been a
-stylometric variable since \citet{yule1939sentence, williams1940note},
-never given a reproducible measure that separates rhythm from length.
-We propose one and use it to benchmark the prompting techniques people
-already rely on.
+Burstiness is the variation in sentence length that gives human prose its
+rhythm and is one of the signals most often cited to separate human writing
+from machine writing~\citep{arxiv2024detecting, arxiv2025detecting}: while
+human authors usually alternate long and short clauses, language models tend
+toward a flatter middle. The
+deployed operational definition traces to an unreviewed detector technical
+note~\citep{arxiv2024detecting, arxiv2025training}, and its statistic, raw
+sentence-length variance, is confounded with absolute length: uniformly long
+sentences can score burstier than genuinely varied short ones.
 
-\paragraph{A measurement.}
-We treat sentence boundaries as a point process in word-time and score
-the sentence-length sequence with the Goh--Barab\'asi burstiness
+Sentence-length dispersion has been a stylometric variable since
+\citet{yule1939sentence, williams1940note}, but as a signal for authorship it
+has never been given a reproducible definition that divides rhythm apart from
+length. The aim of this paper is to give this definition and use it to
+benchmark the prompting techniques people already rely on, modeling human
+rhythmic patterns rather than building a tool whose purpose is to evade
+detection.
+
+\paragraph{A definition.}
+We treat sentence boundaries as a point process in word-time and score the
+sentence-length sequence with the Goh--Barab\'asi burstiness
 coefficient~\citep{goh2008burstiness} under the Kim--Jo finite-$n$
 correction~\citep{kim2016measuring}, written $B_n$. It is bounded in
-$[-1, 1]$, needs no reference model, and, as a function of the
-coefficient of variation alone, measures rhythm relative to typical
-sentence length instead of conflating the two.
-Alongside $B_n$ we report a Gini robustness
-check~\citep{gini1912variabilit}, Miller--Madow-corrected punctuation
-entropy as a separate segmentation axis, and a memory coefficient $M$
-for lag-1 order; surprisal stays deliberately outside the construct.
-A metric that becomes a target invites gaming, so we pair $B_n$
-with two safeguards, a Goodhart guard and a coherence
-gate~\citep{arxiv2025evaluating} (Section~\ref{sec:formalizing}).
+$[-1, 1]$, needs no reference model, and depends on the coefficient of
+variation alone, being scale-free: it measures rhythm relative to typical
+sentence length instead of conflating the two. Alongside $B_n$ we report a
+Gini robustness check~\citep{gini1912variabilit}, Miller--Madow-corrected
+punctuation entropy as a separate segmentation axis, and a memory coefficient
+$M$ for lag-1 order; surprisal, the strong but model-relative detector
+signal, stays deliberately outside the construct. Because a metric that
+becomes a target invites gaming, we pair $B_n$ with two safeguards: a
+Goodhart guard that rejects degenerate constructions that inflate any
+dispersion score, and a coherence gate~\citep{arxiv2025evaluating} that keeps
+incoherent high-variance text from winning the metric.
 
 \paragraph{A benchmark of five prompting techniques.}
-We evaluate five prompting modes people already rely on, from a bare
-control brief through instruction, few-shot exemplars, outline-then-write
-planning, and a self-refine loop (Section~\ref{sec:corpus}), against
-$200$ English Wikinews articles dated 2016--2021~\citep{wikinews2021wikinews},
-each generation length-matched to its paired article and sampled at
-three seeds per cell; era, topic, and register are matched. Generated text is uniformly normalized before
-scoring because markdown scaffolding and echoed headlines manufacture
-dispersion the human baseline lacks (Section~\ref{sec:normalization}). Nine families span
-open-weight checkpoints, API-served models, and closed frontier systems
-(Section~\ref{sec:ninefam}).
+We evaluate control (a bare brief), instruction, few-shot human
+exemplars~\citep{brown2020language, min2022rethinking}, an outline-then-write
+plan mode~\citep{wang2023plan}, and a draft-critique-rewrite self-refine
+loop~\citep{madaan2023self} against $200$ English Wikinews
+articles~\citep{wikinews2021wikinews} dated 2016--2021, with era, topic, and
+register held fixed. Each generation is length-matched to its paired article,
+and every cell is sampled at three seeds. Generated text is uniformly
+normalized before scoring, because markdown scaffolding and echoed headlines
+in raw output manufacture dispersion the human baseline lacks, and on the
+audited leg this choice more than doubles the uninstructed dispersion gap.
+The identical design runs across nine model families, spanning open-weight
+checkpoints (Qwen3.6-27B, Gemma 3 27B), API-served models (DeepSeek V4 Pro,
+GLM-5.2, Kimi K2.6, Grok 4.3), and closed frontier systems (Grok 4.5,
+Gemini 3.1 Pro, Claude Opus 4.8).
 
 \paragraph{The aim problem.}
-Prompting changes rhythm but cannot steer it reliably. Uninstructed,
-eight of nine families write significantly flatter than the human
-articles; only Grok 4.5 starts at the human level. The identical
-instruction scatters the families short of, onto, and past the human
-level, a family's uninstructed gap does not predict where it lands, and
-few-shot exemplars of typical human rhythm are the flattest mode in
-seven of nine.
+Prompting changes rhythm but cannot steer it reliably. Uninstructed, eight
+of the nine families write significantly flatter than the human articles,
+with control deficits $0.027$ to $0.128$; Grok 4.5's control-mode difference is not
+significant ($-0.009$, $p=0.086$). The three largest gaps belong to frontier flagships, so scale does
+not close the gap. The identical instruction leaves four significantly short of
+the human dispersion level, lands two on it, moves one further away,
+and pushes two significantly past it, and a family's uninstructed gap
+does not predict where it lands. Few-shot exemplars of typical human rhythm are the
+flattest mode by rank-biserial in seven of nine families, and within the Grok lineage one
+generation widens the gap under instruction while the next inverts past the
+human level.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-\item A reproducible, model-free, scale-free burstiness measure for
-evaluation or control: Goh--Barab\'asi coefficient
-under Kim--Jo finite-$n$ correction, companions
-(Gini check, segmentation-diversity axis, memory coefficient), surprisal
-kept outside, and two anti-gaming safeguards
-(Section~\ref{sec:formalizing}).
-\item An evaluation protocol whose integrity machinery is the
-contribution: paired era-, topic-, and register-matched design;
-uniform normalization whose effect on verdicts is measured;
-seed-averaging avoiding pseudo-replication; within-family multiplicity
-correction; parity as CI-bounded equivalence with pre-specified margins;
-contamination probe; moderation-refusal audit
-(Sections~\ref{sec:corpus}--\ref{sec:analysis}).
-\item The aim problem, nine families, five modes, three seeds:
-identical instruction scatters families short of, onto, and past the
-human level, and few-shot is the flattest mode in seven of nine
-(Section~\ref{sec:promptceiling}).
+\item A reproducible definition of burstiness that is model-free and
+scale-free, hardened as a control or training target: the Goh--Barab\'asi
+coefficient under the Kim--Jo finite-$n$ correction, companions (Gini
+check, segmentation-diversity axis, memory coefficient; surprisal kept
+outside) and two anti-gaming safeguards (Section~\ref{sec:formalizing}).
+\item A paired protocol on era-, topic-, and register-matched news articles:
+uniform normalization before scoring, seed-averaging that avoids
+pseudo-replication, within-family multiplicity correction, parity only as
+CI-bounded equivalence with pre-specified margins, a contamination probe,
+and a moderation-refusal audit (Sections~\ref{sec:corpus}--\ref{sec:analysis}).
+\item The aim problem across nine families, five modes, three seeds:
+identical instruction leaves four significantly short of the human
+dispersion level, lands two on it, moves one further away, and pushes two
+significantly past it, and few-shot exemplars are the flattest mode by rank-biserial in
+seven of nine families (Section~\ref{sec:promptceiling}).
 \end{enumerate}
 
 \section{Related work}\label{sec:related}
 
-Burstiness research splits into two camps that rarely cite each other: measurement and detection, and steering frozen models toward style targets. Neither camp controls rhythm in-generation, and neither gives burstiness a reproducible definition. That gap is where this paper sits.
+\subsection{Two camps, little contact}
+Burstiness research splits into two camps that rarely cite each other: measurement and
+detection, and steering frozen models toward style targets. Neither camp controls rhythm
+in-generation, and neither gives burstiness a reproducible definition. That gap between
+measurement and control is where this paper sits.
 
 \subsection{Burstiness in detection}
-The operational definition of burstiness in current practice originates in a detector technical note (Tian/GPTZero), which pairs perplexity with a single burstiness scalar~\citep{arxiv2024detecting, arxiv2025training}. It is widely used and not peer-reviewed; Section~\ref{sec:formalizing} closes exactly this trust gap. \citet{onan2025you} compare diffusion and autoregressive text stylometrically with burstiness among the features and quantify after the fact without steering it. DivEye~\citep{arxiv2025diveye} tracks how unpredictability fluctuates across a text, the nearest text-side analog to timing variation, a post-hoc score. Surveys and method papers~\citep{arxiv2025detecting} treat perplexity-burstiness as a standard pair and document its vulnerability to paraphrasing.
+The operational definition of burstiness in current practice originates in a detector technical
+note (Tian/GPTZero), which pairs perplexity with a single burstiness
+scalar~\citep{arxiv2024detecting, arxiv2025training}. It is widely used and not peer-reviewed,
+the formalization gap Section~\ref{sec:formalizing} closes. \citet{onan2025you} compare diffusion
+and autoregressive text stylometrically with burstiness among the features.
+DivEye~\citep{arxiv2025diveye} tracks how unpredictability fluctuates across a text, the nearest
+text-side analog to timing variation. Surveys and method papers~\citep{arxiv2025detecting} treat
+perplexity-burstiness as a standard pair and document its vulnerability to paraphrasing.
 
-\subsection{Stylistic variation, diversity, and steering machinery}
-The stylistic-variation benchmark~\citep{arxiv2025benchmark} evaluates frontier models across prompt settings and benchmarks variation with no distributional target to control against. Effective semantic diversity~\citep{arxiv2025evaluating} gates diversity on quality, and we adopt that method as the composite's coherence gate so incoherent high-variance text is not rewarded when the metric serves as a target.
+\subsection{Stylistic variation and diversity}
+The stylistic-variation benchmark~\citep{arxiv2025benchmark} evaluates frontier models across
+prompt settings and benchmarks variation with no distributional target to control against.
+Effective semantic diversity~\citep{arxiv2025evaluating} gates diversity on quality, and we
+adopt that method as the composite's coherence gate so incoherent high-variance text is not
+rewarded when the metric serves as a target.
 
-Steering machinery exists for style axes other than rhythm: activation-level style vectors, contrastive personal style vectors, steering surveys and LoRA catalogs, and fingerprint-LoRA generation~\citep{konen2024style, liu2025personalized, turner2026weights, arxiv2025low, arxiv2026plug}, with interpolation, obfuscation, personas, and reward-guided decoding~\citep{arxiv2024continuous, fisher2024styleremix, arxiv2026styles, arxiv2026card, arxiv2025llmbraces}; all steer something, none steer rhythm. Mirostat~\citep{basu2021mirostat} is the closest mechanism precedent: controlling a distributional statistic in-generation through closed-form feedback, a token-level first moment, whereas burstiness is a second moment of a derived sequence at the sentence-boundary decision. Detector-evasion humanizers such as SICO~\citep{lu2024large} force length variation by prompt-level substitution, post-hoc and black-box, which we are not building. Speech synthesis met the same average-prosody problem and solved it with explicit prosodic conditioning during generation~\citep{raitio2020controllable, raitio2022emphasis}; listeners stop identifying a voice clone with its source when expressive prosody is mismatched~\citep{bakkouche2025prosodic}, and brain-side long-range prediction~\citep{caucheteux2023long} is motivation only.
+\subsection{Steering machinery, aimed at other targets}
+Steering machinery exists for style axes other than rhythm: activation and contrastive personal style vectors, LoRA catalogs, and fingerprint-LoRA generation~\citep{konen2024style, liu2025personalized, turner2026weights, arxiv2025low, arxiv2026plug}, plus interpolation, obfuscation, personas, and reward-guided decoding~\citep{arxiv2024continuous, fisher2024styleremix, arxiv2026styles, arxiv2026card, arxiv2025llmbraces}; all steer something, none steer rhythm. Mirostat~\citep{basu2021mirostat} is the closest precedent, a token-level first moment, whereas burstiness is a second moment at the sentence-boundary decision. Detector-evasion humanizers such as SICO~\citep{lu2024large} force length variation by prompt-level substitution, post-hoc and black-box.
+
+\subsection{Prosody and the biological bridge}
+Speech synthesis met the same average-prosody problem and solved it with explicit prosodic
+conditioning during generation~\citep{raitio2020controllable, raitio2022emphasis}. Listeners
+stop identifying a voice clone with its source when expressive prosody is mismatched~\citep{bakkouche2025prosodic},
+and brain-side long-range prediction~\citep{caucheteux2023long} is motivation only.
 
 \section{Formalizing burstiness}\label{sec:formalizing}
 
 We replace the field's unreviewed operational definition (Section~\ref{sec:related}) with a
-model-free, reproducible measurement instrument. The question, asked directly of burstiness,
-is what construct the protocol measures.
+model-free, reproducible measurement instrument.
 
 \subsection{Burstiness as a point process}
 Let a document $D$ be segmented into sentences with word-length sequence $L = (l_1, \dots, l_n)$. We
@@ -162,53 +194,56 @@ B = \frac{\sigma - \mu}{\sigma + \mu},
 \]
 where $\mu$ and $\sigma$ are the mean and standard deviation of $L$. $B$ is bounded in $[-1, 1]$:
 $B = -1$ for a metronomic sequence, $B = 0$ for a Poisson one, and $B \to 1$ for
-a maximally bursty one. Real documents give short interval sequences, so we apply the Kim--Jo
+a maximally bursty one. Because real documents give short interval sequences, we apply the Kim--Jo
 finite-$n$ correction~\citep{kim2016measuring}, writing $B_n$ for the corrected coefficient.
 
 $B_n$ is \emph{scale-free}: as a function of the coefficient of variation $r = \sigma / \mu$ alone,
 $B = (r-1)/(r+1)$, it measures variation \emph{relative} to typical sentence length, so rhythm is not
 conflated with length. Classically, $B_n$ is a bounded reparametrization of the coefficient of
-variation, weak alone in the stylometric literature~\citep{yule1939sentence, williams1940note}.
-The novelty here is the measurement protocol around the statistic: anti-gaming
-screens, the paired matched-corpus design, and the nine-family audit
+variation, weak alone in the stylometric literature~\citep{yule1939sentence, williams1940note}. What
+is new is the model-free formulation hardened against gaming,
+its paired evaluation on a matched modern corpus, and the nine-family prompt benchmark built on it
 (Section~\ref{sec:promptceiling}).
 
 \subsection{The construct and its companions}
-Burstiness proper is the scale-free coefficient $B_n$. We report four companions, none folded into
-the construct:
+Burstiness proper is the single scale-free coefficient $B_n$. We report four companions
+alongside it, none folded into the construct:
 \begin{itemize}
 \item \textbf{Gini robustness check.} The Gini coefficient~\citep{gini1912variabilit} of the sentence
 lengths is a scale-free dispersion measure that aggregates over all pairwise differences, so it is
-less hostage to a single long sentence. It agrees with $B_n$ in direction on every significant cell
-of the nine-family benchmark (Section~\ref{sec:promptceiling}), so no reported result is an
-estimator artifact.
+less hostage to a single long sentence. It agrees with $B_n$ in direction on every cell of the
+nine-family benchmark where either difference is significant (Section~\ref{sec:promptceiling});
+agreement shows a result is not an estimator artifact.
 \item \textbf{Segmentation diversity, a separate axis.} The Miller--Madow-corrected Shannon entropy of
-the punctuation distribution scores how varied the segmentation symbols are. Typographic quotes are
-normalized to ASCII uniformly across all nine legs, so smart-quote typography cannot register as
-diversity.
+the punctuation distribution measures how varied the segmentation symbols are, a distinct axis from
+rhythm. Typographic quotes are normalized to ASCII uniformly across all nine legs, so smart-quote
+typography cannot register as diversity.
 \item \textbf{Memory, the order term.} The Goh--Barab\'asi memory coefficient
 $M$~\citep{goh2008burstiness}, the lag-1 correlation between consecutive interval lengths, is the
-order information a dispersion statistic discards.
-\item \textbf{Predictability, kept outside.} Mean per-token surprisal and mean absolute consecutive
-difference, under a fixed reference model, form the strong but model-relative detector signal. They
-sit deliberately \emph{outside} the controllable construct; the benchmark scores the four model-free
-dimensions only.
+order information a dispersion statistic discards. In Section~\ref{sec:promptceiling}
+three families' few-shot legs overshoot the human articles on memory while undershooting on
+dispersion.
+\item \textbf{Predictability, kept outside.} Mean per-token surprisal and the mean absolute
+consecutive difference, under a fixed reference model, form the strong but model-relative detector
+signal. The definition deliberately places them \emph{outside} the controllable construct: they are the first-moment, Mirostat-style quantity, whereas burstiness is a second moment of a derived sequence. The benchmark scores the four model-free dimensions only and reports no surprisal values.
 \end{itemize}
 We compute raw sentence-length variance $\mathrm{var}(L)$ only as a diagnostic; it is confounded with
 absolute length by construction, the central defect of the colloquial statistic.
 
 \subsection{Anti-gaming screens and reproducibility}
 A metric that becomes a control or training target invites gaming. Degenerate texts can reach a
-high-dispersion score (one giant sentence among fragments, mechanical alternation, punctuation spam);
-the Goodhart guard flags these; its thresholds are heuristic, a screen rather than a validated
-defense (Section~\ref{sec:limitations}), and the full flag list ships in the reference
-implementation (Appendix~\ref{sec:refimpl}). A reliability floor of ten sentences bounds $B_n$. Re-punctuating a
-fixed text can move $B_n$ across much of its bounded range. The structural metric must never select
-generations alone; the composite pairs it with a coherence gate~\citep{arxiv2025evaluating}, so
-incoherent high-variance text cannot win the metric. The benchmark of
-Section~\ref{sec:promptceiling} is descriptive and selects nothing by the metric; the guard and the
-gate enter as design constraints on future control use.
-The metric, the guard, and the multiscale profile that the guard's wash-out check reads are pure standard library in
+high-dispersion score (one giant sentence among fragments, mechanical alternation, punctuation spam).
+A Goodhart guard flags these; the full flag list ships in the reference implementation
+(Appendix~\ref{sec:refimpl}). We count $B_n$ only above a reliability floor of ten sentences.
+Re-punctuating a fixed text can move $B_n$ across much of its bounded range, so the structural
+metric must never select generations alone; following the quality-and-diversity
+argument~\citep{arxiv2025evaluating}, the composite pairs it with a coherence gate, so incoherent
+high-variance text cannot win the metric. The benchmark of
+Section~\ref{sec:promptceiling} is descriptive and selects nothing by the metric, so the guard and
+the gate enter as design constraints on future control use; neither filters the scored
+generations here.
+
+The metric, the guard, and the multiscale profile the guard's wash-out check reads are pure standard library in
 \path{experiments/burstiness_pp.py}, with a self-check; Appendix~\ref{sec:refimpl} reproduces the full implementation. They run without a model; of the
 companions above, only surprisal would need one, one more reason it stays
 outside the construct.
@@ -216,128 +251,126 @@ outside the construct.
 \section{The aim problem: how reliably instructions move the construct}
 \label{sec:promptceiling}
 
-Prompting is the baseline every practitioner uses. We evaluate that
-evaluation practice: how much of the rhythm gap it closes, and how
-predictably, with verdicts that must hold across families.
+Prompting is the baseline every practitioner already uses, so how much of the
+human-machine rhythm gap it closes, and how predictably, is the question this
+paper set out to answer. The same wording scatters the nine families, and this
+section measures that scatter.
 
 \subsection{Corpus and generation}
 \label{sec:corpus}
-The corpus is $200$ English Wikinews articles~\citep{wikinews2021wikinews}
-(CC~BY~2.5), dated 2016--2021, before model-written news was a plausible
-presence, so the human side of each pair is human-authored, with era,
-topic, and register held fixed. The human side
-of each pair is the plain article body, regenerable from the source Wikinews
-wikitext by a deterministic parse
-(\path{experiments/ablation/clean_wikinews.py}; Appendix~\ref{sec:protocoldetail}).
-The first leg is
-a frozen open-weights Qwen3.6-27B (bf16, temperature $0.7$, top-$p$ $0.95$,
-reasoning mode enabled, reasoning stripped before scoring). For each headline the model writes
-a news article from a brief containing only the headline and the paired human
-article's word count, so each generation targets its pair's length.
-
-We compare five non-overlapping prompting modes: a \emph{control} brief with
-no stylistic instruction, an \emph{instruction} mode that adds a metric-free
-persona directive to write as a professional reporter in a natural human
-voice, never flat or mechanical,
-\emph{few-shot} exemplars of matched human news
-prose~\citep{brown2020language, min2022rethinking}, an outline-then-write
-\emph{plan} mode~\citep{wang2023plan}, and a draft-critique-rewrite
-\emph{self-refine} loop~\citep{madaan2023self}. The three few-shot exemplars
-are matched human news reports nearest the median of the human $B_n$
-distribution (each near $B_n = -0.416$), typical rhythm rather than the
-high-dispersion end. No prompt names the measured axis, so no mode teaches to
-the test.
-
-We sample each (mode, headline) cell at three fixed seeds. Of the leg's
-$3{,}000$ cells, $2{,}996$ completed; we excluded the four that exceeded the
-reasoning budget rather than scoring their incomplete output, and affected
-headlines average over their remaining seeds, so every mode retains $200$
-matched pairs. The entire run is scripted and reproducible from the released
-artifacts.\footnote{Scoring code, prompts, the metric implementation, per-family scored evaluations (normalized protocol, plus the audited leg's raw-protocol archive), and generation metadata accompany the paper as supplementary material. The full anonymized repository, adding raw generations for eight of nine legs and the research database, is at \url{https://anonymous.4open.science/r/burstiness-was-measured-wrong}. De-anonymized links appear in the camera-ready.}
-Appendix~\ref{sec:prompts} lists the verbatim wording of every mode and the
-rule that composes them.
+The corpus is $200$ English Wikinews articles~\citep{wikinews2021wikinews} (CC~BY~2.5), dated
+2016--2021 and therefore pre-model, with era, topic, and register held fixed, so within a pair
+only authorship differs. The human side of each pair is the plain article body,
+regenerable from the source Wikinews wikitext by a deterministic parse
+(\path{experiments/ablation/clean_wikinews.py}) that, on a held-out check of
+$100$ articles, reproduces the shipped human bodies exactly. The first leg is
+a frozen open-weights Qwen3.6-27B (bf16,
+temperature $0.7$, top-$p$ $0.95$, reasoning mode enabled, reasoning stripped before
+scoring). Eight further families join in Section~\ref{sec:ninefam}. For each headline the model
+writes a news article from a brief containing only the headline and
+the paired human article's word count, so each generation targets its pair's length. We compare five
+non-overlapping prompting modes: a \emph{control} brief with no stylistic instruction, an
+\emph{instruction} mode that adds a metric-free persona directive to write as a professional
+reporter in a natural human voice, never flat or mechanical, restated near the end of the prompt,
+\emph{few-shot} exemplars of matched human news prose~\citep{brown2020language, min2022rethinking},
+an outline-then-write \emph{plan} mode~\citep{wang2023plan}, and a draft-critique-rewrite
+\emph{self-refine} loop~\citep{madaan2023self}. The three few-shot exemplars are representative
+human news reports, matched by register and topic and centered on the median of the human $B_n$
+distribution (each near $B_n = -0.416$). The selection uses $B_n$ only to find the exemplars
+nearest that median, never the high-dispersion end, so the few-shot mode sees typical human
+rhythm. No prompt names the measured axis, so no mode teaches to the test. We sample each (mode, headline) cell at three fixed seeds. Of the
+leg's $3{,}000$ cells,
+$2{,}996$ completed;
+we excluded the four that exceeded the reasoning budget rather than scoring their incomplete output. We average affected
+headlines over their remaining seeds, so every mode retains $200$ matched pairs. The entire run is
+scripted and reproducible from the released artifacts.\footnote{Scoring code, prompts, the metric implementation, per-family scored evaluations, generation metadata, and both raw and normalized evaluation artifacts accompany the paper as supplementary material; a repository link and dataset links are withheld at review time and will appear in the camera-ready.} Appendix~\ref{sec:prompts} lists the verbatim wording of every mode and the rule that composes them.
 
 \subsection{Normalization: stripping the wrapper before scoring}
 \label{sec:normalization}
-Model output does not arrive as plain prose. A generation-hygiene guard
-flagged markdown scaffolding and echoed headline blocks in every family, from
-23--38\% of control-mode generations on one leg to 100\% on another
-(Appendix~\ref{sec:protocoldetail}), formatting the plain-prose human
-articles lack. A segmenter fed raw
-output scores a markdown header or an echoed dateline as a short
-pseudo-sentence, manufacturing length dispersion and segmentation
-symbols the article prose lacks.
+Model output does not arrive as plain prose. A generation-hygiene guard flagged markdown
+scaffolding and echoed headline blocks in every family we benchmark, from 23--38\% of control-mode generations
+on one leg (DeepSeek V4 Pro: 23\% markdown, 38\% title lines) to 100\% on another (Gemma 3 27B
+markdown; headline echoes on the Grok 4.5 and Gemini 3.1 Pro legs). All of it is formatting the
+plain-prose human baseline lacks. A segmenter fed raw output scores a markdown header or an echoed dateline as
+a short pseudo-sentence, and those fragments manufacture length dispersion and segmentation symbols
+the article prose does not have. Every generated leg is therefore normalized before scoring:
+a deterministic script (\path{experiments/ablation/normalize_generation.py}) drops the echoed
+headline block and unwraps markdown syntax while preserving the article prose; the human baseline
+is untouched. A word-loss audit of the full first leg finds median $0.0\%$, mean
+$1.7\%$, and at most $7.4\%$ of a generation lost to normalization, that maximum being the
+headline block itself.
 
-Every generated leg is normalized before scoring by a deterministic script
-(\path{experiments/ablation/normalize_generation.py}). The script drops the
-echoed headline block and unwraps markdown syntax while preserving the
-article prose; the human baseline is untouched. A word-loss audit of the full
-first leg finds median $0.0\%$, mean $1.7\%$, and at most $7.4\%$ of a
-generation lost to normalization; the maximum is the headline block itself. Scaffolding sits outside the construct: scoring it credits formatting
-as rhythm, the same inflation class the Goodhart guard rejects
-(Section~\ref{sec:formalizing}); normalization is the corpus-level
-correction applied uniformly to every leg.
-
-On the audited leg (Qwen3.6-27B), scored raw, instruction-mode $B_n$ shows
-parity ($0.005$, $p=0.10$) where normalized text shows a significant deficit
-($0.028$, $p=3\times10^{-5}$); raw control-mode gaps on segmentation entropy
-and memory ($0.038$ and $-0.060$, both significant) vanish on normalized
-text ($-0.001$ and $-0.007$); and the control-mode dispersion gap on
-normalized text is more than twice the raw estimate ($0.043$ to $0.097$).
-Any benchmark or detector feature computed on raw model output inherits
-these artifacts, so an unreported normalization choice can flip an
-evaluation's conclusion in either direction.
+Scaffolding sits outside the construct: $B_n$ is defined over the sentence
+lengths of prose, and a markdown header or an echoed dateline is not a sentence of the article.
+Scoring it credits formatting as rhythm, the same class of inflation the Goodhart
+guard rejects (Section~\ref{sec:formalizing}), so normalization is a
+corpus-level Goodhart correction, applied uniformly to every leg. Its size is measurable on the
+audited leg (Qwen3.6-27B): scored raw, instruction-mode $B_n$ shows parity ($0.005$, $p=0.10$)
+where normalized text shows a significant deficit ($0.028$, $p=3\times10^{-5}$); raw control-mode
+gaps on segmentation entropy and memory ($0.038$ and $-0.060$, both significant) vanish on
+normalized text ($-0.001$ and $-0.007$), which is why we describe that leg's control gap as
+confined to the dispersion dimensions; and the control-mode dispersion gap on normalized text is
+more than twice the raw estimate ($0.043$ to $0.097$), with per-seed rank-biserial rising from
+$0.27$--$0.34$ to $0.61$--$0.64$. Raw scorings are archived with the released artifacts.
 
 \subsection{Analysis}
 \label{sec:analysis}
 Because the three seeds of a cell share their human counterpart, pooling them as separate pairs would
 pseudo-replicate the human documents and overstate significance. We therefore average each headline's
-metric vector across seeds first and run one Wilcoxon signed-rank test per mode and dimension over
-the $200$ independent matched pairs. The matched rank-biserial is the effect size. Each test compares
-one mode against the human articles. A family's narrowing from one mode to another compares two
-estimates and is not itself a tested contrast.
+metric vector across its seeds first and run one Wilcoxon signed-rank test per mode and dimension over
+the $200$ independent matched pairs. Matched rank-biserial is reported as effect size. Each test
+compares one mode against the human articles; a family's narrowing or widening from one mode to another compares
+two estimates and is not itself a tested contrast.
 
-Every family ran the identical twenty-cell grid (five modes by four dimensions). Each grid is
-corrected within family with Benjamini--Hochberg at $q=0.05$; Holm is reported alongside.
-Across the nine grids, $124$ of the $180$ cells are significant at the per-cell $0.05$ level;
-$120$ survive Benjamini--Hochberg and $103$ survive Holm. All four cells that fall under
-Benjamini--Hochberg sit on companion dimensions, none on $B_n$. The one the prose discusses,
-Qwen3.6-27B instruction-mode memory ($p=0.045$), we mark exploratory and do not build on.
-No correction is applied across families. Table~\ref{tab:ninefam} carries per-cell stars, and
-Appendix~\ref{sec:familygrids} reports each family's corrected census.
+Every family ran the identical twenty-cell grid (five modes by four dimensions), corrected within
+family with Benjamini--Hochberg at $q=0.05$, Holm reported alongside; the correction script and each
+leg's census ship with the released artifacts. Across the nine grids, $124$ of
+the $180$ cells are significant at the per-cell $0.05$ level; $120$ survive Benjamini--Hochberg and
+$103$ survive Holm. All four cells that fall under Benjamini--Hochberg sit on companion dimensions,
+none on $B_n$; the one the prose discusses, Qwen3.6-27B's instruction-mode memory overshoot
+($p=0.045$), we mark exploratory and do not build on. No correction is applied across families;
+Table~\ref{tab:ninefam} carries per-cell stars with a pointer to each family's corrected census in
+Appendix~\ref{sec:familygrids}.
 
-Matching claims are never stated as failures to reject. A match requires the $95\%$ CI of the
-median paired delta to fall inside a pre-specified margin; the margins $0.03$, $0.05$, and $0.08$
-were fixed before the cross-family runs. We also report $m^{*}$, the smallest margin the CI would
-clear, that is, the larger of the two absolute CI bounds. CIs are percentile bootstrap intervals
-(Appendix~\ref{sec:protocoldetail}).
+Matching claims are never stated as failures to reject. A match requires the $95\%$ CI of the median
+paired delta inside a pre-specified margin; margins $0.03$, $0.05$, and $0.08$ were fixed before the
+cross-family runs. We also report $m^{*}$, the smallest margin the CI would clear, the larger of the
+two absolute CI bounds. CIs on the median paired delta are percentile bootstrap intervals: the
+$2.5$th and $97.5$th percentiles of the medians of $2{,}000$ resamples of the $200$ matched pairs.
+Per-seed $B_n$ effect sizes released alongside are consistent with the seed-averaged results.
 
 \subsection{Nine model families: one instruction, nine landings}
 \label{sec:ninefam}
-The design of Section~\ref{sec:corpus} runs identically on every family.
-The nine families are Qwen3.6-27B and Gemma 3 27B (open weights, bf16, temperature $0.7$,
-top-$p$ $0.95$); DeepSeek V4 Pro, Grok 4.3, GLM-5.2, and Kimi K2.6 (API-served,
-provider-default decoding); and Grok 4.5, Gemini 3.1 Pro, and Claude Opus 4.8 (closed). Four
-legs do not honor a requested temperature. Per-leg decoding, thinking modes, effort levels,
-and output caps are recorded in the released metadata, and the one output-cap deviation, which
-restores prose-budget parity for Claude Opus 4.8, is explained in
-Appendix~\ref{sec:protocoldetail}.
-
+The design of Section~\ref{sec:corpus} runs identically on every family: the same $200$ headlines,
+the same five wordings, three seeds, uniform normalization, the same paired scoring. The nine
+families are Qwen3.6-27B and Gemma 3 27B (open weights, bf16, temperature $0.7$, top-$p$ $0.95$);
+DeepSeek V4 Pro, Grok 4.3, GLM-5.2, and Kimi K2.6 (API-served, provider-default decoding; GLM-5.2
+ignores a requested temperature and Kimi K2.6 rejects one); and Grok 4.5, Gemini 3.1 Pro, and
+Claude Opus 4.8 (closed APIs; Grok 4.5 exposes neither temperature nor top-$p$, Gemini 3.1 Pro ran
+at temperature $1.0$ with provider-managed thinking, and Claude Opus 4.8 exposes no temperature).
+Thinking modes, effort levels, and output caps are recorded in each leg's released metadata.
+One deviation is ours rather than a provider's. Anthropic bills reasoning against the output cap, so the shared $16{,}000$-token cap that leaves
+other families room to write leaves Claude Opus 4.8 none at maximum effort: the self-refine rewrite
+spends the whole budget reasoning and emits no prose at all. We ran that leg at high effort with a $32{,}000$-token cap, which
+restores a prose budget comparable to the other families and matches the thinking level Gemini
+3.1 Pro ran at. The leg completed all $3{,}000$ cells with no truncated or empty output.
 Decoding is not matched across providers, so the benchmark reads as nine separate paired
-comparisons against the same human baseline. Where a provider returns reasoning content
-separately, we strip it before scoring. We benchmark single generators only; multi-agent
-systems break the one-generator pairing.
+comparisons against the same human baseline, each family compared against the human articles
+alone. Where a provider returns reasoning content separately
+we strip it before scoring. Gemini's thoughts are never returned, and Gemma 3 has no thinking mode.
+We benchmark single generators only; multi-agent systems are excluded because they break the
+one-generator pairing.
 
-Completeness is disclosed per leg. Provider content moderation removes cells on two legs by two
-different mechanisms: Moonshot refuses explicitly ($25$ of Kimi K2.6's $3{,}000$ cells, one
-Hong Kong protest headline refused at every mode and seed), and Zhipu refuses silently ($36$ of
-GLM-5.2's cells return an ordinary response with empty output, concentrated on the same
-politically sensitive cluster). The harness records both as empty cells
+Completeness is disclosed per leg. Qwen3.6-27B excludes four cells for exceeded reasoning budgets
+(Section~\ref{sec:corpus}), and Grok 4.5 reports two empty self-refine outputs, truncations by
+signature, seed-averaged away. Provider content moderation removes cells on two legs, by two
+different mechanisms. Moonshot refuses explicitly: $25$ of Kimi K2.6's $3{,}000$ cells return
+HTTP $400$, one Hong Kong protest headline refused at every mode and seed. Zhipu refuses
+silently: $36$ of GLM-5.2's cells return an ordinary HTTP $200$ with empty output, concentrated
+on the same cluster of politically sensitive headlines. The harness records both as empty cells
 and seed-averaging excludes them, so every paired statistic is computed over the headlines the
 model actually wrote; a benchmark that does not audit empty outputs would silently absorb the second mechanism into its scores.
-Grok 4.5's two empty cells are truncations by signature
-(Appendix~\ref{sec:protocoldetail}); the remaining five legs generated all $200$ headlines in
-every mode.
+The remaining five legs generated all $200$ headlines in every mode.
 
 \begin{table}[tb]
 \centering
@@ -372,105 +405,69 @@ Grok 4.5 & $-0.009\;(-0.14)$ & $-0.025\;(-0.20)^{*}$ & $0.077\;(0.69)^{**}$ & $-
 
 \begin{figure}[t]
 \centering
-\begin{tikzpicture}
-\definecolor{cbBlue}{RGB}{0,114,178}
-\definecolor{cbVermillion}{RGB}{213,94,0}
-\definecolor{cbGreen}{RGB}{0,158,115}
-\begin{axis}[
-    width=0.95\textwidth,
-    height=5.6cm,
-    xmin=0.45, xmax=9.55,
-    ymin=-0.095, ymax=0.19,
-    xtick={1,2,3,4,5,6,7,8,9},
-    xticklabels={Gemini 3.1 Pro, GLM-5.2, Opus 4.8, Qwen3.6-27B, Kimi K2.6,
-                 Gemma 3 27B, DeepSeek V4, Grok 4.3, Grok 4.5},
-    x tick label style={rotate=32, anchor=east, font=\footnotesize},
-    ytick={-0.05,0,0.05,0.1,0.15},
-    ylabel={Median $\Delta B_n$ (human $-$ model)},
-    ylabel style={font=\small},
-    tick label style={font=\small},
-    ymajorgrids=true,
-    grid style={line width=0.3pt, draw=gray!20},
-    axis line style={line width=0.5pt},
-    tick style={draw=gray!60},
-    legend style={at={(0.5,-0.30)}, anchor=north, legend columns=5,
-        draw=none, font=\small, /tikz/every even column/.append style={column sep=0.6em}},
-    legend cell align=left,
-    clip=false,
-]
-\draw[gray!70, line width=0.4pt] (axis cs:0.45,0) -- (axis cs:9.55,0);
-\node[anchor=south east, font=\footnotesize, text=gray!90!black]
-    at (axis cs:9.5,0.004) {human level};
-\addplot[only marks, mark=o, mark size=2.4pt, black, line width=0.7pt]
-    coordinates {(0.72,0.128) (1.72,0.126) (2.72,0.119) (3.72,0.097) (4.72,0.095)
-                 (5.72,0.069) (6.72,0.035) (7.72,0.027) (8.72,-0.009)};
-\addlegendentry{Control}
-\addplot[only marks, mark=square*, mark size=2.2pt, cbBlue]
-    coordinates {(0.86,0.071) (1.86,0.061) (2.86,-0.037) (3.86,0.028) (4.86,-0.006)
-                 (5.86,0.049) (6.86,0.000) (7.86,0.050) (8.86,-0.025)};
-\addlegendentry{Instruction}
-\addplot[only marks, mark=triangle*, mark size=2.7pt, cbVermillion]
-    coordinates {(1.00,0.169) (2.00,0.148) (3.00,0.039) (4.00,0.119) (5.00,0.123)
-                 (6.00,0.063) (7.00,0.029) (8.00,0.108) (9.00,0.077)};
-\addlegendentry{Few-shot}
-\addplot[only marks, mark=diamond*, mark size=2.7pt, cbGreen]
-    coordinates {(1.14,0.070) (2.14,0.080) (3.14,-0.000) (4.14,0.045) (5.14,0.026)
-                 (6.14,0.061) (7.14,0.013) (8.14,0.061) (9.14,-0.009)};
-\addlegendentry{Plan}
-\addplot[only marks, mark=x, mark size=2.8pt, black, line width=0.9pt]
-    coordinates {(1.28,0.039) (2.28,0.011) (3.28,-0.065) (4.28,0.039) (5.28,-0.070)
-                 (6.28,0.029) (7.28,-0.018) (8.28,0.019) (9.28,-0.059)};
-\addlegendentry{Self-refine}
-\end{axis}
-\end{tikzpicture}
+\includegraphics[width=0.95\textwidth,height=5.6cm]{figures/fig_aimscatter.pdf}
 \caption{Median $\Delta B_n =$ human $-$ model for every family and prompting mode, the
-forty-five cells of Table~\ref{tab:ninefam}; families ordered by control-mode gap. Markers
-above the gray human line are flatter than the human articles, markers below it more
-dispersed. Every control marker except Grok 4.5's sits above the line, few-shot is the
-flattest mode by rank-biserial in seven of nine families, and instruction lands on both sides
-of the line. Per-cell significance is in Table~\ref{tab:ninefam}.}
+forty-five cells of Table~\ref{tab:ninefam}. Reading key: the gray line is the human dispersion
+level; markers above it are flatter than the human articles, markers below it more dispersed.
+Families are ordered by their control-mode gap. Every control marker except Grok 4.5's sits
+above the line, few-shot sits highest in six of nine families by median, and is the flattest mode by rank-biserial in seven: the difference is Gemma 3 27B, where few-shot carries the larger effect size but control the larger median, and instruction lands on both
+sides of the line, including across the three leftmost families whose control markers nearly
+coincide. Per-cell significance is in Table~\ref{tab:ninefam}.}
 \label{fig:aimscatter}
 \end{figure}
 
 Table~\ref{tab:ninefam} reports the $B_n$ cell for every mode on every family,
 Figure~\ref{fig:aimscatter} plots all forty-five cells, and
-Appendix~\ref{sec:familygrids} carries each family's full four-dimension grid.
+Appendix~\ref{sec:familygrids} carries each family's full four-dimension grid with its
+correction census.
 
 Uninstructed, eight of nine families write significantly flatter than the human articles,
-with control deficits from $0.027$ to $0.128$. Grok 4.5 alone starts at the human level
-($-0.009$, $p=0.086$). The three largest gaps are the frontier flagships, Gemini 3.1 Pro
-($0.128$), GLM-5.2 ($0.126$), and Claude Opus 4.8 ($0.119$), which start within $0.009$ of
-one another, so frontier scale does not close the gap.
-Deficits of at most $0.128$ on a coefficient bounded in $[-1,1]$ are consistent signatures,
-well short of the gross flatness the detector literature describes~\citep{arxiv2024detecting, arxiv2025detecting}.
+with control deficits from $0.027$ to $0.128$. Grok 4.5's control-mode difference is not
+significant ($-0.009$, $p=0.086$). The three largest gaps belong to the frontier flagships, Gemini 3.1 Pro
+($0.128$, rank-biserial $0.85$), GLM-5.2 ($0.126$, $0.85$), and Claude Opus 4.8 ($0.119$,
+$0.80$), which start within $0.009$ of one another, so frontier scale alone does not close
+the gap. Deficits of at most $0.128$ on a coefficient bounded in $[-1,1]$ are consistent
+signatures, well short of the gross flatness the detector literature
+describes~\citep{arxiv2024detecting, arxiv2025detecting}.
 
-On four families (Gemini 3.1 Pro, GLM-5.2, Qwen3.6-27B, Gemma 3 27B) the instruction narrows
-the gap without closing it (Table~\ref{tab:ninefam}).
+On four families the instruction narrows the gap without closing it: Gemini 3.1 Pro lands
+at $0.071$, GLM-5.2 at $0.061$, Qwen3.6-27B at $0.028$, and Gemma 3 27B at $0.049$.
 
-DeepSeek V4 Pro and Kimi K2.6 land on the human dispersion level. DeepSeek V4 Pro closes a significant control gap
-($0.035$, rank-biserial $0.34$, $p=3\times10^{-5}$) to a median delta of $0.000$ with $95\%$ CI
-$[-0.012, 0.026]$ ($p=0.57$), inside the tightest margin, $m^{*}=0.026$. Kimi K2.6 closes
-$0.095$ ($0.69$) to $-0.006$ with CI $[-0.034, 0.020]$ ($p=0.96$), $m^{*}=0.034$.
-The DeepSeek landing is one-dimensional. Its instructed leg overshoots human segmentation
-entropy ($-0.145$, rank-biserial $-0.47$, $p<10^{-5}$) while matching dispersion
-(Appendix~\ref{sec:familygrids}).
+Two families land on the human dispersion level, and we state both as CI-bounded
+equivalence with pre-specified margins. DeepSeek V4 Pro closes a significant control gap
+($0.035$, rank-biserial $0.34$, $p=3\times10^{-5}$) to a median delta of $0.000$ with
+$95\%$ CI $[-0.012, 0.026]$ ($p=0.57$), inside the tightest margin, $m^{*}=0.026$.
+Kimi K2.6 closes $0.095$ ($0.69$) to $-0.006$ with CI $[-0.034, 0.020]$ ($p=0.96$),
+bounded at the middle margin, $m^{*}=0.034$. The DeepSeek landing is one-dimensional: its instructed leg overshoots
+human segmentation entropy ($-0.145$, rank-biserial $-0.47$, $p<10^{-5}$) while matching
+dispersion. Kimi's instructed leg shows no per-cell significant difference on any
+dimension, though only its dispersion cell carries an equivalence bound.
 
 Five of the forty-five cells land significantly past the human articles. Claude Opus 4.8 and
 Grok 4.5 cross under instruction ($-0.037$, rank-biserial $-0.25$, $p=0.002$, surviving both
-corrections; $-0.025$, $-0.20$, $p=0.015$, surviving Benjamini--Hochberg, falling under Holm).
-Self-refine pushes three families past (Kimi K2.6 $-0.070$, Claude Opus 4.8 $-0.065$,
+corrections; $-0.025$, $-0.20$, $p=0.015$, surviving Benjamini--Hochberg, falling under Holm),
+and self-refine pushes three families past (Kimi K2.6 $-0.070$, Claude Opus 4.8 $-0.065$,
 Grok 4.5 $-0.059$, all surviving both corrections). Instruction widens Grok 4.3's gap from
-$0.027$ to $0.050$, and Grok 4.5, one generation later, inverts past the human level.
+$0.027$ to $0.050$ (the modes' CIs overlap, $[0.005, 0.044]$ and $[0.030, 0.068]$), and
+Grok 4.5, one generation later, inverts past the human level. The flatness tell is not
+monotone even within a single vendor.
+
+The identical instruction lands Gemini 3.1 Pro, GLM-5.2, and Claude Opus 4.8 at $0.071$,
+$0.061$, and $-0.037$, two significantly short of the human articles and one significantly
+past them. The wording alone moves Claude Opus 4.8 from significantly short of the human
+articles in control and few-shot to significantly past them under instruction and self-refine.
 
 All nine families undershoot significantly under few-shot. The few-shot gap exceeds the
 family's control gap in six of nine, and ranked by rank-biserial it is the largest-effect
-mode in seven of nine (rank-biserial $0.65$ to $0.94$). The exceptions,
-DeepSeek V4 Pro and Claude Opus 4.8, are the families whose uninstructed control carries
-the larger effect. On Grok 4.5 few-shot alone drags the model back below the human level
-($0.077$, rank-biserial $0.69$, $p<10^{-5}$). The exemplars sit at the median of the human
-rhythm distribution (Section~\ref{sec:corpus}). Showing the model
-typical human rhythm produces text farther from it than saying nothing, in six of nine
-families; an untested reading is register reproduction rather than variance.
+mode in seven of nine ($0.94$ on Gemini 3.1 Pro and GLM-5.2, $0.83$ on Kimi K2.6, $0.80$
+on Qwen3.6-27B, $0.76$ on Grok 4.3, $0.69$ on Grok 4.5, $0.65$ on Gemma 3 27B). The
+exceptions, DeepSeek V4 Pro and Claude Opus 4.8, are the families whose uninstructed
+control carries the larger effect. On Grok 4.5 few-shot alone drags the model back below
+the human level ($0.077$, rank-biserial $0.69$, $p<10^{-5}$). The exemplars are three
+human news reports at the median of the human rhythm distribution
+(Appendix~\ref{sec:prompts}), so showing the model typical human rhythm produces text
+farther from it than saying nothing, in six of nine families; one reading we did not
+test is register reproduction rather than variance.
 
 The synthesis is the scatter. Across the forty-five family-by-mode cells, thirty-two land
 significantly flatter than the human articles, eight show no significant difference, and five
@@ -481,87 +478,97 @@ family-dependent, and the uninstructed gap does not predict the landing. This is
 diagnostic exposes: the gap it measures cannot be closed reliably from the prompt side, because
 the instruction that reaches parity on one family moves the next one a different amount and
 sometimes the wrong way.
-A verdict about machine ``flatness'' estimated on one family, one mode, or one seed generalizes in no direction, which is the sense in which the evaluation, and not only the models, fails the trust test.
 
 \section{Discussion}\label{sec:discussion}
 
 \paragraph{What this audit prescribes for evaluation practice.}
-\begin{enumerate}
-\item Normalize before scoring: segmenter-based features computed on raw output measure formatting as well as rhythm, and the unreported choice can flip verdicts (Section~\ref{sec:normalization}).
-\item Sample multiple seeds and average within each headline before testing: pooling seeds pseudo-replicates the human baseline and overstates significance (Section~\ref{sec:analysis}).
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{4pt}
+\item Normalize before scoring: any segmenter-based feature computed on raw model output measures formatting as well as rhythm, and the unreported choice can flip verdicts in both directions (Section~\ref{sec:normalization}).
+\item Sample multiple seeds and average within headline before testing: pooling seeds pseudo-replicates the human baseline and overstates significance (Section~\ref{sec:analysis}).
 \item Audit empty cells: silent provider moderation returns ordinary responses with empty output, and unlogged empties reshape scores invisibly (Section~\ref{sec:ninefam}).
 \item State parity as CI-bounded equivalence against pre-specified margins and report the smallest margin cleared; a failure to reject is not a match (Section~\ref{sec:analysis}).
 \end{enumerate}
 
 \paragraph{Trusting burstiness as a detection signal.}
-\looseness=-1
-A public metric or future controller that raises burstiness could be read as an anti-detection tool; we resist that framing. The measure is exercised in a controlled paired design, as useful for building better detectors as for producing more human-like text. For detection, the instructed dispersion signature persists in five of nine families, but Grok 4.5, Kimi K2.6, and Claude Opus 4.8 each write at or beyond human dispersion under at least one prompted mode, where a flatness threshold fires in the wrong direction. We report detector-relevant behavior rather than optimizing to defeat any one detector; the strong detector signal (surprisal) stays outside the construct.
+Because burstiness is the feature detectors lean on, a definition or a future controller that raises it could be read as an anti-detection tool. We resist that framing on scientific and ethical grounds. For generation, the plain instruction's landing is family-dependent, significantly short of the human dispersion level on five of nine families, on it on two, and past it on two. For detection, the instructed dispersion signature persists in five of nine families, but Grok 4.5, Kimi K2.6, and Claude Opus 4.8 each write at or beyond human dispersion under at least one prompted mode, where a flatness threshold fires in the wrong direction, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. We report detector-relevant behavior across the construct rather than optimizing to defeat any one detector, and the strong detector signal (surprisal) stays outside it.
 
 \paragraph{Dual use and disclosure.}
-We disclose AI-assisted research per venue policy and benchmark against detectors transparently. Future voice and fingerprint work proceeds only from a person's writing with their participation.
+We disclose AI-assisted research per the venue policy, and we benchmark against detectors transparently.
 
 \paragraph{What the diagnostic leaves open.}
-For the five modes tested, the landing cannot be aimed (Section~\ref{sec:promptceiling}), and parity is partial: no leg carries an equivalence bound on the whole metric vector. Rhythm is a sentence-boundary property; aiming may require intervention at that altitude.
+For the five modes tested, the landing cannot be aimed: the same wording lands families short of, on, and past the human level, and the uninstructed gap does not predict which. Rhythm is a sentence-boundary property; we hypothesize aiming requires intervention at that altitude.
 
 \section{Limitations}\label{sec:limitations}
 
 \paragraph{Limits of the metric.}
 Statistical separation is not construct validity: significant paired
-differences show the coefficient separates human from model text in matched news prose, and
-they leave open whether it captures everything meant by rhythm. We have not validated the
-coefficient against blinded human rhythm judgments; until then it is a proposed measure.
+differences show the coefficient separates authorship in matched news prose, and they leave open
+whether it captures everything meant by rhythm.
 The coefficient $B_n$ inherits the weaknesses of the coefficient of variation it reparametrizes
-(Section~\ref{sec:formalizing}): it is order-blind and shape-blind, and the memory coefficient
-recovers only lag-1 order. The metric is unreliable below its ten-sentence floor
-(Section~\ref{sec:formalizing}).
-Syntactic complexity is work in progress and remains outside the locked construct.
-Goodhart guard thresholds are heuristic: a floor, proving nothing about strategies outside
-their list.
+(Section~\ref{sec:formalizing}): it is order-blind and shape-blind,
+scoring the dispersion of the length sequence while ignoring where the long and short sentences fall, and memory recovers only
+lag-1 order. Surprisal is model-relative, which is why it stays outside the construct and is
+not scored. The metric is unreliable below its ten-sentence floor
+(Section~\ref{sec:formalizing}) and is genre-relative: target bands do not transfer unchanged
+across registers. Syntactic complexity, a second intended axis of structural
+variation, is work in progress and not part of the locked definition. Guard thresholds are heuristic: they set a floor and prove nothing about
+strategies outside their list.
 
 \paragraph{Limits of the experiment.}
-\looseness=-1
-The corpus is a single register (Wikinews, expository news, English), chosen because expository
-prose is conservative and low-rhythm; reported gaps are likely smaller than narrative text
-would show. Pairs match era, topic, register, and length, not propositional content
-(Section~\ref{sec:corpus}): a story dense in quotation and figures may pace its sentences
-differently from one improvised from a headline, so part of each gap may be content
-rather than authorship.
-Nine families occupy a narrow band of contemporary instruction-tuned assistants; the Grok
-pair shares one vendor; budget excluded an OpenAI leg. Results are not yet
-shown across genres or languages. The tell keeps changing: Grok 4.3
-to 4.5 flips the instruction-mode gap in one generation, so size and sign are
-vintage-relative. One fixed wording per mode risks
-measuring one model's reading of one prompt; cross-family replication blunts that risk.
-DeepSeek's three metric-free paraphrases land instruction at or past the human level on $B_n$
-(median deltas $-0.026$ to $-0.030$ against $+0.000$); the mode conclusion holds
-under rewording, with a wording-sensitivity band of about $0.03$.
+The corpus is a single register (Wikinews, expository news, English), chosen as a
+conservative, low-rhythm register, so reported gaps are likely smaller than on narrative
+or literary text. Nine families occupy a narrow band of contemporary instruction-tuned assistants, the
+Grok pair contributing two successive generations; for budget reasons we omitted an OpenAI
+leg. Results are not yet shown across genres, languages, or future vintages, and burstiness norms are themselves genre- and language-relative. The flatness tell is model- and vintage-relative: Grok 4.3 to
+Grok 4.5 flips the instruction-mode gap in a single generation, so the gaps we measure should not be read as constants of nature. One fixed wording per mode risks measuring one model's reading of one
+prompt. Cross-family replication removes part of that risk, since few-shot is the
+largest-effect mode by rank-biserial in seven of nine families (DeepSeek V4 Pro and Claude Opus 4.8 are the
+exceptions). DeepSeek V4 Pro's three metric-free paraphrases land instruction at or past the
+human articles on $B_n$ (median deltas $-0.026$ to $-0.030$ against the canonical wording's
+$+0.000$), so the mode conclusion holds under rewording, with a wording-sensitivity band of
+about $0.03$.
 
-Decoding is not matched across providers: four legs do not honor temperature, two ran
-provider defaults, one closed leg ran at $1.0$. Cross-family magnitude comparisons
-carry a decoding confound; within-family comparisons do not. Equivalence margins are
-analysis-time judgments; $0.03$ on a $[-1,1]$ coefficient is a claim of practical
+Decoding is not matched across providers (four legs do not honor a temperature setting,
+two ran at provider defaults, one closed leg ran at temperature $1.0$), so cross-family
+magnitude comparisons carry a decoding confound while within-family comparisons do not,
+since every mode of a leg ran under the same decoding.
+Each twenty-cell grid receives a Benjamini--Hochberg correction
+(Appendix~\ref{sec:familygrids}), and no correction spans families. Of the five past-human
+cells, four survive both corrections; Grok 4.5's instruction inversion is exploratory under
+Holm. Where we claim equivalence we bound it, but the margins are analysis-time
+choices: $0.03$ on a $[-1,1]$ coefficient is a judgment about practical
 insignificance.
 
-\looseness=-1
-The 2016--2021 corpus predates all nine training cutoffs; we measured overlap directly. An
-$n$-gram probe on three families (Appendix~\ref{sec:protocoldetail}) finds matched 8-gram means
-at or below $0.00207$ against a mismatched-article baseline of $0.0$; the worst single
-generation is consistent with a shared quotation, not memorization. Verbatim reproduction
-cannot explain the gaps on the probed families. Memorization would move dispersion toward the
-human level, so any unprobed gap is, if contaminated, an underestimate. The direction reverses
-for the parity landings, which fall in the instruction mode the probe did not cover:
-contamination could manufacture the equivalences we report. Kimi K2.6 is unprobed.
+The human articles may appear in the generators' training data: the 2016--2021 corpus predates all nine training cutoffs; we measured overlap directly.
+An $n$-gram probe over $600$ control-mode generations per model on three families finds
+mean matched 8-gram overlap with the paired article of $0.00055$ (Qwen3.6-27B, max $0.036$),
+$0.00207$ (DeepSeek V4 Pro, max $0.104$), and $0.00098$ (Grok 4.3, max $0.062$), against a
+mismatched-article baseline mean of $0.0$ everywhere; 13-gram means are at or below $0.00064$ for
+all three. The worst single generation shares roughly
+$10\%$ of its 8-grams with its paired article, consistent with a shared quotation rather
+than memorization. Verbatim reproduction therefore cannot explain the measured gaps on the
+probed families. Memorization would move dispersion toward the human level, so any unprobed
+effect, whether a deficit or an overshoot, is, if contaminated, an underestimate. The direction reverses for the parity landings:
+memorization would inflate instructed dispersion to the human level, so contamination could manufacture the equivalences we report. Both fall in the instruction
+mode the probe did not cover; DeepSeek V4 Pro's control-mode overlap ($0.00207$) bounds it only indirectly, and the
+probe did not cover Kimi K2.6 at all.
 
+\enlargethispage{6\baselineskip}
 \section{Conclusion}
-\looseness=-1
-Burstiness has been measured everywhere and, in detection practice, formalized in an
-unreviewed detector note; this paper gives it a reproducible, model-free measure
-with declared anti-gaming screens, and uses it to expose the aim problem: eight of nine
-families write significantly flatter than the human articles
-uninstructed, the same instruction scatters them short of, onto, and past the human level,
-and few-shot is the flattest mode in seven of nine.
-Whether the gap can be closed from inside the generation loop is the question the instrument
-now makes answerable.
+Burstiness has been measured everywhere and, in detection practice, formalized only in an
+unreviewed detector note. This paper gives it a reproducible, model-free definition
+hardened against gaming, and surprisal stays outside. Its first use is the aim problem: on
+uniformly normalized text, eight of nine families write significantly flatter than the
+human articles uninstructed. The same instruction leaves four families significantly short
+of the human dispersion level, lands two on it, moves one further away, and pushes two
+significantly past it. Few-shot exemplars are the flattest mode by rank-biserial in seven of nine.
+
+The contribution is the composition: a principled, model-free
+definition, guarded against gaming, scored on uniformly normalized text,
+and exercised in a matched paired design across nine families.
+The gap it exposes is one that prompting moves but cannot reliably
+close. Whether it can be closed from inside the generation loop is the
+question the instrument now makes answerable.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
@@ -724,7 +731,7 @@ DeepSeek V4 Pro ($0.03$) and Kimi K2.6 ($0.05$) (Section~\ref{sec:ninefam}); Kim
 leg shows no per-cell significant difference on any dimension, though only its dispersion cell
 carries an equivalence bound.
 Memory $M$ is where three few-shot legs (Qwen3.6-27B, Kimi K2.6, Claude Opus 4.8)
-overshoot the human articles even as their $B_n$ stays significantly flat. Seg.\ entropy, the
+overshoot the human articles even as their dispersion stays significantly flat. Seg.\ entropy, the
 axis most exposed to formatting artifacts, still separates on normalized text: instructed
 DeepSeek V4 Pro and four of Grok 4.5's five modes sit significantly above the human articles.
 
@@ -929,6 +936,18 @@ Self-refine & $-0.065\;(-0.50)^{**}$ & $-0.043\;(-0.59)^{**}$ & $-0.005\;(0.01)$
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\textwidth,height=4.6cm]{figures/fig_landings.pdf}
+\caption{Left: of the forty-five family-by-mode cells, thirty-two land
+significantly flatter than the human articles, eight show no significant
+difference, and five land significantly more dispersed. Right: the same
+instruction leaves four families significantly short of the human
+dispersion level, lands two on it, moves one further away, and pushes two
+significantly past (Section~\ref{sec:ninefam}).}
+\label{fig:landings}
+\end{figure}
 
 \section{Reference implementation}
 \label{sec:refimpl}
@@ -1209,7 +1228,7 @@ def burstiness_pp(text: str) -> dict:
 
 \section{Protocol and audit detail}\label{sec:protocoldetail}
 
-% Provenance: paper/main.tex lines 293--300
+% Provenance: paper/main.tex lines 294--299
 \subsection{Corpus parse mechanics}
 The human side of each pair is the plain article body, regenerable from the source Wikinews
 wikitext by a deterministic MediaWiki parse (\path{experiments/ablation/clean_wikinews.py})
@@ -1218,7 +1237,7 @@ drops reference tags with their contents, resolves wikilinks to their display te
 inline formatting. On a held-out check of $100$ articles this parse reproduces the shipped
 human bodies exactly.
 
-% Provenance: paper/main.tex lines 315--319 and 402--404; refusal counts from 405--412
+% Provenance: paper/main.tex lines 315--319 and 402--412
 \subsection{Per-leg completeness}
 Completeness is disclosed per leg. Of Qwen3.6-27B's $3{,}000$ cells ($200$ headlines $\times$
 $5$ modes $\times$ $3$ seeds), $2{,}996$ completed; we excluded the four that exceeded the
@@ -1232,7 +1251,7 @@ cells return an ordinary HTTP $200$ with empty output, concentrated on the same 
 politically sensitive headlines. The remaining five legs generated all $200$ headlines in
 every mode.
 
-% Provenance: paper/tae body 4.4, moved at integration 2026-08-17; source paper/main.tex lines 388--400
+% Provenance: paper/main.tex lines 382--400
 \subsection{Per-leg decoding and output caps}
 GLM-5.2 ignores a requested temperature and Kimi K2.6 rejects one; Grok 4.5 exposes neither
 temperature nor top-$p$; Gemini 3.1 Pro ran at temperature $1.0$ with provider-managed thinking;
@@ -1244,14 +1263,14 @@ leg at high effort with a $32{,}000$-token cap, which restores a comparable pros
 than granting a larger one and matches Gemini 3.1 Pro's thinking level. The leg completed all
 $3{,}000$ cells with no truncated or empty output.
 
-% Provenance: paper/tae body 4.3, moved at integration 2026-08-17
+% Provenance: paper/main.tex lines 372--374
 \subsection{Confidence intervals}
 CIs on median paired deltas are percentile bootstrap intervals: the $2.5$th and $97.5$th
 percentiles of the medians of $2{,}000$ resamples of the $200$ matched pairs. Per-seed $B_n$
 effect sizes are released alongside the evaluation artifacts and are consistent with the
 seed-averaged results.
 
-% Provenance: paper/main.tex lines 325--329
+% Provenance: paper/main.tex lines 325--328
 \subsection{Scaffolding rates}
 A generation-hygiene guard flagged markdown scaffolding and echoed headline blocks in every
 family we benchmark, from 23--38\% of control-mode generations on one leg (DeepSeek V4 Pro:

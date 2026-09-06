@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 .env
+paper/lp4fm/main.pdf
+paper/lp4fm/main.log
+paper/lp4fm/main.blg
+*.synctex.gz
