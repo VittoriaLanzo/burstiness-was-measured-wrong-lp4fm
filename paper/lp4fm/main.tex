@@ -65,7 +65,7 @@ families. We model human rhythm; we do not build detector evasion.
 
 Burstiness is the variation in sentence length that gives human prose its
 rhythm and is one of the signals most often cited to separate human writing
-from machine writing~\citep{arxiv2024detecting, arxiv2025detecting}: while
+from machine writing~\citep{arxiv2024detecting}: while
 human authors usually alternate long and short clauses, language models tend
 toward a flatter middle. The
 deployed operational definition traces to an unreviewed detector technical
@@ -115,7 +115,7 @@ GLM-5.2, Kimi K2.6, Grok 4.3), and closed frontier systems (Grok 4.5,
 Gemini 3.1 Pro, Claude Opus 4.8).
 
 \paragraph{The aim problem.}
-Prompting changes rhythm but cannot steer it reliably. Uninstructed, eight
+Prompting changes rhythm, and the landing is family-dependent. Uninstructed, eight
 of the nine families write significantly flatter than the human articles,
 with control deficits $0.027$ to $0.128$; Grok 4.5's control-mode difference is not
 significant ($-0.009$, $p=0.086$). The three largest gaps belong to frontier flagships, so scale does
@@ -130,7 +130,7 @@ human level.
 \paragraph{Contributions.}
 \begin{enumerate}
 \item A reproducible definition of burstiness that is model-free and
-scale-free, hardened as a control or training target: the Goh--Barab\'asi
+scale-free, hardened against gaming: the Goh--Barab\'asi
 coefficient under the Kim--Jo finite-$n$ correction, companions (Gini
 check, segmentation-diversity axis, memory coefficient; surprisal kept
 outside) and two anti-gaming safeguards (Section~\ref{sec:formalizing}).
@@ -148,12 +148,6 @@ seven of nine families (Section~\ref{sec:promptceiling}).
 
 \section{Related work}\label{sec:related}
 
-\subsection{Two camps, little contact}
-Burstiness research splits into two camps that rarely cite each other: measurement and
-detection, and steering frozen models toward style targets. Neither camp controls rhythm
-in-generation, and neither gives burstiness a reproducible definition. That gap between
-measurement and control is where this paper sits.
-
 \subsection{Burstiness in detection}
 The operational definition of burstiness in current practice originates in a detector technical
 note (Tian/GPTZero), which pairs perplexity with a single burstiness
@@ -161,24 +155,15 @@ scalar~\citep{arxiv2024detecting, arxiv2025training}. It is widely used and not 
 the formalization gap Section~\ref{sec:formalizing} closes. \citet{onan2025you} compare diffusion
 and autoregressive text stylometrically with burstiness among the features.
 DivEye~\citep{arxiv2025diveye} tracks how unpredictability fluctuates across a text, the nearest
-text-side analog to timing variation. Surveys and method papers~\citep{arxiv2025detecting} treat
-perplexity-burstiness as a standard pair and document its vulnerability to paraphrasing.
+text-side analog to timing variation. Surveys~\citep{arxiv2024detecting} treat
+perplexity-burstiness as a standard pair and document detector vulnerability to paraphrasing.
 
 \subsection{Stylistic variation and diversity}
 The stylistic-variation benchmark~\citep{arxiv2025benchmark} evaluates frontier models across
-prompt settings and benchmarks variation with no distributional target to control against.
-Effective semantic diversity~\citep{arxiv2025evaluating} gates diversity on quality, and we
-adopt that method as the composite's coherence gate so incoherent high-variance text is not
-rewarded when the metric serves as a target.
-
-\subsection{Steering machinery, aimed at other targets}
-Steering machinery exists for style axes other than rhythm: activation and contrastive personal style vectors, LoRA catalogs, and fingerprint-LoRA generation~\citep{konen2024style, liu2025personalized, turner2026weights, arxiv2025low, arxiv2026plug}, plus interpolation, obfuscation, personas, and reward-guided decoding~\citep{arxiv2024continuous, fisher2024styleremix, arxiv2026styles, arxiv2026card, arxiv2025llmbraces}; all steer something, none steer rhythm. Mirostat~\citep{basu2021mirostat} is the closest precedent, a token-level first moment, whereas burstiness is a second moment at the sentence-boundary decision. Detector-evasion humanizers such as SICO~\citep{lu2024large} force length variation by prompt-level substitution, post-hoc and black-box.
-
-\subsection{Prosody and the biological bridge}
-Speech synthesis met the same average-prosody problem and solved it with explicit prosodic
-conditioning during generation~\citep{raitio2020controllable, raitio2022emphasis}. Listeners
-stop identifying a voice clone with its source when expressive prosody is mismatched~\citep{bakkouche2025prosodic},
-and brain-side long-range prediction~\citep{caucheteux2023long} is motivation only.
+prompt settings and scores how varied the output is, with no human reference distribution to
+score against. Effective semantic diversity~\citep{arxiv2025evaluating} gates diversity on
+quality, and we adopt that method as the composite's coherence gate so incoherent high-variance
+text is not rewarded.
 
 \section{Formalizing burstiness}\label{sec:formalizing}
 
@@ -225,13 +210,13 @@ three families' few-shot legs overshoot the human articles on memory while under
 dispersion.
 \item \textbf{Predictability, kept outside.} Mean per-token surprisal and the mean absolute
 consecutive difference, under a fixed reference model, form the strong but model-relative detector
-signal. The definition deliberately places them \emph{outside} the controllable construct: they are the first-moment, Mirostat-style quantity, whereas burstiness is a second moment of a derived sequence. The benchmark scores the four model-free dimensions only and reports no surprisal values.
+signal. The definition places them \emph{outside} the construct: they are a first-moment quantity, whereas burstiness is a second moment of a derived sequence. The benchmark scores the four model-free dimensions only and reports no surprisal values.
 \end{itemize}
 We compute raw sentence-length variance $\mathrm{var}(L)$ only as a diagnostic; it is confounded with
 absolute length by construction, the central defect of the colloquial statistic.
 
 \subsection{Anti-gaming screens and reproducibility}
-A metric that becomes a control or training target invites gaming. Degenerate texts can reach a
+A metric that becomes a selection score invites gaming. Degenerate texts can reach a
 high-dispersion score (one giant sentence among fragments, mechanical alternation, punctuation spam).
 A Goodhart guard flags these; the full flag list ships in the reference implementation
 (Appendix~\ref{sec:refimpl}). We count $B_n$ only above a reliability floor of ten sentences.
@@ -239,9 +224,8 @@ Re-punctuating a fixed text can move $B_n$ across much of its bounded range, so 
 metric must never select generations alone; following the quality-and-diversity
 argument~\citep{arxiv2025evaluating}, the composite pairs it with a coherence gate, so incoherent
 high-variance text cannot win the metric. The benchmark of
-Section~\ref{sec:promptceiling} is descriptive and selects nothing by the metric, so the guard and
-the gate enter as design constraints on future control use; neither filters the scored
-generations here.
+Section~\ref{sec:promptceiling} is descriptive and selects nothing by the metric; neither the guard
+nor the gate filters the scored generations here.
 
 The metric, the guard, and the multiscale profile the guard's wash-out check reads are pure standard library in
 \path{experiments/burstiness_pp.py}, with a self-check; Appendix~\ref{sec:refimpl} reproduces the full implementation. They run without a model; of the
@@ -251,10 +235,9 @@ outside the construct.
 \section{The aim problem: how reliably instructions move the construct}
 \label{sec:promptceiling}
 
-Prompting is the baseline every practitioner already uses, so how much of the
-human-machine rhythm gap it closes, and how predictably, is the question this
-paper set out to answer. The same wording scatters the nine families, and this
-section measures that scatter.
+How much of the human-machine rhythm gap prompting closes, and how predictably,
+is the question this paper answers. The same wording scatters the nine families,
+and this section measures that scatter.
 
 \subsection{Corpus and generation}
 \label{sec:corpus}
@@ -339,7 +322,7 @@ two absolute CI bounds. CIs on the median paired delta are percentile bootstrap 
 $2.5$th and $97.5$th percentiles of the medians of $2{,}000$ resamples of the $200$ matched pairs.
 Per-seed $B_n$ effect sizes released alongside are consistent with the seed-averaged results.
 
-\subsection{Nine model families: one instruction, nine landings}
+\subsection{One unified instruction for 9 families}
 \label{sec:ninefam}
 The design of Section~\ref{sec:corpus} runs identically on every family: the same $200$ headlines,
 the same five wordings, three seeds, uniform normalization, the same paired scoring. The nine
@@ -349,7 +332,7 @@ ignores a requested temperature and Kimi K2.6 rejects one); and Grok 4.5, Gemini
 Claude Opus 4.8 (closed APIs; Grok 4.5 exposes neither temperature nor top-$p$, Gemini 3.1 Pro ran
 at temperature $1.0$ with provider-managed thinking, and Claude Opus 4.8 exposes no temperature).
 Thinking modes, effort levels, and output caps are recorded in each leg's released metadata.
-One deviation is ours rather than a provider's. Anthropic bills reasoning against the output cap, so the shared $16{,}000$-token cap that leaves
+Anthropic bills reasoning against the output cap, so the shared $16{,}000$-token cap that leaves
 other families room to write leaves Claude Opus 4.8 none at maximum effort: the self-refine rewrite
 spends the whole budget reasoning and emits no prose at all. We ran that leg at high effort with a $32{,}000$-token cap, which
 restores a prose budget comparable to the other families and matches the thinking level Gemini
@@ -428,7 +411,7 @@ significant ($-0.009$, $p=0.086$). The three largest gaps belong to the frontier
 $0.80$), which start within $0.009$ of one another, so frontier scale alone does not close
 the gap. Deficits of at most $0.128$ on a coefficient bounded in $[-1,1]$ are consistent
 signatures, well short of the gross flatness the detector literature
-describes~\citep{arxiv2024detecting, arxiv2025detecting}.
+describes~\citep{arxiv2024detecting}.
 
 On four families the instruction narrows the gap without closing it: Gemini 3.1 Pro lands
 at $0.071$, GLM-5.2 at $0.061$, Qwen3.6-27B at $0.028$, and Gemma 3 27B at $0.049$.
@@ -490,13 +473,13 @@ sometimes the wrong way.
 \end{enumerate}
 
 \paragraph{Trusting burstiness as a detection signal.}
-Because burstiness is the feature detectors lean on, a definition or a future controller that raises it could be read as an anti-detection tool. We resist that framing on scientific and ethical grounds. For generation, the plain instruction's landing is family-dependent, significantly short of the human dispersion level on five of nine families, on it on two, and past it on two. For detection, the instructed dispersion signature persists in five of nine families, but Grok 4.5, Kimi K2.6, and Claude Opus 4.8 each write at or beyond human dispersion under at least one prompted mode, where a flatness threshold fires in the wrong direction, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. We report detector-relevant behavior across the construct rather than optimizing to defeat any one detector, and the strong detector signal (surprisal) stays outside it.
+Because burstiness is the feature detectors lean on, a definition that raises it could be read as an anti-detection tool. We resist that framing on scientific and ethical grounds. For generation, the plain instruction's landing is family-dependent, significantly short of the human dispersion level on five of nine families, on it on two, and past it on two. For detection, the instructed dispersion signature persists in five of nine families, but Grok 4.5, Kimi K2.6, and Claude Opus 4.8 each write at or beyond human dispersion under at least one prompted mode, where a flatness threshold fires in the wrong direction, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. We report detector-relevant behavior across the construct rather than optimizing to defeat any one detector, and the strong detector signal (surprisal) stays outside it.
 
 \paragraph{Dual use and disclosure.}
 We disclose AI-assisted research per the venue policy, and we benchmark against detectors transparently.
 
 \paragraph{What the diagnostic leaves open.}
-For the five modes tested, the landing cannot be aimed: the same wording lands families short of, on, and past the human level, and the uninstructed gap does not predict which. Rhythm is a sentence-boundary property; we hypothesize aiming requires intervention at that altitude.
+For the five modes tested, the landing cannot be aimed: the same wording lands families short of, on, and past the human level, and the uninstructed gap does not predict which.
 
 \section{Limitations}\label{sec:limitations}
 
@@ -553,7 +536,6 @@ memorization would inflate instructed dispersion to the human level, so contamin
 mode the probe did not cover; DeepSeek V4 Pro's control-mode overlap ($0.00207$) bounds it only indirectly, and the
 probe did not cover Kimi K2.6 at all.
 
-\enlargethispage{6\baselineskip}
 \section{Conclusion}
 Burstiness has been measured everywhere and, in detection practice, formalized only in an
 unreviewed detector note. This paper gives it a reproducible, model-free definition
@@ -567,8 +549,7 @@ The contribution is the composition: a principled, model-free
 definition, guarded against gaming, scored on uniformly normalized text,
 and exercised in a matched paired design across nine families.
 The gap it exposes is one that prompting moves but cannot reliably
-close. Whether it can be closed from inside the generation loop is the
-question the instrument now makes answerable.
+close.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
