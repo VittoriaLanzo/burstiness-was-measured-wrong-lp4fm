@@ -26,9 +26,10 @@ BLACK = (0.0, 0.0, 0.0)
 
 # Same model order as Table 1: control-mode gap, the Grok pair last.
 MODEL_IDS = ["gemini-3.1-pro", "glm-5.2", "opus-4.8", "qwen3.6-27b", "kimi-k2.6",
-             "gemma-3-27b", "deepseek-v4-pro", "grok-4.3", "grok-4.5"]
+             "gemma-3-27b", "deepseek-v4-pro", "deepseek-v4-pro-1018", "grok-4.3", "grok-4.5"]
 FAMILIES = ["Gemini 3.1 Pro", "GLM-5.2", "Opus 4.8", "Qwen3.6-27B", "Kimi K2.6",
-            "Gemma 3 27B", "DeepSeek V4", "Grok 4.3", "Grok 4.5"]
+            "Gemma 3 27B", "DeepSeek V4", "DeepSeek V4*", "Grok 4.3", "Grok 4.5"]
+N = len(MODEL_IDS)
 _SSOT = {m: json.loads((BENCH / m / "seed_avg_paired.json").read_text(encoding="utf-8"))["dims"]["B_n"]
          for m in MODEL_IDS}
 
@@ -39,7 +40,7 @@ def _col(mode):
 
 CONTROL, INSTRUCTION, FEWSHOT, PLAN, SELF_REFINE = (
     _col("control"), _col("instruction"), _col("fewshot"), _col("plan"), _col("self_refine"))
-assert len(CONTROL) + len(INSTRUCTION) + len(FEWSHOT) + len(PLAN) + len(SELF_REFINE) == 45
+assert len(CONTROL) + len(INSTRUCTION) + len(FEWSHOT) + len(PLAN) + len(SELF_REFINE) == 5 * N
 
 # Tikz jitter: control 0.72, instruction 0.86, few-shot 1.00, plan 1.14, self-refine 1.28
 OFFSETS = {
@@ -74,11 +75,11 @@ def make_aimscatter():
     # Matches \includegraphics[width=0.95\textwidth,height=5.6cm] on ~5.5in NeurIPS text.
     fig_w, fig_h = 5.5 * 0.95, 5.6 / 2.54
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-    x = np.arange(1, 10, dtype=float)
+    x = np.arange(1, N + 1, dtype=float)
 
     ax.axhline(0.0, color=(0.55, 0.55, 0.55), linewidth=0.6, zorder=1)
     ax.text(
-        9.45,
+        N + 0.45,
         0.006,
         "human level",
         ha="right",
@@ -105,7 +106,7 @@ def make_aimscatter():
             kwargs.update(facecolors="none", edgecolors=[color], linewidths=lw)
         ax.scatter(x + dx, ys, **kwargs)
 
-    ax.set_xlim(0.45, 9.55)
+    ax.set_xlim(0.45, N + 0.55)
     ax.set_ylim(-0.095, 0.19)
     ax.set_xticks(x)
     ax.set_xticklabels(FAMILIES, rotation=32, ha="right")

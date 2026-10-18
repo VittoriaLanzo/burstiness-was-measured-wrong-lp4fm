@@ -1,27 +1,30 @@
 {
-  "design": "Three independent paraphrases of the instruction VOICE/TAIL (experiments/ablation/prompt_paraphrase.py), deepseek-v4, 200 briefs, 1 seed each, normalized, scored with the canonical paired machinery",
+  "design": "Three independent paraphrases of the instruction VOICE/TAIL (experiments/ablation/prompt_paraphrase.py), run on 18 October 2026 against the DeepSeek V4 Pro API snapshot of that date (the deepseek-v4-pro-1018 leg), 200 briefs, 1 sample each, normalized, scored with the canonical paired machinery and the corrected segmenter. The July 2026 evals (181/187/176 briefs, released segmenter) are in july-2026/.",
   "B_n_instruction_delta_by_wording": {
-    "canonical_3seed": {
-      "delta": 0.0,
-      "rb": 0.05,
-      "p": 0.572
+    "canonical_3seed_1018": {
+      "delta": -0.037,
+      "rb": -0.273,
+      "p": 0.0008
     },
     "para_v1_1seed": {
-      "delta": -0.03,
-      "rb": -0.12,
-      "p": 0.18
+      "delta": -0.066,
+      "rb": -0.433,
+      "p": 0.0,
+      "n_pairs": 200
     },
     "para_v2_1seed": {
-      "delta": -0.03,
-      "rb": -0.24,
-      "p": 0.0042
+      "delta": -0.067,
+      "rb": -0.451,
+      "p": 0.0,
+      "n_pairs": 200
     },
     "para_v3_1seed": {
-      "delta": -0.026,
-      "rb": -0.11,
-      "p": 0.2
+      "delta": -0.047,
+      "rb": -0.353,
+      "p": 0.0,
+      "n_pairs": 200
     }
   },
-  "reading": "Every paraphrase lands DeepSeek instruction at or past the human level on B_n (medians -0.026 to -0.030, one significant), against the canonical wording's 0.000; the landing point moves by about 0.03 with wording.",
-  "caveats": "paraphrase legs are 1-sample (canonical is 3-sample seed-averaged); one model"
+  "reading": "On the 18 October snapshot every wording lands DeepSeek instruction past the human level on B_n: canonical -0.037 (3 samples), paraphrases -0.066, -0.067 and -0.047 (1 sample each), all significant; wording moves the landing by 0.010 to 0.030 and never changes its side.",
+  "caveats": "paraphrase legs are 1-sample (canonical is 3-sample seed-averaged); one model; a later snapshot than the July leg, so the July leg's instruction landing (0.003, equivalent at 0.05) was not probed."
 }

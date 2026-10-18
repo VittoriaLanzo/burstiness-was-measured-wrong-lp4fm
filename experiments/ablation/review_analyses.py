@@ -15,8 +15,13 @@ generations, so nothing here is a parallel implementation of the protocol.
                       without the human pairs the guard flags (side by side with the main scoring)
   floor10             the B_n benchmark re-scored with a ten-sentence floor (default floor: five)
   lengths             achieved word-count ratio and sentence counts per leg/mode
+  replication_contrasts  per mode, paired delta between a later-snapshot re-run of a leg and the
+                      original leg on the same headlines (re-run minus original, in B_n)
+  paraphrase_contrasts   paired delta between each paraphrase file's instruction cell and the
+                      canonical instruction cell of the leg it ran against (paraphrase minus canonical)
 
     python -m experiments.ablation.review_analyses HUMAN.jsonl NORM_DIR [--out PATH]
+        [--paraphrase NORMALIZED_VARIANT.jsonl ...]
 
 NORM_DIR holds one normalized generation file per leg, named <model_id>.jsonl
 (normalize_generation.py output). Writes experiments/results/review_analyses.json.
@@ -42,6 +47,8 @@ MODES = ["control", "instruction", "fewshot", "plan", "self_refine"]
 MARGINS = [0.03, 0.05, 0.08]
 CONTRASTS = [("instruction", "control"), ("fewshot", "control"), ("plan", "control"),
              ("self_refine", "control"), ("fewshot", "instruction"), ("self_refine", "instruction")]
+REPLICATES = {"deepseek-v4-pro-1018": "deepseek-v4-pro"}   # re-run leg -> original leg
+PARAPHRASE_CANONICAL = "deepseek-v4-pro-1018"               # the leg the paraphrase files ran against
 
 
 def _boot_ci(d, rng):
@@ -97,6 +104,8 @@ def main() -> int:
     ap.add_argument("human", type=Path)
     ap.add_argument("norm_dir", type=Path)
     ap.add_argument("--out", type=Path, default=ROOT / "experiments" / "results" / "review_analyses.json")
+    ap.add_argument("--paraphrase", type=Path, nargs="*", default=[],
+                    help="normalized paraphrase files (one instruction_vK mode each)")
     a = ap.parse_args()
     rng = random.Random(0)
 
@@ -140,10 +149,12 @@ def main() -> int:
     out["mode_contrasts_B_n"], out["floor10_B_n"], out["lengths"] = {}, {}, {}
     out["guard_filtered_B_n"] = {}
     hb10 = {k: _bn_floor10(t) for k, t in htext.items()}
+    bn_by_leg = {}
 
     for f in sorted(a.norm_dir.glob("*.jsonl")):
         mid, rows = f.stem, _load(f)
         bn = _seed_avg(rows, lambda t: (metrics(t) or {}).get("B_n"))
+        bn_by_leg[mid] = bn
         out["mode_contrasts_B_n"][mid] = {
             f"{x}-{y}": _paired([bn[x][k] - bn[y][k] for k in sorted(set(bn[x]) & set(bn[y]))], rng)
             for x, y in CONTRASTS}   # positive: mode x more dispersed than mode y
@@ -176,6 +187,22 @@ def main() -> int:
                                    "frac_below_10_sentences": round(sum(n < 10 for n in ns[m]) / len(ns[m]), 3)}
                                for m in MODES}
         print(f"done {mid}", flush=True)
+
+    # positive: the replicate is more dispersed than the original on that mode
+    out["replication_contrasts_B_n"] = {
+        rep: {"against": orig, **{m: _paired([bn_by_leg[rep][m][k] - bn_by_leg[orig][m][k]
+                                              for k in sorted(set(bn_by_leg[rep][m]) & set(bn_by_leg[orig][m]))], rng)
+                                  for m in MODES}}
+        for rep, orig in REPLICATES.items() if rep in bn_by_leg and orig in bn_by_leg}
+
+    # positive: the paraphrase is more dispersed than the canonical wording on the same headlines
+    out["paraphrase_contrasts_B_n"] = {"against": PARAPHRASE_CANONICAL}
+    for f in a.paraphrase:
+        pb = _seed_avg(_load(f), lambda t: (metrics(t) or {}).get("B_n"))
+        cb = bn_by_leg.get(PARAPHRASE_CANONICAL, {}).get("instruction", {})
+        for variant, d in pb.items():
+            ks = sorted(set(d) & set(cb))
+            out["paraphrase_contrasts_B_n"][variant] = _paired([d[k] - cb[k] for k in ks], rng)
 
     out["lengths"]["human"] = {"sentences_median": st.median(len(sentence_lengths(t)) for t in htext.values()),
                                "min_sentences": min(len(sentence_lengths(t)) for t in htext.values())}

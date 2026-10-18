@@ -68,14 +68,17 @@ scripts run from this directory as the working root.
   equivalence_test.py.
 - experiments/results/benchmark/qwen3.6-27b/seed_avg_paired.raw-archive.json: the
   audited leg scored under the raw protocol (Section 4.2).
-- experiments/results/paraphrase_robustness/: the DeepSeek paraphrase probe evals.
+- experiments/results/paraphrase_robustness/: the DeepSeek paraphrase probe evals
+  (18 October 2026 run, against the starred leg's snapshot; the July 2026 evals the
+  reviewed version reported are kept in july-2026/).
 - experiments/results/review_analyses.json: the supplementary analyses output.
 - experiments/results/contamination_probe.json: the n-gram probe output.
 - hf-datasets.zip: mirror of the HuggingFace datasets the pipeline consumes,
   masked ids restored by path. Contains the frozen human baseline
   (prompts_200_human.jsonl, 200 paired Wikinews articles), the ablation-corpus
-  pairs, and the raw generations of all nine benchmark legs (released
-  post-scrub revisions). See the README inside the zip.
+  pairs, the raw generations of all nine benchmark legs, the 18 October 2026
+  DeepSeek replication and its paraphrase run (released post-scrub revisions).
+  See the README inside the zip.
 - research-db.zip: the SQLite research corpus behind the literature curation
   (papers with verified arXiv ids, queries, findings, learnings, session
   provenance), with its seed script and schemas. Cell-scrubbed and VACUUMed;

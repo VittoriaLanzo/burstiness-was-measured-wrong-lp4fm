@@ -106,10 +106,7 @@ signal, stays deliberately outside the construct. Because a metric that
 becomes a target invites gaming, we add a Goodhart guard, a screen that flags
 degenerate constructions that inflate any dispersion score, for any use that
 selects text by the score; a quality gate in the sense of
-\citet{arxiv2025evaluating} is the second condition such a use would need. The
-benchmark scores text as written, and reports the guard's flag rates and a
-guard-filtered re-scoring beside the main results
-(Appendix~\ref{sec:protocoldetail}).
+\citet{arxiv2025evaluating} is the second condition such a use would need.
 
 \paragraph{A benchmark of five prompting techniques.}
 We evaluate control (a bare brief), instruction, few-shot human
@@ -157,10 +154,8 @@ pseudo-replication, within-model multiplicity correction, equivalence only as a
 CI inside pre-specified margins, a contamination probe,
 and a moderation-refusal audit (Sections~\ref{sec:corpus}--\ref{sec:analysis}).
 \item The aim problem across nine models, five modes, three samples per cell:
-the identical instruction leaves \val{inst.flat.w} models significantly flatter
-than the human articles, \val{inst.ns.w} not significantly different and
-\val{inst.past.w} significantly more dispersed, every mode-to-mode claim the text
-builds on carries a direct paired contrast with rankings marked descriptive, and
+every mode-to-mode claim the text builds on carries a direct paired contrast
+with rankings marked descriptive, and
 few-shot exemplars produce text significantly flatter than the instruction
 alone in \val{con.fslt.phrase} (Section~\ref{sec:promptceiling}).
 \end{enumerate}
@@ -339,8 +334,7 @@ why we describe that leg's control gap as significant only on the dispersion dim
 normalized text is $\val{qwen.Bn.control.d}$ against a raw estimate of
 $\val{qwenraw.Bn.control.d}$, with per-seed rank-biserial rising from
 $\val{qwenraw.cons.control.min}$--$\val{qwenraw.cons.control.max}$ to
-$\val{qwen.cons.control.min}$--$\val{qwen.cons.control.max}$. Raw scorings are archived with the
-released artifacts.
+$\val{qwen.cons.control.min}$--$\val{qwen.cons.control.max}$.
 
 \subsection{Analysis}
 \label{sec:analysis}
@@ -355,7 +349,7 @@ own $B_n$, so a negative value means the first mode is flatter).
 
 Every model ran the identical twenty-cell grid (five modes by four dimensions), corrected within
 model with Benjamini--Hochberg at $q=0.05$, Holm reported alongside; the correction script and each
-leg's census ship with the released artifacts. Across the nine grids, $\val{sig.raw}$ of
+leg's census ship with the released artifacts. Across the nine models' grids, $\val{sig.raw}$ of
 the $180$ cells are significant at the per-cell $0.05$ level; $\val{sig.bh}$ survive
 Benjamini--Hochberg and $\val{sig.holm}$ survive Holm. The one cell that falls under
 Benjamini--Hochberg (\val{sig.lostbh.names}) is not on $B_n$, and the prose does not build on it. No correction is applied across models; Table~\ref{tab:ninefam} carries
@@ -382,12 +376,16 @@ ignores a requested temperature and Kimi K2.6 rejects one); and Grok 4.5, Gemini
 Claude Opus 4.8 (closed APIs; Grok 4.5 exposes neither temperature nor top-$p$, Gemini 3.1 Pro ran
 at temperature $1.0$ with provider-managed thinking, and Claude Opus 4.8 exposes no temperature).
 Thinking modes, effort levels and output caps are recorded in each leg's released metadata and
-listed in Appendix~\ref{sec:protocoldetail}. Two API legs ran with a $32{,}000$-token cap instead of
+listed in Appendix~\ref{sec:protocoldetail}. Two of the nine models' API legs ran with a $32{,}000$-token cap instead of
 $16{,}000$: DeepSeek V4 Pro, after reasoning exhausted the smaller cap early in the run, and Claude Opus 4.8,
 because Anthropic bills reasoning against the cap, so at maximum effort the self-refine rewrite
 spent the whole budget reasoning and emitted no prose. That leg ran at effort high (Gemini 3.1
 Pro ran at thinking level high) and completed all $3{,}000$ cells with no truncated or empty
-output.
+output. A tenth leg, DeepSeek V4 Pro$^{\ast}$, re-ran the DeepSeek V4 Pro grid on 18 October
+2026 with the same prompts and briefs against the snapshot the API alias then served; it is
+reported beside the nine models in every cross-model table and in Figure~\ref{fig:aimscatter},
+has its own grid (Table~\ref{tab:grid-deepseek1018}), and stays outside the nine-model counts
+(Appendix~\ref{sec:protocoldetail}).
 Decoding is not matched across providers, so the benchmark reads as nine separate paired
 comparisons against the same human baseline, each model compared against the human articles
 alone. Where a provider returns reasoning content separately
@@ -406,7 +404,7 @@ and seed-averaging excludes them, so every paired statistic is computed over the
 model actually wrote (\val{glm.npairs.range} per mode for GLM-5.2, \val{kimi.npairs.range} for
 Kimi K2.6; Appendix~\ref{sec:familygrids}); a benchmark that does not audit empty outputs would silently absorb the second mechanism into its
 scores.
-The remaining five legs generated all $200$ headlines in every mode.
+The remaining five legs, and the starred leg, generated all $200$ headlines in every mode.
 
 \begin{table}[tb]
 \centering
@@ -418,7 +416,10 @@ mode, seed-averaged Wilcoxon paired tests over the matched headlines each mode c
 below the human articles (flatter), negative above them (more dispersed). Matched rank-biserial in
 parentheses; $^{*}p<0.05$, $^{**}p<0.01$ per cell; each model's corrected twenty-cell grid is in
 Appendix~\ref{sec:familygrids}, with no correction across models (Section~\ref{sec:analysis}). The
-two rows below the rule are successive Grok generations.}
+two rows below the rule are successive Grok generations. The row DeepSeek V4 Pro$^{\ast}$ is the
+DeepSeek leg re-run on 18 October 2026 against the snapshot the API alias then served, with the
+same prompts and briefs (Appendix~\ref{sec:protocoldetail}); it is reported beside the nine models
+and outside their counts.}
 \label{tab:ninefam}
 \resizebox{\textwidth}{!}{%
 \input{generated/tab_ninefam}}%
@@ -428,9 +429,9 @@ two rows below the rule are successive Grok generations.}
 \centering
 \includegraphics[width=0.95\textwidth,height=5.6cm]{figures/fig_aimscatter.pdf}
 \caption{Median $\Delta B_n =$ human $-$ model for every model and prompting mode, the
-forty-five cells of Table~\ref{tab:ninefam}. Reading key: the gray line is the human dispersion
+forty-five cells of Table~\ref{tab:ninefam} and the five of its starred row. Reading key: the gray line is the human dispersion
 level; markers above it are flatter than the human articles, markers below it more dispersed.
-Models are ordered by their control-mode gap. Few-shot sits highest in \val{fewshot.medtop.w} of
+Columns follow the order of Table~\ref{tab:ninefam}. Few-shot sits highest in \val{fewshot.medtop.w} of
 nine models by median and is the largest-effect mode by rank-biserial in \val{fewshot.rbtop.w}, and
 instruction lands on both sides of the line, including across the three leftmost models whose
 control markers nearly coincide. Per-cell significance is in Table~\ref{tab:ninefam}.}
@@ -438,7 +439,7 @@ control markers nearly coincide. Per-cell significance is in Table~\ref{tab:nine
 \end{figure}
 
 Table~\ref{tab:ninefam} reports the $B_n$ cell for every mode on every model,
-Figure~\ref{fig:aimscatter} plots all forty-five cells, and
+Figure~\ref{fig:aimscatter} plots all forty-five cells and the starred leg's five, and
 Appendix~\ref{sec:familygrids} carries each model's full four-dimension grid with its
 correction census.
 
@@ -468,16 +469,17 @@ significantly and still be equivalent at a margin. DeepSeek V4 Pro closes a sign
 rank-biserial $\val{deepseek.Bn.control.rb}$, $\val{deepseek.Bn.control.p}$) to
 $\val{deepseek.Bn.instruction.d}$ (contrast $\val{con.deepseek.instruction-control.d}$,
 $\val{con.deepseek.instruction-control.p}$) with CI $\val{deepseek.Bn.instruction.ci}$
-($m^{*}=\val{deepseek.Bn.instruction.mstar}$); Kimi K2.6 closes $\val{kimi.Bn.control.d}$
+($m^{*}=\val{deepseek.Bn.instruction.mstar}$), a landing the same alias did not reproduce at its
+18 October snapshot, where the same wording lands significantly past the human articles
+($\val{deepseek1018.Bn.instruction.d}$, $\val{deepseek1018.Bn.instruction.p}$,
+\val{deepseek1018.Bn.instruction.eqphrase}; Appendix~\ref{sec:protocoldetail}); Kimi K2.6 closes $\val{kimi.Bn.control.d}$
 ($\val{kimi.Bn.control.rb}$) to $\val{kimi.Bn.instruction.d}$ (contrast
 $\val{con.kimi.instruction-control.d}$, $\val{con.kimi.instruction-control.p}$) with CI
 $\val{kimi.Bn.instruction.ci}$ ($m^{*}=\val{kimi.Bn.instruction.mstar}$). The DeepSeek landing is
 on dispersion only: its instructed leg overshoots the human articles on segmentation entropy
 ($\val{deepseek.seg.instruction.d}$, rank-biserial $\val{deepseek.seg.instruction.rb}$,
 $\val{deepseek.seg.instruction.p}$) and on memory ($\val{deepseek.M.instruction.d}$,
-$\val{deepseek.M.instruction.rb}$, $\val{deepseek.M.instruction.p}$) while matching dispersion. Kimi's instructed leg shows no
-per-cell significant difference on any dimension, though only its dispersion cell carries an
-equivalence bound.
+$\val{deepseek.M.instruction.rb}$, $\val{deepseek.M.instruction.p}$) while matching dispersion.
 
 \val{census.past.W} of the forty-five cells land significantly past the human articles: Claude
 Opus 4.8 crosses under instruction ($\val{opus.Bn.instruction.d}$, rank-biserial
@@ -491,8 +493,7 @@ dispersion the other way ($\val{con.grok45.instruction-control.d}$,
 $\val{con.grok45.instruction-control.p}$) and leaves it not significantly different from the
 human articles ($\val{grok45.Bn.instruction.d}$, $\val{grok45.Bn.instruction.p}$), the one
 instruction landing that the released segmenter and the guard-filtered re-scoring each place on
-the other side of the line (Appendix~\ref{sec:protocoldetail}). The flatness tell is not monotone
-even within a single vendor.
+the other side of the line (Appendix~\ref{sec:protocoldetail}).
 
 \val{fewshot.flat.W} of nine models undershoot significantly under few-shot, and few-shot output
 is significantly flatter than instruction output in \val{con.fslt.phrase} (paired contrasts,
@@ -528,7 +529,7 @@ reaches equivalence on one model moves the next a different amount and sometimes
 \end{enumerate}
 
 \paragraph{Sentence-length dispersion as a detection signal.}
-Sentence-length dispersion is one reading of the feature detectors use, and the benchmark says where its flatness signature holds and where it inverts. For generation, the plain instruction's landing is model-specific: significantly flatter than the human articles on \val{inst.flat.w} of nine models, not significantly different on \val{inst.ns.w}, significantly more dispersed on \val{inst.past.w}. For detection, the instructed flatness signature persists in \val{inst.flat.w} of nine models, but \val{anypast.names} each write significantly more dispersed text than the human articles under at least one prompted mode, where a flatness threshold fires in the wrong direction, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. The strong detector signal, surprisal, stays outside the construct.
+Sentence-length dispersion is one reading of the feature detectors use, and the benchmark says where its flatness signature holds and where it inverts. For detection, the instructed flatness signature persists in \val{inst.flat.w} of nine models, but \val{anypast.names} each write significantly more dispersed text than the human articles under at least one prompted mode, where a flatness threshold fires in the wrong direction, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. The strong detector signal, surprisal, stays outside the construct.
 
 \section{Limitations}\label{sec:limitations}
 
@@ -550,24 +551,27 @@ The corpus is a single register (Wikinews, expository news, English), chosen as 
 conservative, low-dispersion register, so reported gaps are likely smaller than on narrative
 or literary text. The nine models occupy a narrow band of contemporary instruction-tuned
 assistants, with the Grok pair contributing two successive generations; for budget reasons we
-omitted an OpenAI leg. The flatness tell is model- and vintage-relative: Grok 4.3 to Grok 4.5 changes the
-instruction-mode landing in a single generation, so the gaps we measure should not be read as
-constants of nature. One fixed wording per mode risks measuring one model's reading of one
+omitted an OpenAI leg. The flatness tell is model- and snapshot-relative: Grok 4.3 to Grok 4.5 changes the
+instruction-mode landing in a single generation, and the DeepSeek V4 Pro alias re-queried three
+months later writes significantly more dispersed text than it did in July in all five modes
+(Appendix~\ref{sec:protocoldetail}), so the gaps we measure should not be read as constants of
+nature. One fixed wording per mode risks measuring one model's reading of one
 prompt, and neither an explicit instruction to vary sentence length nor a per-model calibration
 was tested, so the benchmark covers the prompts people already use, not every prompt. Replication across nine
 models removes part of the wording risk, since few-shot output is significantly flatter than
-instruction output in \val{con.fslt.phrase}. The paraphrase probe bounds the other part: under
-the canonical wording DeepSeek V4 Pro is \val{deepseek.Bn.instruction.eqphrase}; under three
-paraphrases of the same persona frame (one sample per brief, \val{para.n.min}--\val{para.n.max}
-completed briefs each, so wider intervals; scored with the released segmenter, as the paraphrase
-generations are not part of the release, and the correction moved this leg's canonical
-instruction cell from $\val{pre.deepseek.instruction.d}$ to $\val{deepseek.Bn.instruction.d}$) it lands $\val{para.ad.lo}$ to $\val{para.ad.hi}$ past
-the human level, significantly in \val{para.past.w} of the three, and the three intervals
-\val{para.eqphrase} ($m^{*}$ $\val{para.mstar.lo}$--$\val{para.mstar.hi}$). The $0.05$
-equivalence is specific to the canonical wording; the wording-sensitivity band is the size of
-the tightest margin.
+instruction output in \val{con.fslt.phrase}. A paraphrase probe samples the other part on one
+model, the 18 October DeepSeek snapshot, where the canonical wording lands
+$\val{deepseek1018.Bn.instruction.ad}$ past the human level
+($\val{deepseek1018.Bn.instruction.p}$): three paraphrases of the same persona frame (one sample
+per brief, $\val{para.n.min}$ briefs each) land that snapshot $\val{para.ad.lo}$ to
+$\val{para.ad.hi}$ past, \val{para.past.w} of three significantly, so no wording we tried returns it
+to the human level and none, the canonical one included, is equivalent at $0.03$ or $0.05$.
+Paired on the same headlines, the paraphrases sit $\val{para.con.d.min}$ to $\val{para.con.d.max}$
+beyond the canonical wording (\val{para.con.sig.w} of three significant), a wording effect
+smaller than the tightest margin. The July snapshot's $0.05$ equivalence could not be re-probed:
+by October the alias served a later snapshot (Appendix~\ref{sec:protocoldetail}).
 
-Decoding is not matched across providers (four legs do not honor a temperature setting,
+Decoding is not matched across providers (of the nine models' legs, four do not honor a temperature setting,
 two ran at provider defaults, one closed leg ran at temperature $1.0$), so cross-model
 magnitude comparisons carry a decoding confound while within-model comparisons do not,
 since every mode of a leg ran under the same decoding.
@@ -713,9 +717,9 @@ a user asking for human-sounding prose would. What the wording withholds is the 
 quantity and any target on it, not the intent.
 
 \paragraph{Instruction paraphrases (wording-robustness probe).} The probe in
-Section~\ref{sec:limitations} re-runs the instruction mode on DeepSeek V4 Pro under three
-independent rewrites of the voice and tail above, one sample over all $200$ briefs, each keeping
-the persona frame and naming no statistic. The harness is
+Section~\ref{sec:limitations} re-runs the instruction mode on the 18 October DeepSeek V4 Pro
+snapshot (the starred leg) under three independent rewrites of the voice and tail above, one
+sample over all $200$ briefs, each keeping the persona frame and naming no statistic. The harness is
 \path{experiments/ablation/prompt_paraphrase.py}. The three pairs follow, the voice prepended and
 the tail appended around the same brief.
 
@@ -751,8 +755,10 @@ Sustain that human texture to the very end of the piece.
 Every model ran the identical full design: the same $200$ matched headlines, the same five
 mode wordings (Appendix~\ref{sec:prompts}), three samples per cell, uniform normalization, and
 the same paired scoring on all four dimensions. Qwen3.6-27B's grid is
-Table~\ref{tab:promptceiling}, and the eight grids that follow complete the set, generated from
-each model's released evaluation with no hand-transcribed values. Within each model we apply
+Table~\ref{tab:promptceiling}, the grids that follow complete the set, and the starred leg of
+Appendix~\ref{sec:protocoldetail} has its own grid beside its July leg
+(Table~\ref{tab:grid-deepseek1018}); all are generated from each leg's released evaluation with no
+hand-transcribed values. Within each model we apply
 Benjamini--Hochberg at $q=0.05$ across its twenty cells and report the census in the caption,
 with the stricter Holm count alongside, and no correction is applied across models.
 Instruction-mode equivalence for every model is in Table~\ref{tab:equivalence}
@@ -1135,6 +1141,35 @@ Gemini 3.1 Pro ran at thinking level high. The Opus leg completed all $3{,}000$ 
 truncated or empty output. Each cell was sampled three times: at seeds $0$, $1$, $2$ on the open-weight
 legs, as independent calls on the API legs.
 
+\subsection{DeepSeek V4 Pro at a later snapshot}
+The starred leg re-ran the DeepSeek V4 Pro grid on 18 October 2026 through the API alias the July
+leg used (7 July). The alias was documented at the time as DeepSeek-V4-Pro-0813, a version dated
+13 August, after the July run; the July rows record only the bare alias, so the version they were
+served is not named. Settings: the same $200$ briefs and five prompts (every first-stage request
+matches \path{bench/prompts.py} on the frozen briefs), three samples per cell, thinking at
+reasoning effort maximum as in July, a $32{,}000$-token cap throughout (the July leg kept its early
+cells generated at $16{,}000$, Appendix~\ref{sec:protocoldetail}), no temperature, top-$p$ or seed
+sent. All $3{,}000$ cells completed with a stop finish reason, some after retries of transport or
+empty results, with every attempt journal released. One self-refine rewrite (scenario 93, sample
+1) answered off topic in one 51-word sentence; it is kept unaltered in the release and, falling
+below the scorer's five-sentence floor, is dropped from that headline's self-refine seed mean (the
+other two samples carry the headline). The paraphrase probe of Section~\ref{sec:limitations} ran
+on the same day through the same alias at the same settings, two of its $600$ cells after one
+retry; the reviewed version reported a July probe of the same design, re-run because its raw
+generations could not be recovered for re-scoring with the corrected segmenter. Paired on the same
+headlines, the October leg is more dispersed than the July leg in every mode: $B_n$ deltas
+(October $-$ July) of $\val{rep.deepseek1018.d.min}$ to $\val{rep.deepseek1018.d.max}$,
+\val{rep.deepseek1018.sig.w} of five significant, the largest $\val{rep.deepseek1018.p.max}$. Its
+instruction, plan and self-refine cells land significantly past the human articles at the per-cell
+level (Table~\ref{tab:ninefam}; the plan cell does not survive the within-leg correction,
+Table~\ref{tab:grid-deepseek1018}), where the July cells did not; its few-shot cell,
+significantly flatter than the human articles in July ($\val{deepseek.Bn.fewshot.d}$,
+$\val{deepseek.Bn.fewshot.p}$), is not significantly different in October
+($\val{deepseek1018.Bn.fewshot.d}$, $\val{deepseek1018.Bn.fewshot.p}$), though still
+significantly flatter than the leg's instruction cell (Table~\ref{tab:contrasts}). The leg is
+reported in every table of this appendix and in Figure~\ref{fig:aimscatter}; the censuses and
+counts of Section~\ref{sec:ninefam} are over the nine models.
+
 % Provenance: paper/main.tex lines 372--374
 \subsection{Confidence intervals}
 CIs on median paired deltas are percentile bootstrap intervals: the $2.5$th and $97.5$th
@@ -1220,8 +1255,7 @@ The human articles carry straight quotes and no such boundaries; several API mod
 typographic quotes, with a leg mean of up to $1.3$ missed boundaries per generation on the DeepSeek V4 Pro,
 Gemma 3 27B and Grok 4.5 legs, merges that on net make the model look more dispersed. This
 version maps typographic quotes to ASCII before segmentation, and every benchmark number in this
-paper is scored with the corrected segmenter (the paraphrase probe of Section~\ref{sec:limitations}
-keeps the released scoring); the correction moved median $\Delta B_n$ by
+paper is scored with the corrected segmenter; the correction moved median $\Delta B_n$ by
 $\val{segfix.shift.min}$ to $\val{segfix.shift.max}$ and changed \val{segfix.moved.w} of the
 forty-five landings (Table~\ref{tab:audit}). Abbreviations outside the guard list, \emph{U.S.}
 among them, cause a false split at rates of the same order on both sides ($0.17$ per human
@@ -1248,7 +1282,8 @@ $\val{floor10.kimi.plan.d}$, $\val{floor10.kimi.plan.p}$).
 \caption{Per model: $B_n$ cells whose landing (flatter, no difference, more dispersed) changes
 under the segmenter correction and under a ten-sentence floor; the guard's flag rate across modes;
 the median, over individual generations, of the generated-to-human word-count ratio; the median sentence count across
-modes; and the largest share of scored generations under ten sentences in any mode.}
+modes; and the largest share of scored generations under ten sentences in any mode. The starred
+leg postdates the segmenter correction and was scored only with the corrected segmenter (--).}
 \label{tab:audit}
 \resizebox{\textwidth}{!}{\input{generated/tab_audit}}
 \end{table}

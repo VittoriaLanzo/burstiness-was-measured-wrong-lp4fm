@@ -1,0 +1,60 @@
+{
+  "model_id": "deepseek-v4-1018",
+  "api_model_id": "deepseek-v4-pro (documented by the provider on the run date as DeepSeek-V4-Pro-0813)",
+  "display_name": "DeepSeek V4 Pro, 18 October 2026 snapshot",
+  "family": "DeepSeek",
+  "openness": "api",
+  "precision": "provider-served",
+  "replicates": "deepseek-v4-pro",
+  "decoding": {
+    "temperature": "provider-default (none sent)",
+    "top_p": "provider-default (none sent)",
+    "seed": "none sent",
+    "system_message": "none",
+    "reasoning_mode": "enabled (reasoning_effort=max)",
+    "reasoning_stripped_before_scoring": true
+  },
+  "corpus": {
+    "name": "Wikinews",
+    "n_headlines": 200,
+    "years": "2016-2021",
+    "license": "CC BY 2.5",
+    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl (revision 3f27ce645ce4f21aa91bd9b8b52a9ca33214fdee, sha256 fa73bffe8b2a312ae0902a90a3b3e72b07de74ddbc8a3dd49134c39377859ed6)"
+  },
+  "design": {
+    "modes": [
+      "control",
+      "instruction",
+      "fewshot",
+      "plan",
+      "self_refine"
+    ],
+    "seeds": 3,
+    "cells_total": 3000,
+    "cells_completed": 3000,
+    "excluded": "none; every cell finished with finish_reason=stop. One self_refine rewrite (scenario 93, iteration 1) is off topic (51 words on 19th-century physics) and is kept unchanged, as released.",
+    "prompts": "identical to the July leg: every first-stage request matches bench/prompts.py on the frozen briefs, and the critique and rewrite requests use the FEEDBACK and REWRITE templates"
+  },
+  "released_artifacts": {
+    "hf_dataset": "ANONYMIZED/deepseek-v4-news-gen",
+    "raw_generations": "benchmark/new-run-2026-10-18/deepseek-v4.jsonl (revision e35f0b872b489151fc2e430b879499b20092884c)",
+    "attempts_and_requests": "benchmark/new-run-2026-10-18/ (attempts.jsonl, stage-requests.jsonl, manifests, SHA256SUMS)",
+    "companion_paraphrase_run": "paraphrase/new-run-2026-10-18/ (revision 69dc8a31412b45bf06848b3b1f0ec53cfc37af34)"
+  },
+  "scoring": {
+    "script": "experiments/ablation/seed_avg_paired.py",
+    "test": "one paired Wilcoxon signed-rank per (mode, metric) over 200 seed-averaged headline pairs, delta = human - model",
+    "metric_revision": "corrected segmenter (typographic quotes mapped to ASCII before splitting); scoring input normalized (normalize_generation.py)"
+  },
+  "generation": {
+    "driver": "bench/run.py, streaming, reasoning_content separated from text at the provider layer; 4,200 stages (3,000 articles, 600 self-refine drafts, 600 critiques), 71 transport failures retried",
+    "provider_api": "api.deepseek.com (OpenAI-compat)",
+    "max_tokens": 32000
+  },
+  "run_date": "2026-10-18",
+  "provenance": "Generated via the DeepSeek API on 18 October 2026 with the July leg's prompts and briefs; a later-snapshot replication of deepseek-v4-pro, not a recovery of the July outputs. Scored against the frozen human baseline; the compiled eval is the file in this directory.",
+  "normalization": {
+    "script": "experiments/ablation/normalize_generation.py",
+    "why": "same scoring input as every leg: echoed headline block dropped, markdown unwrapped, all prose preserved."
+  }
+}

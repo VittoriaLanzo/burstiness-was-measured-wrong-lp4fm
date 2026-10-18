@@ -128,6 +128,24 @@ Self-refine & $-0.002\;(0.04)$ & $-0.001\;(0.02)$ & $-0.139\;(-0.49)^{**}$ & $-0
 \begin{table}[htbp]
 \centering
 \small
+\caption{DeepSeek V4 Pro$^{\ast}$, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $11$ of $20$ cells per-cell significant; $9$ survive Benjamini--Hochberg at $q=0.05$ and $9$ survive Holm (lost under Benjamini--Hochberg: plan $B_n$, instruction Seg.\ entropy). The DeepSeek V4 Pro leg re-run on 18 October 2026 against the snapshot the API alias then served, with the same prompts and briefs (Appendix~\ref{sec:protocoldetail}); reported beside the nine models and outside their counts.}
+\label{tab:grid-deepseek1018}
+\begin{tabular}{lcccc}
+\toprule
+Mode & $B_n$ & Gini & Seg.\ entropy & Memory $M$ \\
+\midrule
+Control & $0.039\;(0.34)^{**}$ & $0.018\;(0.29)^{**}$ & $0.023\;(0.14)$ & $-0.070\;(-0.24)^{**}$ \\
+Instruction & $-0.037\;(-0.27)^{**}$ & $-0.027\;(-0.34)^{**}$ & $-0.060\;(-0.18)^{*}$ & $-0.013\;(-0.10)$ \\
+Few-shot & $0.018\;(0.14)$ & $0.004\;(0.04)$ & $0.132\;(0.29)^{**}$ & $-0.003\;(0.03)$ \\
+Plan & $-0.030\;(-0.18)^{*}$ & $-0.022\;(-0.25)^{**}$ & $-0.018\;(0.01)$ & $-0.036\;(-0.09)$ \\
+Self-refine & $-0.042\;(-0.29)^{**}$ & $-0.020\;(-0.30)^{**}$ & $0.001\;(-0.05)$ & $0.011\;(0.05)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
 \caption{Grok 4.3, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $13$ survive Holm.}
 \label{tab:grid-grok43}
 \begin{tabular}{lcccc}
