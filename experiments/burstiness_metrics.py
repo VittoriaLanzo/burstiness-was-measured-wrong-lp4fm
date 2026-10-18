@@ -72,6 +72,13 @@ _SENT_SPLIT = re.compile(r'([.!?]+["\')\]]?)\s+')
 # Symbols counted for the punctuation/segmentation entropy (Q7 proxy).
 _PUNCT_SYMBOLS = re.compile(r'[.!?,;:\-—()"\']')
 
+# Typographic quotes are mapped to ASCII BEFORE segmentation. The split pattern's
+# closing-quote class is ASCII-only, so without this a sentence ending in a curly
+# closing quote (.” followed by a space) is never split and merges with the next
+# sentence. The human baseline uses straight closing quotes while several API models
+# emit curly ones, so the unmapped segmenter merged sentences on the model side only.
+_TYPO_QUOTES = str.maketrans({"\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'"})
+
 
 def sentence_lengths(text: str) -> List[int]:
     """Return the list of sentence lengths (whitespace-token counts).
@@ -90,6 +97,7 @@ def sentence_lengths(text: str) -> List[int]:
     """
     if not text or not text.strip():
         return []
+    text = text.translate(_TYPO_QUOTES)
 
     sentences: List[str] = []
     last = 0
