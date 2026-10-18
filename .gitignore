@@ -8,3 +8,7 @@ paper/lp4fm/main.blg
 
 # camera-ready working notes (local only)
 revision/
+paper/lp4fm/main.aux
+paper/lp4fm/main.fdb_latexmk
+paper/lp4fm/main.fls
+paper/lp4fm/main.out
