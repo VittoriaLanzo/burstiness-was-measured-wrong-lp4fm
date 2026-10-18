@@ -89,8 +89,7 @@ def main() -> int:
         print()
     print("Verdict: the seg_entropy deficit is a straight-quote-only regex missing smart quotes.")
     print("Fix: normalize curly->straight (or add “”‘’ to _PUNCT_SYMBOLS) before "
-          "scoring, then re-score ALL models. Do NOT headline the split. Needs author sign-off "
-          "(touches the metric SSOT).")
+          "scoring, then re-score ALL models. The fix is in experiments/burstiness_pp.py.")
     return 0
 
 

@@ -107,7 +107,8 @@ MODELS: list[dict] = [
         "token_param": "max_tokens",
         "extra_body": {"thinking": {"type": "enabled"}, "reasoning_effort": "max"},
         "include_usage": True,
-        "max_tokens": _MAX_TOKENS,
+        # 32k, as run: at 16k, 51 of the first 513 cells spent the whole budget on reasoning.
+        "max_tokens": 2 * _MAX_TOKENS,
         "enabled": True,
     },
     {
@@ -179,11 +180,8 @@ EXCLUDED_MODELS: dict[str, str] = {
         "discloses it in Limitations rather than leaving a reviewer to notice it."
     ),
     "fugu-ultra": (
-        "PROVENANCE UNKNOWN. Registered (Sakana AI, api.sakana.ai, xhigh effort) and enabled, "
-        "never run, and no reason was recorded anywhere in the repo. Found 2026-07-13 by the "
-        "accountability check below. This entry exists so the model stops being an invisible "
-        "hole; it is NOT a scientific rationale. Do not cite it as a deliberate exclusion in "
-        "the paper until the authors confirm whether it was dropped on purpose or simply forgotten."
+        "Registered (Sakana AI, api.sakana.ai) but never run; it is not part of the "
+        "benchmark, and no reason for dropping it was recorded."
     ),
 }
 

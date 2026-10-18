@@ -15,10 +15,9 @@ per (mode, metric), the tightest margin at which equivalence holds (m* = max|CI 
 and evaluate a couple of candidate margins. m* is the number to argue about; pick m first,
 then read equivalence.
 
-NOTE (honesty): this reads the committed summary CIs (bootstrap CI of the paired median).
-A fully rigorous TOST on the raw 200 paired differences needs the per-headline scores
-(data/*.jsonl on HF scored via seed_avg_paired.py); the margin and the raw-data TOST both
-want author sign-off before going into the paper.
+This reads the committed summary CIs (percentile bootstrap CI of the paired median, 2,000
+resamples). The 95% interval is stricter than the 90% interval of a textbook alpha=0.05 TOST.
+Margins 0.03 / 0.05 / 0.08 are the ones the paper pre-specified; the paper also reports m*.
 
 Run:
     python3 experiments/ablation/equivalence_test.py

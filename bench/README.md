@@ -1,7 +1,7 @@
 # `bench/` — frontier-model burstiness bench
 
 Generates a news article for each of **200 headlines** (the frozen human reference set) under
-**5 non-overlapping prompting modes**, across several frontier LLM APIs at **maximum reasoning
+**5 non-overlapping prompting modes**, across several frontier LLM APIs at **high or maximum reasoning
 effort**, and checkpoints every output to disk so a long, paid run is resumable and loss-proof.
 This is the *prompt-level control* track (paper Q1): how close can prompt engineering alone push
 an LLM's rhythm toward the human `B_n` distribution.
@@ -146,7 +146,7 @@ never mixes generation configs.
   immune (Anthropic does the computing).
 - Provider content-filter refusals are recorded as empty cells
   (usage.refusal), never retried into fail-fast. The refusal pattern itself is
-  data: see knowledge/PROVIDER-REFUSAL-AUDIT.md.
+  data: the per-leg counts are in each leg's meta.json and in the paper (Section 4.4).
 - Cost estimation: price sheet x reasoning-mode output multiplier x mode-mix
   multiplier. Thinking modes produced 5-8x terse-model output volume
   (kimi 15.15M out tokens); self_refine is ~40-50% of a thinking leg's cost.

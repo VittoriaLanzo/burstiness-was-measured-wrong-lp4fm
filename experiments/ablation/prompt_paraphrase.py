@@ -4,8 +4,8 @@
 The benchmark uses ONE fixed wording per mode; R1-3 notes the mode ordering
 could be an artifact of those particular sentences. This harness reruns the
 instruction condition under three independent paraphrases of the VOICE+TAIL
-pair (same Persona Pattern, same metric-free constraint: no naming of sentence
-length, variation, rhythm, or any measured axis) on one model family, one
+pair (same Persona Pattern and the same constraint as the canonical VOICE/TAIL:
+no mention of sentence length, rhythm, or any number) on one model family, one
 seed, all 200 briefs, and scores each variant with the same paired machinery.
 
 If the instruction-mode deltas agree in sign and rough magnitude across
@@ -30,7 +30,7 @@ from bench.config import MODELS
 from bench.providers import generate
 
 # Three independent paraphrases of (VOICE, TAIL). Persona Pattern preserved;
-# metric-free by construction (no measured axis is ever named).
+# like the canonical pair, none names the statistic, sentence length, or rhythm.
 VARIANTS = {
     "v1": (
         "You are a veteran newspaper reporter. Write the story the way an experienced "

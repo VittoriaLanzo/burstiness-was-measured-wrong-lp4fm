@@ -8,10 +8,8 @@ Holm-Bonferroni (controls the family-wise error rate) and Benjamini-Hochberg (co
 false discovery rate) to all 20 raw p-values from the committed SSOT and reports which
 effects survive at alpha=0.05.
 
-Stdlib only. Emits experiments/results/benchmark/qwen3.6-27b/multiplicity.json.
-
-Proposal for the authors: the durable, defensible reading is BH at q=0.05 (standard for a
-benchmark table of this size). Needs author sign-off before the paper adopts it.
+Stdlib only. Emits experiments/results/benchmark/<model>/multiplicity.json. The paper reports
+BH at q=0.05 within each family's twenty-cell grid, with Holm alongside.
 
 Run:
     python3 experiments/ablation/multiplicity_correction.py

@@ -27,8 +27,10 @@ completion; most modes make one call, self_refine makes three. Keeping every pro
 # (Goodhart). Report it only as a labeled, compute-matched upper bound.
 # Design support: Lost-in-the-Middle (Liu et al. 2024, arXiv 2307.03172) -> the TAIL re-anchor and
 # the exemplar ordering; Huang et al. 2024 (arXiv 2310.01798) -> the M4 self-leniency guard.
-# METRIC-FREE WORDING: never name the measured axis to the model (no B_n / dispersion, no
-# "vary sentence length", no clumping/M, no numbers) -- it teaches to the test. The metric is
+# METRIC-FREE WORDING: no prompt names the statistic or gives a target on it (no B_n /
+# dispersion, no "vary sentence length", no clumping/M, no numbers). The few-shot and
+# self-refine prompts do describe the style in plain words (rhythm, pacing, cadence), as a
+# user asking for human-sounding prose would; the self-check below enforces the stricter rule only. The metric is
 # model-free point-process burstiness B_n (Goh-Barabasi 2008 / Kim-Jo 2016); human news prose sits
 # at B_n ~ -0.4 and B_n is genre-relative, so the voice is a news journalist, not an essayist.
 # Decoding is held constant across modes (temp 0.7 where the API allows; see providers).
@@ -71,7 +73,7 @@ def load_briefs():
     return briefs
 
 
-# --- prompt text (metric-free; news register; DRAFT, to be finalized) -------
+# --- prompt text (metric-free; news register; finalized 2026-07-01) ----------
 VOICE = (  # Persona Pattern (White et al. 2023, arXiv:2302.11382); metric-free by construction
     "Act as a professional news journalist. Provide the article a seasoned staff reporter "
     "would write: concrete and specific, in a natural human voice, never flat or mechanical."
@@ -189,7 +191,8 @@ def _selfcheck():
     calls = []
     self_refine(lambda u: calls.append(u) or "x", brief)
     assert len(calls) == 3, f"self_refine should make 3 calls, made {len(calls)}"
-    # metric-free guard: no measured-axis terms in any prompt text
+    # metric-free guard: no statistic or measured-axis term in any prompt text (plain style
+    # words such as "rhythm" or "pacing" are allowed and do appear: see the comment at the top)
     forbidden = ["sentence length", "sentence-length", "variance", "std", "b_n",
                  "clumping", "standard deviation", "burstiness"]
     blob = " ".join([VOICE, TAIL, PLAN, FEEDBACK, REWRITE, FEWSHOT_LEAD, BRIEF]).lower()

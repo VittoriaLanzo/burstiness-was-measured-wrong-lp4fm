@@ -30,9 +30,10 @@ WHY this over raw var(L): var(L) is confounded by absolute sentence length
 (a genre/length artifact), which is why its held-out detection AUC was 0.479
 (near chance). B and B_n are scale-free (a ratio), so they factor that out.
 
-NOTE: the exact Kim & Jo B_n expression is implemented per the published form
-(verify against Kim & Jo 2016 before it goes in the paper; a parallel lit pass
-is confirming it). The asymptotic B and M are certain.
+B_n follows Kim & Jo (2016): with r = sigma/mu over n intervals,
+    B_n = (sqrt(n+1) r - sqrt(n-1)) / ((sqrt(n+1) - 2) r + sqrt(n-1)),
+which is -1 at r = 0, 0 at the finite-n Poisson value r = sqrt((n-1)/(n+1)), and 1 at
+the largest r attainable with n intervals, sqrt(n-1). It depends on n as well as on r.
 
 CLI:
     python experiments/burstiness_pp.py --demo            # self-check
@@ -55,9 +56,8 @@ KNOWN LIMITATIONS (tracked here so they surface where the metric is used)
       add right after the formula lock; see syntactic_complexity().
     - long-range temporality: only lag-1 M + coarse multiscale now; DFA/Hurst deferred
       to the 30+ sentence regime.
-    - construct validity (perception): THE KEYSTONE, addressed last. Whether B tracks
-      human-perceived rhythm is validated by the pre-registered perception study, not
-      by any structural addition. Deferred: we are still in the pilot pre-experiment build.
+    - construct validity (perception): whether B_n tracks perceived rhythm is not
+      established by statistical separation; it needs a perception study (not in this repo).
 """
 from __future__ import annotations
 

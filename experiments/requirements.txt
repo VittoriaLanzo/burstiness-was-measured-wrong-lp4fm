@@ -1,13 +1,9 @@
-# Dependencies for experiments/activation_pilot.py (the B1 activation-steering pilot).
-#
-# ONLY needed for the activation_pilot real run.
-# burstiness_metrics.py and test_metrics.py are stdlib-only and need NOTHING here.
-#
-# Pin versions when you actually run the pilot; left open here for the scaffold.
-torch
-transformers
-accelerate
+# Only needed outside the scoring path; the metric, the scorer and every analysis
+# script are standard library.
+mwparserfromhell  # experiments/ablation/clean_wikinews.py (corpus rebuild from wikitext)
+huggingface_hub   # dataset download: bench/prompts.py, build_ablation_corpus.py, select_m2_exemplars.py
+pandas            # build_ablation_corpus.py (reads the malteos/wikinews parquet files)
+pyarrow
+scikit-learn      # select_m2_exemplars.py (TF-IDF headline leakage check)
+matplotlib        # paper/lp4fm/make_lp4fm_figures.py
 numpy
-scipy
-
-sentence-transformers  # spec C4 content preservation (all-MiniLM)
