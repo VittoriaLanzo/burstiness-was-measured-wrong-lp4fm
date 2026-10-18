@@ -396,9 +396,9 @@ Thinking modes, effort levels and output caps are recorded in each leg's release
 listed in Appendix~\ref{sec:protocoldetail}. Two API legs ran with a $32{,}000$-token cap instead of
 $16{,}000$: DeepSeek V4 Pro, after reasoning exhausted the smaller cap early in the run, and Claude Opus 4.8,
 because Anthropic bills reasoning against the cap, so at maximum effort the self-refine rewrite
-spent the whole budget reasoning and emitted no prose. That leg ran at high effort, matching the
-thinking level requested for Gemini 3.1 Pro, and completed all $3{,}000$ cells with no truncated
-or empty output.
+spent the whole budget reasoning and emitted no prose. That leg ran at effort high (Gemini 3.1
+Pro ran at thinking level high) and completed all $3{,}000$ cells with no truncated or empty
+output.
 Decoding is not matched across providers, so the benchmark reads as nine separate paired
 comparisons against the same human baseline, each model compared against the human articles
 alone. Where a provider returns reasoning content separately
@@ -1123,9 +1123,9 @@ kept), and Claude Opus 4.8 at $32{,}000$; on the open-weight legs the cap is per
 on Qwen3.6-27B, whose thinking shares the budget, and $1{,}024$ on Gemma 3 27B. Anthropic bills
 reasoning against the cap, so at $16{,}000$ tokens and maximum effort the Opus self-refine rewrite
 spent the whole budget reasoning and emitted no prose; the leg ran at high effort with the
-$32{,}000$-token cap, which restores a comparable prose budget rather than granting a larger one
-and matches the thinking level requested for Gemini 3.1 Pro, and completed all $3{,}000$ cells
-with no truncated or empty output. Each cell was sampled three times: at seeds $0$, $1$, $2$ on the open-weight
+$32{,}000$-token cap, which restores a comparable prose budget rather than granting a larger one;
+Gemini 3.1 Pro ran at thinking level high. The leg completed all $3{,}000$ cells with no
+truncated or empty output. Each cell was sampled three times: at seeds $0$, $1$, $2$ on the open-weight
 legs, as independent calls on the API legs.
 
 % Provenance: paper/main.tex lines 372--374

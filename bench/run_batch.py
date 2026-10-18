@@ -1,23 +1,23 @@
-"""Batch-mode leg runner for Anthropic models (Message Batches API, 50% price).
+"""Batch-mode leg runner for Anthropic models (Message Batches API, half the list price).
 
-Why this exists: the live runner (bench/run.py) pays full per-token price and
-holds a worker pool open for hours. The bench's 3,000 cells are embarrassingly
-batchable, and Anthropic's Batches API halves the price of every token. The
-only wrinkle is self_refine (draft -> critique -> rewrite), which needs three
-sequential calls per cell: this runner submits three WAVES, each a single
-batch, carrying intermediate drafts/critiques in a state file between waves.
+The live runner (bench/run.py) pays the full per-token price and holds a worker
+pool open for the whole leg. The Message Batches API bills every token at half
+price, so this runner submits the leg as batches. self_refine (draft -> critique
+-> rewrite) needs three sequential calls per cell, so the leg goes out as three
+waves, each a single batch, with intermediate drafts and critiques carried in a
+state file between waves.
 
-  Wave A: control / instruction / fewshot / plan cells + self_refine DRAFTS
-  Wave B: self_refine CRITIQUES (built from wave A drafts)
-  Wave C: self_refine REWRITES  (recorded as the final self_refine cells)
+  Wave A: control / instruction / fewshot / plan cells + self_refine drafts
+  Wave B: self_refine critiques (built from wave A drafts)
+  Wave C: self_refine rewrites  (recorded as the final self_refine cells)
 
-Output schema is bench/storage.append, byte-compatible with the live runner,
-so hygiene/normalize/score (make leg MODEL=<key>) work unchanged. Resumable at
-every stage: completed cells are skipped, submitted batch ids are persisted in
+Output schema is bench/storage.append, byte-compatible with the live runner, so
+hygiene, normalization and scoring work unchanged. Resumable at every stage:
+completed cells are skipped, submitted batch ids are persisted in
 <results>/<key>.batchstate.json and re-polled instead of resubmitted.
 
 Refusals (stop_reason == "refusal") are recorded as empty cells with
-usage.refusal = "provider_content_filter", per the 2026-07-11 protocol.
+usage.refusal = "provider_content_filter".
 
   python3 -m bench.run_batch --model opus-4.8 [--effort high] [--limit N]
                              [--poll 120] [--dry-run]
@@ -38,22 +38,17 @@ from bench.config import MODELS
 MODES_SINGLE = ["control", "instruction", "fewshot", "plan"]
 SEEDS = 3
 
-# Published LIST prices, USD per Mtok, as (input, output). Verify against the provider's
-# pricing page and record the date before adding a row.
+# Published list prices, USD per Mtok, as (input, output), taken from the provider's pricing
+# page. A model with no published list price gets None, and batch_price refuses to cost it.
 #
-# Never invent a number here. A guessed price does not just misreport spend: it silently
-# ranks the legs against each other, and an unpriced model that looks 2x its neighbour will
-# get dropped from the benchmark for a reason that was never real. A model whose price we
-# have not verified gets None, and the runner refuses to cost it rather than guessing.
-#
-#   claude-opus-4-8  anthropic.com/pricing, verified 2026-07-13
-#   claude-fable-5   no list price published as of 2026-07-13, so deliberately unpriced
+#   claude-opus-4-8  anthropic.com/pricing
+#   claude-fable-5   no published list price
 LIST_PRICE_USD: dict[str, tuple[float, float] | None] = {
     "claude-opus-4-8": (5.00, 25.00),
     "claude-fable-5": None,
 }
-# The Message Batches API bills at half the list rate. Derived, never restated, so the
-# batch and list numbers cannot drift apart.
+# The Message Batches API bills at half the list rate; batch prices are derived from the list
+# prices rather than stated separately.
 BATCH_DISCOUNT = 0.5
 
 
@@ -69,24 +64,17 @@ def batch_price(model_id: str) -> tuple[float, float]:
     return listed[0] * BATCH_DISCOUNT, listed[1] * BATCH_DISCOUNT
 
 
-# Mean tokens per RECORDED cell, measured on the opus-4.8 5-brief smokes of 2026-07-13.
-# Keyed by effort, and split by mode class because a self_refine cell sums three chained calls
-# and is nothing like a single-shot cell.
-#
-# The old estimator guessed a flat 900 in / 1900 out per cell and multiplied the whole leg by
-# 2.2 "for thinking + self_refine chains". That applied the chain penalty to all 3000 cells when
-# only 600 have a chain, and it modelled max and high identically. It quoted $164 for a leg that
-# costs $44 at high and ~$345 at max: wrong in both directions at once, and it nearly cost us the
-# leg. Estimates now come from measurement, and an unmeasured effort says so instead of bluffing.
-#
-# Note how far apart the two efforts are: at max, a single-shot cell emits 1701 output tokens and
-# a self_refine cell emits 38,533. At high they emit 582 and 2,416. Effort is the cost driver in
-# this benchmark, not model choice, and the self_refine chain is where it compounds.
+# Mean tokens per recorded cell, measured on opus-4.8 5-brief smoke runs. Keyed by effort and
+# split by mode class, because a self_refine cell sums three chained calls. At max, a
+# single-shot cell emits about 1,700 output tokens and a self_refine cell about 38,500; at
+# high, 582 and 2,416. Effort, not model choice, is the cost driver, and the self_refine chain
+# is where it compounds. An effort that has not been measured is bracketed between the two
+# that have (see estimate_leg_cost).
 #
 #                    single-shot cell      self_refine cell (draft+critique+rewrite, summed)
 PER_CELL_TOKENS: dict[str, tuple[tuple[int, int], tuple[int, int]]] = {
     "high": ((806, 582), (2559, 2416)),
-    "max":  ((806, 1701), (2840, 38533)),   # rewrite runs away; 60% truncate even at 32k
+    "max":  ((806, 1701), (2840, 38533)),   # the rewrite runs away; 60% of cells truncate even at 32k
 }
 SELF_REFINE_SHARE = 0.2   # 1 of the 5 modes
 
@@ -94,7 +82,7 @@ SELF_REFINE_SHARE = 0.2   # 1 of the 5 modes
 def estimate_leg_cost(n_cells: int, effort: str, pin: float, pout: float) -> tuple[float, float]:
     """(low, high) USD for a batched leg. Equal bounds when the effort has been measured."""
     if effort not in PER_CELL_TOKENS:
-        # Bracket between the two efforts we HAVE measured rather than inventing a third.
+        # Bracket between the two measured efforts.
         lo, _ = estimate_leg_cost(n_cells, "high", pin, pout)
         _, hi = estimate_leg_cost(n_cells, "max", pin, pout)
         return lo, hi
@@ -139,21 +127,16 @@ def _extract(message) -> tuple[str, dict]:
 
 
 def _classify(msg, text: str, usage: dict) -> tuple[str, dict]:
-    """Mark WHY a cell is empty. An unmarked empty cell is a silent data-integrity failure.
+    """Mark why a cell is empty.
 
-    Two ways a cell comes back with no prose, and they mean opposite things:
+    Two ways a cell comes back with no prose, with opposite meanings:
 
-      refusal    the provider declined the content. A real datum: the leg records it and the
-                 scorer seed-averages it away, per the 2026-07-11 protocol.
+      refusal    the provider declined the content. A datum: the leg records it and the
+                 scorer's seed-averaging excludes it.
       max_tokens the model spent its whole budget thinking and never emitted a text block.
-                 NOT a datum. It is a budget bug, and recording it as an empty cell fabricates
-                 a refusal that never happened.
-
-    Opus 4.8 at effort=max hit exactly this on 2026-07-13: every self_refine rewrite stopped at
-    max_tokens with content=['thinking'] and no text, because for Anthropic models the thinking
-    tokens are billed against max_tokens. Before this guard the runner recorded 15 of 15 empty
-    self_refine cells with no marker, which downstream would have read as "Opus refuses
-    self_refine" and put a finding in the paper that is simply false.
+                 Not a datum: for Anthropic models thinking tokens are billed against
+                 max_tokens, so this is a budget problem, and an unmarked empty cell would
+                 read downstream as a refusal that never happened.
     """
     if msg.stop_reason == "refusal":
         return "", {**usage, "refusal": "provider_content_filter"}
@@ -208,14 +191,13 @@ def main():
     brief_by_id = {b["id"]: b["brief"] for b in briefs}
 
     results_f = storage.RESULTS_DIR / f"{a.model}.jsonl"
-    # Config purity preflight: cells written before this batch run (e.g. the 7
-    # near-miss cells at the registry's effort=max) would silently mix effort
-    # configs inside one leg. Archive any pre-existing file unless a batchstate
-    # already exists (which means the prior cells are OUR earlier waves).
+    # Config purity preflight: cells written before this batch run (e.g. by the live runner at
+    # the registry's effort) would mix generation configs inside one leg, so any pre-existing
+    # results file is archived unless a batchstate already exists (then the prior cells are
+    # this runner's own earlier waves).
     state_probe = storage.RESULTS_DIR / f"{a.model}.batchstate.json"
-    # Cells written before this batch run (e.g. the 7 near-miss cells at the registry's
-    # effort=max) would silently mix effort configs inside one leg, so a real run archives
-    # them. A --dry-run must not: it is a cost preview and touches nothing on disk.
+    # A --dry-run is a cost preview and touches nothing on disk, so it only reports what a
+    # real run would archive.
     stale = results_f.exists() and not state_probe.exists()
     if stale:
         import datetime
@@ -269,7 +251,7 @@ def main():
         lo, hi = estimate_leg_cost(n_cells, effort, pin, pout)
         band = f"~${lo:.0f}" if lo == hi else f"~${lo:.0f}-{hi:.0f}"
         print(f"dry-run: batched estimate {band} "
-              f"({'measured on the opus-4.8 smoke, 2026-07-13' if effort in PER_CELL_TOKENS else 'UNMEASURED effort, wide band'})")
+              f"({'from measured per-cell token counts' if effort in PER_CELL_TOKENS else 'unmeasured effort, wide band'})")
         return
 
     import anthropic
@@ -277,12 +259,10 @@ def main():
 
     # ---- wave A ----
     # A wave sits in one of three states: None (never submitted), a batch id (in flight),
-    # or "consumed" (its results are recorded). Submit when there is pending work and no
-    # batch is in flight, which includes the "consumed" case: that is how a smoke run
-    # (--limit N) expands into the full leg without regenerating the cells it already paid
-    # for. Waves B and C already guarded this way; wave A did not, and its `not state[...]`
-    # / `if state[...]` pair meant a second run skipped the submit and then handed the
-    # literal string "consumed" to _await_batch as a batch id.
+    # or "consumed" (its results are recorded). A wave is submitted when there is pending
+    # work and no batch is in flight, which includes the "consumed" case: that is how a
+    # smoke run (--limit N) expands into the full leg without regenerating the cells it
+    # already has.
     if wave_a_reqs and state["wave_a"] in (None, "consumed"):
         state["wave_a"] = _submit(client, wave_a_reqs, "wave A")
         save_state()
@@ -397,10 +377,9 @@ def main():
     print(f"== {a.model}: {total}/{n_cells} cells recorded; "
           f"{pin/1e6:.2f}M in, {pout/1e6:.2f}M out ~= ${pin/1e6*pi + pout/1e6*po:.2f} batched")
 
-    # A leg is not "complete" because every cell has a row. Truncated cells carry no prose and
-    # are not data: they are a budget bug wearing a datum's clothes. Left unflagged they enter
-    # the scorer as empties, get seed-averaged away, and the leg silently reports a mode it
-    # never actually measured. Fail loudly instead, so nobody scores a leg that is not there.
+    # A leg is not complete just because every cell has a row. Truncated cells carry no prose
+    # and are not data; left unflagged they would enter the scorer as empties, be seed-averaged
+    # away, and the leg would report a mode it never measured. The run therefore exits non-zero.
     if truncated_by_mode:
         print()
         for mode, n_trunc in sorted(truncated_by_mode.items()):

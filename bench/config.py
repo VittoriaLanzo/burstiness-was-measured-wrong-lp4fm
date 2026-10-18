@@ -1,13 +1,14 @@
 """Model registry, env-key loading, and run parameters.
 
-Keys are read from the environment only -- never hardcoded. As a convenience, a `.env`
-file (in bench/ or the cwd) is loaded into the environment at import (existing vars win),
-so you can keep keys in a gitignored file instead of exporting them each shell.
+API keys are read from the environment. A `.env` file (in bench/ or the cwd) is loaded into
+the environment at import without overriding variables that are already set, so keys can be
+kept in a gitignored file.
 
-Reasoning is dialed to maximum on every model (Opus 4.8 effort=max, GPT-5.5 xhigh, Gemini
-3.1 Pro thinking_level=high, DeepSeek/GLM reasoning_effort=max, Kimi thinking on). Disable
-a model with "enabled": False, or select a subset on the CLI. N_ITERATIONS (the generation
-cycle count) is config, never hardcoded, and is overridable via $BENCH_ITERATIONS or --iterations.
+Each registry entry sets the highest reasoning level its API offers (Opus 4.8 effort=max,
+GPT-5.5 xhigh, Gemini 3.1 Pro thinking_level=high, DeepSeek/GLM reasoning_effort=max, Kimi
+thinking on). A model is disabled with "enabled": False, or a subset is selected on the CLI.
+N_ITERATIONS (the generation cycle count) defaults to 3 and is overridable via
+$BENCH_ITERATIONS or --iterations.
 """
 from __future__ import annotations
 
@@ -43,19 +44,14 @@ MODELS: list[dict] = [
         "model_id": "claude-opus-4-8",
         "api_key_env": "ANTHROPIC_API_KEY",
         "effort": "max",
-        # 2x _MAX_TOKENS, and this PRESERVES cross-family parity rather than breaking it.
-        #
-        # For Anthropic models with extended thinking, max_tokens caps thinking AND text
-        # together. Everywhere else in this benchmark it effectively caps the prose: Gemini
-        # never returns its thoughts, and GLM and Kimi stream thinking into output but landed
-        # at ~3.3k and ~5.1k tokens per cell, far under the ceiling. So a flat 16k hands Opus
-        # strictly LESS room to write than every other family gets.
-        #
-        # Measured 2026-07-13: at effort=max the self_refine rewrite (which carries the draft
-        # and the critique in context) spent all 16,000 tokens thinking and emitted zero text.
-        # Every self_refine cell in the smoke run came back empty with stop_reason=max_tokens.
-        # 32k restores a real prose budget behind the thinking. It is a deviation the protocol
-        # section must disclose, so the reviewer sees parity of TEXT budget, not of raw cap.
+        # 2x _MAX_TOKENS. For Anthropic models with extended thinking, max_tokens caps
+        # thinking and text together, whereas for the other families it effectively caps the
+        # prose: Gemini does not return its thoughts, and GLM and Kimi stream thinking into
+        # the output but stay far under the ceiling (about 3.3k and 5.1k tokens per cell).
+        # At 16k the self_refine rewrite (which carries the draft and the critique in
+        # context) can spend the whole budget thinking and emit no text, with
+        # stop_reason=max_tokens. 32k leaves a prose budget behind the thinking, so the text
+        # budget is comparable across families even though the raw cap is not.
         "max_tokens": 2 * _MAX_TOKENS,
         "enabled": True,
     },
@@ -71,7 +67,7 @@ MODELS: list[dict] = [
     {
         "key": "gpt-5.5",
         "provider": "openai_responses",
-        "model_id": "gpt-5.5",  # pin "gpt-5.5-2026-04-23" for a frozen run
+        "model_id": "gpt-5.5",  # pin a dated model id for a frozen run
         "api_key_env": "OPENAI_API_KEY",
         "reasoning_effort": "xhigh",  # max for gpt-5.5
         "max_tokens": _MAX_TOKENS,
@@ -80,7 +76,7 @@ MODELS: list[dict] = [
     {
         "key": "gemini-3.1-pro",
         "provider": "google",
-        "model_id": "gemini-3.1-pro-preview",  # 3-pro-preview was retired; 3.1 is current
+        "model_id": "gemini-3.1-pro-preview",  # the 3-pro preview id was retired
         "api_key_env": "GEMINI_API_KEY",
         "thinking_level": "high",  # max
         "max_tokens": _MAX_TOKENS,
@@ -107,14 +103,14 @@ MODELS: list[dict] = [
         "token_param": "max_tokens",
         "extra_body": {"thinking": {"type": "enabled"}, "reasoning_effort": "max"},
         "include_usage": True,
-        # 32k, as run: at 16k, 51 of the first 513 cells spent the whole budget on reasoning.
+        # 32k: at a 16k cap, 51 of the first 513 cells spent the whole budget on reasoning.
         "max_tokens": 2 * _MAX_TOKENS,
         "enabled": True,
     },
     {
         "key": "grok-4.3",
         "provider": "openai_compat",
-        "model_id": "grok-4.3",  # xAI's current flagship (1M ctx); reasoning built in, no effort dial
+        "model_id": "grok-4.3",  # reasoning built in, no effort dial
         "api_key_env": "XAI_API_KEY",
         "base_url": "https://api.x.ai/v1",
         "token_param": "max_tokens",
@@ -125,7 +121,7 @@ MODELS: list[dict] = [
     {
         "key": "grok-4.5",
         "provider": "openai_compat",
-        "model_id": "grok-4.5",  # released 2026-07-08 ($2/$6 per M); the dot matters, grok-4-5 404s
+        "model_id": "grok-4.5",  # the dot matters: grok-4-5 returns 404
         "api_key_env": "XAI_API_KEY",
         "base_url": "https://api.x.ai/v1",
         "token_param": "max_tokens",
@@ -136,12 +132,12 @@ MODELS: list[dict] = [
     {
         "key": "fugu-ultra",
         "provider": "openai_compat",
-        "model_id": "fugu-ultra",  # Sakana Fugu Ultra: multi-agent-as-a-model behind one API
+        "model_id": "fugu-ultra",  # Sakana Fugu Ultra
         "api_key_env": "SAKANA_API_KEY",
         "base_url": "https://api.sakana.ai/v1",
         "token_param": "max_tokens",
         "extra_body": {"reasoning": {"effort": "xhigh"}},  # high | xhigh ("max" aliases xhigh)
-        "include_usage": False,  # stream usage support unverified; flip on once confirmed
+        "include_usage": False,  # stream usage support unverified
         "max_tokens": _MAX_TOKENS,
         "enabled": True,
     },
@@ -153,43 +149,34 @@ MODELS: list[dict] = [
         "base_url": "https://api.z.ai/api/paas/v4/",  # .cn: open.bigmodel.cn + ZHIPUAI_API_KEY
         "token_param": "max_tokens",
         "extra_body": {"thinking": {"type": "enabled"}, "reasoning_effort": "max"},
-        "include_usage": False,  # stream usage support unverified on z.ai; flip on once confirmed
+        "include_usage": False,  # stream usage support unverified on z.ai
         "max_tokens": _MAX_TOKENS,
         "enabled": True,
     },
 ]
 
-# Registered models we deliberately did not run, and why. A leg that is simply absent looks like
-# an oversight to a reviewer; a leg that is absent with a stated reason is a limitation. Anything
-# in MODELS without a benchmark leg belongs here or in the benchmark, never in neither.
-#
-# The Qwen exclusion (circularity: it was the synthetic-data generation family, so it would have
-# sat on both sides of train/eval) was lifted 2026-07-02 when the T5 training was retired.
-# Qwen3.6 is now benchmarked locally via bench/gen_vllm.py.
+# Registered models that were not run, with the reason. Every entry in MODELS either has a
+# benchmark leg or an entry here. The open-weights legs (Qwen3.6-27B, Gemma 3 27B) are not in
+# MODELS; they run locally through bench/gen_vllm.py.
 EXCLUDED_MODELS: dict[str, str] = {
     "fable-5": (
-        "No published list price as of 2026-07-13, so the leg cannot be costed honestly "
-        "(see LIST_PRICE_USD in bench/run_batch.py, which refuses to price it). Opus 4.8 "
-        "carries the Anthropic flagship slot instead, which is the coverage the benchmark needs."
+        "No published list price at the time of the runs, so the leg could not be costed "
+        "(LIST_PRICE_USD in bench/run_batch.py refuses to price it); Claude Opus 4.8 is the "
+        "Anthropic leg."
     ),
     "gpt-5.5": (
-        "Cost, decided 2026-07-13. List price $5/$30 per Mtok (verified). The harness has no "
-        "OpenAI batch lane, so it would run at full rate, roughly $390 against the ~$195 it "
-        "would cost batched. With Gemini 3.1 Pro and Claude Opus 4.8 both in the benchmark, the "
-        "closed-source frontier is represented. This is the one frontier absence and the paper "
-        "discloses it in Limitations rather than leaving a reviewer to notice it."
+        "Not run, for cost: list price $5/$30 per Mtok and no OpenAI batch lane in the "
+        "harness, so a leg would run at full rate (roughly $390). Gemini 3.1 Pro and Claude "
+        "Opus 4.8 cover the closed frontier; the paper states the omission."
     ),
     "fugu-ultra": (
-        "Registered (Sakana AI, api.sakana.ai) but never run; it is not part of the "
-        "benchmark, and no reason for dropping it was recorded."
+        "Registered (Sakana AI, api.sakana.ai) but never run; not part of the benchmark."
     ),
 }
 
-# Legs being generated right now. A model sits here only while a run is genuinely in progress,
-# and it must graduate to a benchmark leg or to EXCLUDED_MODELS. This is a COMMITTED declaration
-# on purpose: the first version of the accountability check below inferred "in flight" from the
-# presence of bench/results/<key>.batchstate.json, which is gitignored, so it passed locally and
-# could never pass in CI. A guard that depends on untracked state is a guard that lies.
+# Legs whose generation is in progress. A model is listed here only while a run is under way,
+# and is then moved to a benchmark leg or to EXCLUDED_MODELS. It is a committed declaration,
+# not inferred from bench/results/<key>.batchstate.json, which is gitignored and so absent in CI.
 IN_FLIGHT_MODELS: dict[str, str] = {}
 
 N_ITERATIONS = int(os.environ.get("BENCH_ITERATIONS", "3"))

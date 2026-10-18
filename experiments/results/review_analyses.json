@@ -1,5 +1,5 @@
 {
- "note": "Analyses added for the camera-ready (LP4FM reviewer requests), from released artifacts.",
+ "note": "Supplementary analyses of the prompt-ceiling benchmark, computed from the released artifacts.",
  "human_spread": {
   "n": 200,
   "median": -0.414,

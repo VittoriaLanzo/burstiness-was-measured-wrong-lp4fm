@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# LP4FM workshop clone build (NeurIPS 2026): compile the assembled main.tex.
-# This pack ships a single assembled file. Requires tectonic.
+# Build the LP4FM workshop paper (NeurIPS 2026): compile the single assembled main.tex.
+# Requires tectonic.
 set -euo pipefail
 cd "$(dirname "$0")"
 

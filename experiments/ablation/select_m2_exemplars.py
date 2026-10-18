@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Select and freeze the 3 few-shot (M2) exemplars for the prompt-ceiling bench.
+"""Select and freeze the 3 few-shot exemplars for the prompt-ceiling bench.
 
-The exemplars teach RHYTHM, not content: they must be clean human news REPORTS (not
+The exemplars teach rhythm, not content: they are clean human news reports (not
 interviews / opinion / photo galleries) that are
   (1) disjoint from the 200 reference headlines (never in the target set),
-  (2) representative human rhythm -- nearest the MEDIAN B_n of the pool (B_n is used only to
-      exclude degenerate tails, NEVER to select high, so selection does not leak the axis we
-      measure -- picking exemplars by their burstiness would bias the few-shot condition), and
-  (3) topically dissimilar from every target AND from each other, so no content leaks.
+  (2) representative of human rhythm: nearest the median B_n of the pool (B_n is used only to
+      exclude degenerate tails, never to select high, so selection does not leak the measured
+      axis into the few-shot condition), and
+  (3) topically dissimilar from every target and from each other, so no content leaks.
 
 Method basis: few-shot / in-context learning (Brown 2020, arXiv:2005.14165) and demonstration
 format/selection (Min 2022, arXiv:2202.12837); the no-metric-leak rule (median-centered, not
-burstiness-selected) is the key adaptation.
+burstiness-selected) is the adaptation.
 
-Reuses the Wikinews cleaner + length filter from build_ablation_corpus; scores B_n with
+Reuses the Wikinews cleaner and length filter from build_ablation_corpus; scores B_n with
 burstiness_pp; checks topical overlap with TF-IDF cosine over headlines (sklearn).
-gaming_flags is NOT used to gate here -- it is a generated-text guard and is false-positive
-prone on human prose (it is only counted, as a calibration signal). The scored pool is cached
-(gitignored) so re-tuning needs no re-download. Writes the frozen triple + provenance to
-bench/m2_exemplars.json, which prompts.py loads.
+gaming_flags does not gate here: it is a generated-text guard and is false-positive prone on
+human prose, so it is only counted, as a calibration signal. The scored pool is cached
+(gitignored) so re-picking needs no re-download. Writes the frozen triple and its provenance
+to bench/m2_exemplars.json, which prompts.py loads.
 
     python -m experiments.ablation.select_m2_exemplars           # full: download, score, pick
     python -m experiments.ablation.select_m2_exemplars --repick  # re-pick from the cache only
@@ -67,7 +67,7 @@ def load_targets():
 def build_pool(exclude_headlines):
     """Eligible disjoint straight-report Wikinews articles, scored by B_n.
 
-    gaming_flags is counted (human false-positive signal) but NOT used to exclude.
+    gaming_flags is counted (human false-positive signal) but not used to exclude.
     """
     df = bac.load_pool()
     pool, errors, special, flagged = [], 0, 0, 0
@@ -124,7 +124,7 @@ def pick_three(pool, targets, threshold=LEAK_THRESHOLD):
     """3 representative, leakage-clean, mutually-distinct straight reports near the band center."""
     bns = sorted(c["B_n"] for c in pool)
     lo, hi = _quantile(bns, PCTILE_LO), _quantile(bns, PCTILE_HI)
-    center = _quantile(bns, 0.50)  # the MEDIAN: representative exemplars, never selected for high B_n
+    center = _quantile(bns, 0.50)  # the median: representative exemplars, never selected for high B_n
     band = [c for c in pool if lo <= c["B_n"] <= hi]
     sims = leakage_scores([c["headline"] for c in band], [t["headline"] for t in targets])
     clean_band = [c for c, s in zip(band, sims) if s < threshold]

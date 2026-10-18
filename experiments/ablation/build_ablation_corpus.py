@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""Reproducible builder for the era-controlled Wikinews human-vs-AI ablation corpus.
+"""Builder for the era-controlled Wikinews human-vs-AI ablation corpus.
 
-Pairs with `clean_wikinews.py` (the wikitext -> prose cleaner): this script selects
-which articles enter the corpus and validates reproduction. One source of truth, two jobs:
+Pairs with `clean_wikinews.py` (the wikitext -> prose cleaner): this script selects which
+articles enter the corpus and validates reproduction. Two jobs:
 
-  --validate  Regenerate the human side of the EXISTING pairs from the public source and
-              assert byte-for-byte reproduction (a 100/100 regression guard). Proves the
-              committed cleaner is the one that built the frozen corpus.
-  --select    Select a NEW, disjoint batch of human articles with the SAME method, for
-              expanding the benchmark (for example 100 -> 200). Emits the human side plus
-              a fairness report; the AI side is generated separately (step 2).
+  --validate  Regenerate the human side of the existing pairs from the public source and
+              assert byte-for-byte reproduction (a 100/100 regression check that the
+              committed cleaner is the one that built the frozen corpus).
+  --select    Select a new, disjoint batch of human articles with the same method, for
+              expanding the corpus (for example 100 -> 200). Emits the human side plus a
+              fairness report; the AI side is generated separately.
 
-Selection method (recovered from the dataset card, validated against the frozen 100):
+Selection method:
   * Source: malteos/wikinews, English config, raw wikitext (`raw_text`).
-  * Window: article dated 2016-2021 (confidently pre-model).
-  * Clean to plain prose via `clean_wikinews.clean`; filter ONLY by length and format,
-    never by style: keep 120..500 words AND >= 10 sentences.
+  * Window: article dated 2016-2021 (pre-model).
+  * Clean to plain prose via `clean_wikinews.clean`; filter only by length and format,
+    never by style: keep 120..500 words and >= 10 sentences.
   * Stratify evenly across the six years (100 -> 17/17/17/17/16/16).
   * Word count is whitespace-split; sentence count splits on [.!?] followed by whitespace
     (both rules reproduce the frozen human_words / human_n_sentences 100/100).
@@ -195,7 +195,7 @@ def _write_outputs(selected, cands, n, seed):
 
 
 def _fairness_report(selected, cands):
-    """Prove the selection is not drawn from the length tail: compare the selected
+    """Check that the selection is not drawn from the length tail: compare the selected
     word-count distribution against the full eligible pool and report percentile spread."""
     pool_w = sorted(c["human_words"] for c in cands)
     sel_w = sorted(c["human_words"] for c in selected)

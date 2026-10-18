@@ -38,7 +38,7 @@
   "scoring": {
     "script": "experiments/ablation/seed_avg_paired.py",
     "test": "one paired Wilcoxon signed-rank per (mode, metric) over 200 seed-averaged headline pairs, delta = human - model",
-    "metric_revision": "post-R1-5 quote-normalized metric; input normalized per R1-6"
+    "metric_revision": "quote-normalized metric; scoring input normalized (normalize_generation.py)"
   },
   "generation": {
     "driver": "bench/run.py --workers 24",
@@ -47,10 +47,10 @@
   },
   "run_date": "2026-07-07",
   "cost_usd": "6.61",
-  "provenance": "Generated via the xAI API by the bench session; scored locally against the frozen human baseline; compiled eval carried into the code repo as SSOT.",
+  "provenance": "Generated via the xAI API; scored against the frozen human baseline; the compiled eval is the file in this directory.",
   "normalization": {
     "script": "experiments/ablation/normalize_generation.py",
-    "why": "generation hygiene flagged 47% markdown, title lines (formatting the plain-prose human baseline lacks); remark R1-6. Scoring input = normalized text (echoed headline block dropped, markdown unwrapped, all prose preserved).",
-    "raw_text_scoring": "archived: the pre-normalization eval (post-R1-5 metric) remains on the HF dataset for transparency."
+    "why": "generation hygiene flagged 47% markdown, title lines (formatting the plain-prose human baseline lacks). Scoring input = normalized text (echoed headline block dropped, markdown unwrapped, all prose preserved).",
+    "raw_text_scoring": "the pre-normalization eval remains on the dataset."
   }
 }

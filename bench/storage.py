@@ -3,7 +3,7 @@
 One JSONL file per model under results/. Each line is one generation cell, keyed by
 (prompt_id, iteration) where prompt_id = <mode>__s<brief_id>. Successful cells are flushed
 (and fsync'd) immediately, so a crash or a model timing out never loses earlier outputs and a
-re-run resumes by skipping cells already on disk. Failures are NOT written, so they are simply
+re-run resumes by skipping cells already on disk. Failures are not written, so they are simply
 retried on the next run.
 
 The (mode x model x brief x iteration) array is reconstructed by reading these files back;

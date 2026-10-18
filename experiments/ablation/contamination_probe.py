@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""Contamination / memorization probe for the prompt-ceiling benchmark (remark R1-4).
+"""Contamination / memorization probe for the prompt-ceiling benchmark.
 
-The paper's Limitations concede the human Wikinews articles may sit in each
-generator's training data, and "to the extent the model reproduces memorized
-phrasing, the measured authorship gap would shrink"; the parity results are
-"open to a memorization account we cannot exclude." This probe bounds that
-account with a measurement instead of a concession.
+The human Wikinews articles may sit in each generator's training data; to the
+extent a model reproduces memorized phrasing, the measured authorship gap would
+shrink. This probe bounds that account with a measurement.
 
-Method (word-level n-gram overlap, the standard memorization screen):
+Method (word-level n-gram overlap):
   For every generation, compute the fraction of its n-grams that appear in
-  (a) its PAIRED human article (matched overlap: memorization + topical overlap)
-  (b) a fixed MISMATCHED article, id (i+101) mod 200 (topical-register baseline)
+  (a) its paired human article (matched overlap: memorization + topical overlap)
+  (b) a fixed mismatched article, id (i+101) mod 200 (topical-register baseline)
 Memorization would show as matched >> mismatched, or as individual generations
 with runaway matched overlap. Headline-driven topical overlap (names, places)
 inflates both sides equally at small n, which is why the mismatched baseline
-and the long-n (13-gram, the GPT-3-era screen) numbers matter most.
+and the long-n (13-gram) numbers carry the most weight.
 
 Reads bench-format JSONL (control mode by default: the uninstructed condition
 is where memorized phrasing would surface most directly). Stdlib only.
@@ -98,7 +96,7 @@ def main() -> int:
     human = {str(r["id"]): r["human_text"] for r in
              (json.loads(l) for l in a.human.open(encoding="utf-8") if l.strip())}
     result = {"mode": a.mode, "ngram_sizes": list(NGRAM_SIZES), "models": {},
-              "note": ("R1-4 memorization bound. matched = generation vs its paired human "
+              "note": ("Memorization bound. matched = generation vs its paired human "
                        "article; mismatched = vs a fixed other article (topical-register "
                        "baseline). Memorization shows as matched >> mismatched or runaway "
                        "per-generation maxima, especially at 13-grams.")}

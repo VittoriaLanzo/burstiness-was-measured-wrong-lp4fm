@@ -32,7 +32,7 @@
   },
   "normalization": {
     "script": "experiments/ablation/normalize_generation.py",
-    "why": "generation hygiene flagged 72% markdown and 100% title lines (formatting the plain-prose human baseline lacks; guard: experiments/ablation/generation_hygiene.py). Uniform R1-6 protocol: every leg is normalized before scoring.",
+    "why": "generation hygiene flagged 72% markdown and 100% title lines (formatting the plain-prose human baseline lacks; guard: experiments/ablation/generation_hygiene.py). Every leg is normalized before scoring.",
     "effect": "scored on normalized text; raw scoring archived beside the normalized eval on the HF dataset."
   },
   "released_artifacts": {
@@ -44,16 +44,14 @@
   },
   "scoring": {
     "script": "experiments/ablation/seed_avg_paired.py",
-    "metric_revision": "post-R1-5 (typographic-quote-normalized segmentation entropy, PR #21)",
+    "metric_revision": "typographic-quote-normalized segmentation entropy",
     "test": "one paired Wilcoxon signed-rank per (mode, metric) over 200 seed-averaged headline pairs, delta = human - model"
   },
   "generation": {
-    "driver": "bench/run.py (google provider, thinking_level=high, max_tokens 16000, checkpoint-resumable JSONL)",
-    "repo_ref": "bench/grok45-gemini-legs branch"
+    "driver": "bench/run.py (google provider, thinking_level=high, max_tokens 16000, checkpoint-resumable JSONL)"
   },
   "run_date": "2026-07-10",
   "duration": "~3h API run (8 workers), single-cell resume for 1 transient error",
-  "cost_usd": "$26.17 visible from telemetry: 2,260,446 in @ $2/M + 1,804,284 candidates-out @ $12/M; thought tokens (thinking_level=high) billed but not itemized by the harness (known telemetry gap, fix queued: record thoughts_token_count)",
-  "headline_finding": "Textbook headline pattern at frontier scale: human text far burstier in control (B_n +0.128, rb +0.85, p~0), instruction narrows the gap (+0.071) but does not close it (still p~0). Strongest control-mode dispersion gap of any family measured.",
-  "provenance": "Generated via the Gemini API against pinned prompts; hygiene-gated, normalized (R1-6 uniform protocol), and scored locally against the frozen human baseline on the post-R1-5 metric; compiled eval carried into the repo as SSOT."
+  "cost_usd": "$26.17 from telemetry: 2,260,446 input tokens at $2/M + 1,804,284 output tokens at $12/M; thought tokens (thinking_level=high) were billed but not recorded by the harness, so this is a floor.",
+  "provenance": "Generated via the Gemini API against pinned prompts; normalized and scored against the frozen human baseline; the compiled eval is the file in this directory."
 }

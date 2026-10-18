@@ -3,8 +3,10 @@
 
 Drops the leading markdown/title headline block (the brief's echoed headline;
 the human_text carries no headline line) and strips markdown syntax while
-preserving every word of article prose. Quote style is left alone: the locked
-metric normalizes typographic quotes itself (R1-5)."""
+preserving every word of article prose. Quote style is left alone: the metric
+normalizes typographic quotes itself.
+
+    python normalize_generation.py SRC.jsonl DST.jsonl"""
 import json, re, sys
 
 MD_INLINE = re.compile(r"\*\*|__|`|\[([^\]]+)\]\([^)]+\)")

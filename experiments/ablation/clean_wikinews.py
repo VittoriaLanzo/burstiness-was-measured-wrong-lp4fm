@@ -3,9 +3,9 @@
 
 This is the corpus-construction step for the era-controlled ablation (see README):
 `clean(raw) -> str` reproduces the human side of `burstiness_pairs.jsonl` from the
-raw wikitext, so the human corpus is regenerable rather than opaque. It is a real
-MediaWiki AST parse (mwparserfromhell) with custom node handlers, verified to match
-the shipped bodies exactly (100/100 on the held-out reconstruction harness).
+raw wikitext, so the human corpus is regenerable. It is a MediaWiki AST parse
+(mwparserfromhell) with custom node handlers; `build_ablation_corpus.py --validate`
+checks that it matches the shipped bodies exactly (100/100).
 
 Requires: mwparserfromhell  (`pip install mwparserfromhell`)
 
@@ -13,16 +13,16 @@ Usage:
     python -m experiments.ablation.clean_wikinews < raw.txt   # clean one article on stdin
     python -m experiments.ablation.clean_wikinews --selftest   # run the built-in checks
 
-Rules reverse-engineered from the corpus:
+Rules:
 - keep body only: drop everything from the first section heading OR the first
   {{haveyoursay}} terminator onward (note: {{HYS}} is NOT a terminator).
-- {{w|A|B}} -> B, {{w|A}} -> A  (take the LAST pipe segment; matches quirks like
+- {{w|A|B}} -> B, {{w|A}} -> A  (take the last pipe segment; matches quirks like
   {{w|X|foreign=suppress}} -> "foreign=suppress" and {{w|X|anchor=J|J}} -> "J").
 - every other template -> removed.
 - [[File:/Image:/Category:/CAT:/Media: ...]] -> removed; [[A|B]] -> B, [[A]] -> A (strip w:).
 - <ref>...</ref> -> removed (with contents); '''/'' -> unwrapped (no space);
   ---- kept literally; every other HTML tag -> replaced by a space (so 8<sup>th</sup> -> "8 th").
-- {|...|} tables are KEPT (mangled): raw markup passes through, pipes are stripped.
+- {|...|} tables are kept (mangled): raw markup passes through, pipes are stripped.
 - <!--comments--> removed; html.unescape; drop leading *#:; list markers.
 - collapse "<ws>" (adjacent double-quotes) to nothing; strip whitespace before . , ; : !
 - mojibake (e.g. Su<0xEF><0xBF><0xBD>rez) is preserved, not re-decoded.

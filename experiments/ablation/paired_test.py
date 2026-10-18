@@ -2,13 +2,15 @@
 """Paired (matched-headline) human-vs-AI test on burstiness_pairs.jsonl.
 
 Per dimension: paired delta = metric(human) - metric(ai); Wilcoxon signed-rank
-(normal approx, tie-corrected), sign test, paired dz, median delta + bootstrap CI.
-The matched design (same headline/era/register, vary only authorship) is the most
-powerful version of the ablation. Model-free; M bias-corrected.
+(normal approximation, tie-corrected), sign test, paired dz, median delta with a
+seeded 2,000-resample bootstrap CI. The matched design (same headline/era/register,
+only authorship varies) is the most powerful version of the ablation. Model-free;
+M is bias-corrected by adding 1/(n-1).
 
-Reproduces the paired ablation table (paper sec:ablation, tab:wikinews-paired).
-The corpus is the private HF dataset ANONYMIZED-ablation-corpus; point at it with
-BURST_PAIRS=/path/to/burstiness_pairs.jsonl or drop it in ./data/.
+metrics() and wilcoxon() are also the scorer used by seed_avg_paired.py and
+review_analyses.py. The corpus is the private HF dataset ANONYMIZED-ablation-corpus;
+point at it with BURST_PAIRS=/path/to/burstiness_pairs.jsonl or place it in ./data/.
+Writes paired_test_results.json next to the corpus.
 """
 from __future__ import annotations
 import json, math, os, random, statistics as st, sys

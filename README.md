@@ -47,8 +47,13 @@ scripts run from this directory as the working root.
 - experiments/ablation/prompt_paraphrase.py: the instruction-wording robustness
   probe (Limitations).
 - experiments/ablation/rescore_all.py: rescores every leg raw and normalized.
-- paper/gen_bench_table.py: regenerates Table 1 and the figure fragments from the
-  released evals; no hand-transcribed values.
+- experiments/ablation/review_analyses.py: the supplementary analyses (human B_n
+  spread, mode contrasts, raw-variance baseline, guard rates, ten-sentence floor,
+  lengths) behind the appendix tables; writes experiments/results/review_analyses.json.
+- experiments/test_segmenter.py: regression tests for the sentence segmenter.
+- paper/gen_bench_table.py: regenerates Table 1, the per-family grids, the appendix
+  tables and every number macro (paper/lp4fm/generated/) from the released evals; no
+  hand-transcribed values.
 
 ## Data
 
@@ -62,8 +67,9 @@ scripts run from this directory as the working root.
   equivalence margins; regenerable for any family from seed_avg_paired.json via
   equivalence_test.py.
 - experiments/results/benchmark/qwen3.6-27b/seed_avg_paired.raw-archive.json: the
-  audited leg scored under the raw protocol (Section 4.2 reversal).
+  audited leg scored under the raw protocol (Section 4.2).
 - experiments/results/paraphrase_robustness/: the DeepSeek paraphrase probe evals.
+- experiments/results/review_analyses.json: the supplementary analyses output.
 - experiments/results/contamination_probe.json: the n-gram probe output.
 - hf-datasets.zip: mirror of the HuggingFace datasets the pipeline consumes,
   masked ids restored by path. Contains the frozen human baseline

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Analyses added for the camera-ready (LP4FM reviewer requests), from released artifacts.
+"""Supplementary analyses of the prompt-ceiling benchmark, computed from the released artifacts.
 
 Every quantity is computed with the canonical scorer's own pieces (paired_test.metrics /
 wilcoxon, seeded bootstrap of 2,000 resamples), on the same uniformly normalized
@@ -146,7 +146,7 @@ def main() -> int:
         bn = _seed_avg(rows, lambda t: (metrics(t) or {}).get("B_n"))
         out["mode_contrasts_B_n"][mid] = {
             f"{x}-{y}": _paired([bn[x][k] - bn[y][k] for k in sorted(set(bn[x]) & set(bn[y]))], rng)
-            for x, y in CONTRASTS}   # positive: mode x MORE dispersed than mode y
+            for x, y in CONTRASTS}   # positive: mode x more dispersed than mode y
         va = _seed_avg(rows, _var_L)
         out["variance_baseline"]["legs"][mid] = {
             m: _paired([hv[k] - va[m][k] for k in va[m] if hv.get(k) is not None], rng) for m in MODES}

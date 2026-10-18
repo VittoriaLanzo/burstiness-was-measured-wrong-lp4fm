@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Generation hygiene guard: flag formatting that makes a model's text incomparable to the
-straight-quote, markdown-free human news baseline BEFORE it corrupts a metric.
+Generation hygiene audit: report formatting in a model's raw generations that the
+straight-quote, markdown-free human news baseline does not contain.
 
-The seg_entropy "API-vs-open-weights split" (remark R1-5) was a text-hygiene failure: the API
-models emitted smart quotes the metric silently dropped. The audit also found title-lines
-(23-38% of API control docs) and markdown (up to 47% of Grok) that the human Wikinews baseline
-does not contain. B_n/Gini proved robust to those (0.005-0.03 shift), but the inconsistency is a
-methodological hole. This module makes the hole visible: run it on every new model leg.
+Three detectors, applied to control-mode generations: typographic (smart) quotes, markdown
+syntax, and a leading title line. Smart quotes are invisible to the segmentation-entropy
+regex, which counts straight quotes only, and title lines and markdown scaffolding add
+pseudo-sentences and symbols the article prose does not have; the metric normalizes quote
+style itself, and normalize_generation.py strips the markdown and title block before scoring.
+A model whose rate on any detector exceeds --warn-rate is flagged.
 
-Pure stdlib. Detector functions are unit-tested (tests/test_generation_hygiene.py); the CLI
-reports per-model rates from the raw generations (bench/results/*.jsonl, local).
+Pure stdlib. The CLI reports per-model rates from the raw generations (bench/results/*.jsonl).
 
 Run:
     python3 experiments/ablation/generation_hygiene.py

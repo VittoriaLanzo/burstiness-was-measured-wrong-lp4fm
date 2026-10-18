@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for the R1-4 contamination probe (offline, synthetic texts)."""
+"""Tests for the contamination probe (offline, synthetic texts)."""
 from __future__ import annotations
 
 import unittest

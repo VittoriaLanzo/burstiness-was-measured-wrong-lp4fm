@@ -333,7 +333,7 @@ def main() -> int:
     else:
         old = None
         for k in ("segfix.moved", "segfix.moved.w", "segfix.shift.min", "segfix.shift.max"):
-            v.put(k, "??")   # filled by the nine-leg re-score (revision/finish.sh archives the pre-fix SSOTs)
+            v.put(k, "??")   # placeholders until every family has a seed_avg_paired.pre-segfix.json
         print("WARNING: no pre-segfix SSOTs; segfix macros are placeholders")
 
     # --- write ----------------------------------------------------------------------------

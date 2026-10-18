@@ -28,11 +28,11 @@
     "seeds": 3,
     "cells_total": 3000,
     "cells_completed": 3000,
-    "excluded": "25 explicit content-filter refusals (HTTP 400 'high risk', recorded as empty cells): s167 Hong Kong protests categorically (15 = every mode x seed), plus intermittent refusals on the same cluster Zhipu silently drops - s139 China term limits (3), s163 Carrie Lam (2), s166 Thunberg (2) - and 3 one-off cells (s1, s38, s132). Excluded by the seed-averaging protocol; see knowledge/PROVIDER-REFUSAL-AUDIT.md."
+    "excluded": "25 explicit content-filter refusals (HTTP 400 'high risk', recorded as empty cells): s167 Hong Kong protests categorically (15 = every mode x seed), plus intermittent refusals on the same cluster Zhipu silently drops - s139 China term limits (3), s163 Carrie Lam (2), s166 Thunberg (2) - and 3 one-off cells (s1, s38, s132). Excluded by the seed-averaging protocol."
   },
   "normalization": {
     "script": "experiments/ablation/normalize_generation.py",
-    "why": "hygiene guard: ~83% markdown / 93% title lines vs the plain-prose human baseline. Uniform R1-6 protocol.",
+    "why": "hygiene guard: ~83% markdown / 93% title lines vs the plain-prose human baseline. Every leg is normalized before scoring.",
     "effect": "scored on normalized text; raw scoring archived on the HF dataset."
   },
   "released_artifacts": {
@@ -44,16 +44,14 @@
   },
   "scoring": {
     "script": "experiments/ablation/seed_avg_paired.py",
-    "metric_revision": "post-R1-5 (typographic-quote-normalized segmentation entropy, PR #21)",
+    "metric_revision": "typographic-quote-normalized segmentation entropy",
     "test": "one paired Wilcoxon signed-rank per (mode, metric) over 200 seed-averaged headline pairs, delta = human - model"
   },
   "generation": {
-    "driver": "bench/run.py (openai_compat provider, api.moonshot.ai/v1, max_completion_tokens 16000, checkpoint-resumable JSONL; content-filter refusals recorded per the 2026-07-11 harness patch)",
-    "repo_ref": "tier1/science-sweep branch"
+    "driver": "bench/run.py (openai_compat provider, api.moonshot.ai/v1, max_completion_tokens 16000, checkpoint-resumable JSONL; content-filter refusals recorded as empty cells)"
   },
   "run_date": "2026-07-11",
-  "duration": "~12h wall across 2 balance exhaustions, 2 machine-sleep interruptions and heavy provider throttling; checkpoint-resumed losslessly each time",
-  "cost_usd": "$63.79 console-verified actual (account-lifetime consumption; account created during this project, so the console's '2026-06-30' bill row is a billing-bucket artifact, not prior spend - arithmetic: $60 recharged + $5 voucher - $1.21 balance). 2.24M in / 15.15M out; self_refine tail dominated. Most expensive leg of the benchmark.",
-  "headline_finding": "Second family to reach B_n parity under a plain instruction, landing dead on zero (delta -0.006, rb -0.00, p=0.96) from a large control gap (+0.095, rb +0.69). self_refine overshoots hard (rb ~ -0.5): within one model, different prompting modes land on opposite sides of the human distribution - the aim-scatter law inside a single family.",
-  "provenance": "Generated via the Moonshot API against pinned prompts; hygiene-gated, normalized (R1-6 uniform protocol), and scored locally against the frozen human baseline on the post-R1-5 metric."
+  "duration": "~12h wall (two balance exhaustions, two interruptions, heavy provider throttling; checkpoint-resumed)",
+  "cost_usd": "$63.79 (console total for an account used only for this leg): 2.24M input, 15.15M output tokens; self_refine dominates.",
+  "provenance": "Generated via the Moonshot API against pinned prompts; normalized and scored against the frozen human baseline."
 }

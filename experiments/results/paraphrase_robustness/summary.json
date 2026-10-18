@@ -1,5 +1,5 @@
 {
-  "design": "R1-3: 3 independent metric-free paraphrases of the instruction VOICE/TAIL (experiments/ablation/prompt_paraphrase.py), deepseek-v4, 200 briefs, 1 seed each, R1-6 normalized, scored with the canonical paired machinery",
+  "design": "Three independent paraphrases of the instruction VOICE/TAIL (experiments/ablation/prompt_paraphrase.py), deepseek-v4, 200 briefs, 1 seed each, normalized, scored with the canonical paired machinery",
   "B_n_instruction_delta_by_wording": {
     "canonical_3seed": {
       "delta": 0.0,
@@ -22,6 +22,6 @@
       "p": 0.2
     }
   },
-  "reading": "The mode-level conclusion is robust to wording: every paraphrase lands deepseek instruction at parity-or-beyond on B_n. The landing POINT is not: all three paraphrases cluster at -0.026..-0.030 (one significant), ~0.03 from the canonical wording's +0.000, comparable to the size of many reported mode effects. Mode ordering claims should carry a wording-sensitivity bound; the aim wobble is the same phenomenon as the cross-model scatter.",
-  "caveats": "paraphrase legs are 1-seed (canonical is 3-seed seed-averaged); one model family"
+  "reading": "Every paraphrase lands DeepSeek instruction at or past the human level on B_n (medians -0.026 to -0.030, one significant), against the canonical wording's 0.000; the landing point moves by about 0.03 with wording.",
+  "caveats": "paraphrase legs are 1-sample (canonical is 3-sample seed-averaged); one model"
 }

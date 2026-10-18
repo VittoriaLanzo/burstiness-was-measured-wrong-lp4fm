@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
 """
-Re-score helper: regenerate every model's seed_avg_paired SSOT with the fixed metric.
+Re-score helper: regenerate every model's committed seed_avg_paired.json with the current metric.
 
-After the R1-5 quote-normalization fix in experiments/burstiness_pp.py, the committed
-per-model SSOTs (scored with the old metric) are stale for any model whose generations used
-smart quotes (DeepSeek, Grok). This driver re-runs the CANONICAL scorer
-(experiments/ablation/seed_avg_paired.py, unchanged) for each model against the frozen human
-baseline and writes the corrected SSOT into experiments/results/benchmark/<model_id>/, so the
-numbers are apples-to-apples and traceable.
+Runs the canonical scorer (experiments/ablation/seed_avg_paired.py, as a subprocess, no
+reimplementation) for each model against the frozen human baseline and writes the result to
+experiments/results/benchmark/<model_id>/seed_avg_paired.json. Prints the before/after
+control-mode seg_entropy delta per model, so the effect of a metric change is visible.
 
-Reuses the canonical scorer verbatim (no reimplementation) and prints a before/after
-seg_entropy control delta per model so the effect of the fix is visible.
-
-One author runs this (they have the human baseline + all raw generations). It needs:
+It needs:
   - the human baseline JSONL (ANONYMIZED/paper-dataset :: prompts_200_human.jsonl)
-  - each model's raw generations JSONL (bench/results/*.jsonl locally, or from each HF dataset)
+  - each model's generations JSONL (bench/results/*.jsonl locally, or from each HF dataset)
 
 Run:
     python3 experiments/ablation/rescore_all.py --human path/to/prompts_200_human.jsonl \\
@@ -68,7 +63,7 @@ def main() -> int:
     args = ap.parse_args()
     if not args.human.exists():
         raise SystemExit(f"human baseline not found: {args.human}")
-    print("Re-scoring with the quote-normalized metric (fix R1-5):")
+    print("Re-scoring with the quote-normalized metric:")
     for spec in args.models:
         if "=" not in spec:
             raise SystemExit(f"bad model spec {spec!r}; use model_id=path.jsonl")

@@ -16,7 +16,7 @@ where
     kurt(L)      = excess kurtosis of sentence length  -- tail / burst behavior
     fluc(S)      = surprisal fluctuation across the doc (DivEye-style, 2509.18880)
     punct_entropy= Shannon entropy of the punctuation / segmentation pattern
-                   (Q7 timing-free proxy; see Onegin symbolic time-series 2604.20221)
+                   (timing-free proxy; see Onegin symbolic time-series 2604.20221)
 
 Human writing has rhythm: sentence length and complexity vary in bursts.
 LLM text is rhythmically flat ("average prosody" for text). var(L), kurt(L)
@@ -57,14 +57,14 @@ _ABBREVIATIONS = {
 # followed by closing quotes/brackets, then whitespace before the next char.
 _SENT_SPLIT = re.compile(r'([.!?]+["\')\]]?)\s+')
 
-# Symbols counted for the punctuation/segmentation entropy (Q7 proxy).
+# Symbols counted for the punctuation/segmentation entropy.
 _PUNCT_SYMBOLS = re.compile(r'[.!?,;:\-—()"\']')
 
-# Typographic quotes are mapped to ASCII BEFORE segmentation. The split pattern's
-# closing-quote class is ASCII-only, so without this a sentence ending in a curly
-# closing quote (.” followed by a space) is never split and merges with the next
-# sentence. The human baseline uses straight closing quotes while several API models
-# emit curly ones, so the unmapped segmenter merged sentences on the model side only.
+# Typographic quotes are mapped to ASCII before segmentation. The split pattern's
+# closing-quote class is ASCII-only, so without the mapping a sentence ending in a curly
+# closing quote (.” followed by a space) is not split from the next one. The human
+# baseline uses straight quotes while several API models emit curly ones, so the mapping
+# keeps segmentation identical on both sides.
 _TYPO_QUOTES = str.maketrans({"\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'"})
 
 
@@ -146,21 +146,21 @@ def kurt_L(lengths: List[int]) -> float:
 
 
 def fluc_S_proxy(lengths: List[int]) -> float:
-    """MODEL-FREE proxy for DivEye-style surprisal fluctuation fluc(S).
+    """Model-free proxy for DivEye-style surprisal fluctuation fluc(S).
 
-    The real fluc(S) (DivEye, arXiv:2509.18880) is the
-    fluctuation of per-token surprisal (negative log-prob) across the document,
-    and REQUIRES a language model. This harness is stdlib-only, so we compute a
-    proxy from the rhythm signal we already have: the standard deviation of the
-    first-differences of sentence length, normalized by mean sentence length.
+    The real fluc(S) (DivEye, arXiv:2509.18880) is the fluctuation of per-token
+    surprisal (negative log-prob) across the document, and requires a language
+    model. This module is stdlib-only, so the proxy is computed from the rhythm
+    signal already available: the standard deviation of the first-differences of
+    sentence length, normalized by mean sentence length.
 
         d_i = L_{i+1} - L_i      (how much the rhythm jumps between sentences)
         fluc_S_proxy = stdev(d) / mean(L)
 
-    This is "how violently does the local rhythm change", which is the same
-    intuition surprisal fluctuation captures one level down at the token scale.
-    It is a PROXY -- see the module docstring. Returns 0.0 with fewer than two
-    sentences (no first-difference is defined).
+    This measures how much the local rhythm changes, the same intuition surprisal
+    fluctuation captures at the token scale. It is a proxy (see the module
+    docstring). Returns 0.0 with fewer than two sentences (no first-difference is
+    defined).
     """
     if len(lengths) < 2:
         return 0.0
@@ -223,10 +223,10 @@ def burstiness_vector(text: str, surprisal_fn=None) -> dict:
         }
 
     The ``var_L`` / ``kurt_L`` / ``fluc_S`` / ``punct_entropy`` keys are the
-    operational burstiness vector B = [var(L), kurt(L), fluc(S), punct_entropy]
-    from the design doc. The quality gate (2504.12522) is applied OUTSIDE this
-    function: B is only counted for a generation that has already passed a
-    coherence threshold, so high-variance gibberish never wins.
+    raw-moment burstiness vector B = [var(L), kurt(L), fluc(S), punct_entropy].
+    The quality gate (2504.12522) is applied outside this function: B is only
+    counted for a generation that has already passed a coherence threshold, so
+    high-variance gibberish never wins.
 
     ``surprisal_fn``: optional callable ``str -> float`` returning the real
     DivEye-style surprisal fluctuation of the document. When given, ``fluc_S``
