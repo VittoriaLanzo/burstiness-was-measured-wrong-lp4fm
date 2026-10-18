@@ -2,7 +2,7 @@
 \begin{table}[htbp]
 \centering
 \small
-\caption{Qwen3.6-27B, full grid ($n=200$ headlines). Seed-averaged Wilcoxon signed-rank paired tests over the matched headlines; median $\Delta =$ human $-$ model, so positive means the model sits \emph{below} the human article on that dimension. Matched rank-biserial in parentheses; $^{*}p<0.05$, $^{**}p<0.01$ (per cell, two-sided). Within-family census: $13$ of $20$ cells per-cell significant; $12$ survive Benjamini--Hochberg at $q=0.05$ and $12$ survive Holm (lost under Benjamini--Hochberg: instruction Memory $M$).}
+\caption{Qwen3.6-27B, full grid ($n=200$ headlines). Seed-averaged Wilcoxon signed-rank paired tests over the matched headlines; median $\Delta =$ human $-$ model, so positive means the model sits \emph{below} the human article on that dimension. Matched rank-biserial in parentheses; $^{*}p<0.05$, $^{**}p<0.01$ (per cell, two-sided). Within-model census: $13$ of $20$ cells per-cell significant; $12$ survive Benjamini--Hochberg at $q=0.05$ and $12$ survive Holm (lost under Benjamini--Hochberg: instruction Memory $M$).}
 \label{tab:promptceiling}
 \begin{tabular}{lcccc}
 \toprule
@@ -20,7 +20,7 @@ Self-refine & $0.039\;(0.26)^{**}$ & $0.021\;(0.24)^{**}$ & $0.029\;(0.10)$ & $0
 \begin{table}[htbp]
 \centering
 \small
-\caption{Gemini 3.1 Pro, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-family census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $13$ survive Holm.}
+\caption{Gemini 3.1 Pro, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $13$ survive Holm.}
 \label{tab:grid-gemini}
 \begin{tabular}{lcccc}
 \toprule
@@ -38,7 +38,7 @@ Self-refine & $0.039\;(0.27)^{**}$ & $0.013\;(0.21)^{**}$ & $-0.051\;(-0.12)$ & 
 \begin{table}[htbp]
 \centering
 \small
-\caption{GLM-5.2, full grid ($n=198$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-family census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $14$ survive Holm. Silent-refusal empty cells are excluded by the seed-averaging protocol (Section~\ref{sec:ninefam}).}
+\caption{GLM-5.2, full grid ($n=198/198/197/197/200 per mode$ headlines, in Table~\ref{tab:ninefam} order). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $14$ survive Holm. Silent-refusal empty cells are excluded by the seed-averaging protocol (Section~\ref{sec:ninefam}).}
 \label{tab:grid-glm}
 \begin{tabular}{lcccc}
 \toprule
@@ -56,7 +56,7 @@ Self-refine & $0.011\;(0.13)$ & $0.002\;(0.09)$ & $0.050\;(0.33)^{**}$ & $-0.019
 \begin{table}[htbp]
 \centering
 \small
-\caption{Claude Opus 4.8, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-family census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $15$ survive Holm. Ran at effort high with a 32{,}000-token cap (Section~\ref{sec:ninefam}).}
+\caption{Claude Opus 4.8, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $15$ survive Holm. Ran at effort high with a 32{,}000-token cap (Section~\ref{sec:ninefam}).}
 \label{tab:grid-opus}
 \begin{tabular}{lcccc}
 \toprule
@@ -74,7 +74,7 @@ Self-refine & $-0.065\;(-0.50)^{**}$ & $-0.043\;(-0.59)^{**}$ & $-0.005\;(0.01)$
 \begin{table}[htbp]
 \centering
 \small
-\caption{Kimi K2.6, full grid ($n=199$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-family census: $12$ of $20$ cells per-cell significant; $10$ survive Benjamini--Hochberg at $q=0.05$ and $9$ survive Holm (lost under Benjamini--Hochberg: plan Memory $M$, control Seg.\ entropy). Provider content-filter refusals are excluded by the seed-averaging protocol (Section~\ref{sec:ninefam}).}
+\caption{Kimi K2.6, full grid ($n=199/199/199/199/198 per mode$ headlines, in Table~\ref{tab:ninefam} order). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $12$ of $20$ cells per-cell significant; $10$ survive Benjamini--Hochberg at $q=0.05$ and $9$ survive Holm (lost under Benjamini--Hochberg: plan Memory $M$, control Seg.\ entropy). Provider content-filter refusals are excluded by the seed-averaging protocol (Section~\ref{sec:ninefam}).}
 \label{tab:grid-kimi}
 \begin{tabular}{lcccc}
 \toprule
@@ -92,7 +92,7 @@ Self-refine & $-0.070\;(-0.57)^{**}$ & $-0.040\;(-0.58)^{**}$ & $0.061\;(0.16)$ 
 \begin{table}[htbp]
 \centering
 \small
-\caption{Gemma 3 27B, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-family census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $16$ survive Holm.}
+\caption{Gemma 3 27B, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $16$ of $20$ cells per-cell significant; $16$ survive Benjamini--Hochberg at $q=0.05$ and $16$ survive Holm.}
 \label{tab:grid-gemma}
 \begin{tabular}{lcccc}
 \toprule
@@ -110,7 +110,7 @@ Self-refine & $0.029\;(0.30)^{**}$ & $0.015\;(0.29)^{**}$ & $0.094\;(0.32)^{**}$
 \begin{table}[htbp]
 \centering
 \small
-\caption{DeepSeek V4 Pro, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-family census: $8$ of $20$ cells per-cell significant; $8$ survive Benjamini--Hochberg at $q=0.05$ and $6$ survive Holm. Ran with a 32{,}000-token cap (Section~\ref{sec:ninefam}).}
+\caption{DeepSeek V4 Pro, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $8$ of $20$ cells per-cell significant; $8$ survive Benjamini--Hochberg at $q=0.05$ and $6$ survive Holm. Ran with a 32{,}000-token cap (Section~\ref{sec:ninefam}).}
 \label{tab:grid-deepseek}
 \begin{tabular}{lcccc}
 \toprule
@@ -128,7 +128,7 @@ Self-refine & $-0.018\;(-0.10)$ & $-0.010\;(-0.11)$ & $-0.139\;(-0.49)^{**}$ & $
 \begin{table}[htbp]
 \centering
 \small
-\caption{Grok 4.3, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-family census: $13$ of $20$ cells per-cell significant; $13$ survive Benjamini--Hochberg at $q=0.05$ and $9$ survive Holm.}
+\caption{Grok 4.3, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $13$ of $20$ cells per-cell significant; $13$ survive Benjamini--Hochberg at $q=0.05$ and $9$ survive Holm.}
 \label{tab:grid-grok43}
 \begin{tabular}{lcccc}
 \toprule
@@ -146,7 +146,7 @@ Self-refine & $0.019\;(0.19)^{*}$ & $0.009\;(0.14)$ & $0.055\;(0.21)^{**}$ & $0.
 \begin{table}[htbp]
 \centering
 \small
-\caption{Grok 4.5, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-family census: $14$ of $20$ cells per-cell significant; $13$ survive Benjamini--Hochberg at $q=0.05$ and $9$ survive Holm (lost under Benjamini--Hochberg: control Gini).}
+\caption{Grok 4.5, full grid ($n=200$ headlines). Design and conventions as in Table~\ref{tab:promptceiling}. Within-model census: $14$ of $20$ cells per-cell significant; $13$ survive Benjamini--Hochberg at $q=0.05$ and $9$ survive Holm (lost under Benjamini--Hochberg: control Gini).}
 \label{tab:grid-grok45}
 \begin{tabular}{lcccc}
 \toprule

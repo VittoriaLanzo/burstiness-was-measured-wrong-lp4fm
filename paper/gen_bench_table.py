@@ -9,6 +9,7 @@ Outputs go to paper/lp4fm/generated/ and main.tex \\input's them:
   tab_contrasts.tex      direct mode-vs-mode paired tests within family
   tab_variance.tex       raw var(L) beside B_n
   tab_audit.tex          segmenter-fix and ten-sentence-floor sensitivity, guard rates, lengths
+  tab_guard.tex          B_n per model and mode, main scoring beside guard-filtered scoring
 
 Nothing is hand-typed: rerun after any re-score and rebuild the paper.
 
@@ -42,7 +43,7 @@ MODES = [("control", "Control"), ("instruction", "Instruction"), ("fewshot", "Fe
 DIMS = [("B_n", "Bn", "$B_n$"), ("gini", "gini", "Gini"), ("seg_entropy", "seg", "Seg.\\ entropy"),
         ("M", "M", "Memory $M$")]
 MARGINS = [0.03, 0.05, 0.08]
-WORDS = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen " \
+WORDS = "none one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen " \
         "sixteen seventeen eighteen nineteen twenty".split()
 TENS = {20: "twenty", 30: "thirty", 40: "forty", 50: "fifty"}
 
@@ -60,6 +61,21 @@ def word(n: int) -> str:
         return WORDS[n]
     t, u = divmod(n, 10)
     return TENS[t * 10] + ("" if u == 0 else "-" + WORDS[u])
+
+
+def of_total(n: int, total: int) -> str:
+    """'every' when all of them, else 'six of eight'."""
+    if n == total == 9:
+        return "every"
+    return f"{word(n)} of {word(total)}"
+
+
+def models_phrase(n: int) -> str:
+    return {0: "no model", 1: "one model"}.get(n, f"{word(n)} models")
+
+
+def join_names(names):
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
 def f3(x):
@@ -103,6 +119,12 @@ class Vals(dict):
         assert key not in self, f"duplicate macro key {key}"
         self[key] = str(v)
 
+    def count(self, key, n):
+        """digits, word, and capitalised word for one count."""
+        self.put(key, n)
+        self.put(f"{key}.w", word(n))
+        self.put(f"{key}.W", word(n).capitalize())
+
     def stat(self, key, e, delta="median_delta_h_minus_ai"):
         d = e[delta]
         self.put(f"{key}.d", f3(d))
@@ -111,8 +133,12 @@ class Vals(dict):
         self.put(f"{key}.p", peq(e["wilcoxon_p"]))
         ci = e.get("median_delta_95ci")
         if ci:
+            m_star = max(abs(ci[0]), abs(ci[1]))
             self.put(f"{key}.ci", f"[{f3(ci[0])}, {f3(ci[1])}]")
-            self.put(f"{key}.mstar", f3(max(abs(ci[0]), abs(ci[1]))))
+            self.put(f"{key}.mstar", f3(m_star))
+            cleared = [m for m in MARGINS if m_star <= m]
+            self.put(f"{key}.eqphrase", f"equivalent at the ${cleared[0]}$ margin" if cleared
+                     else "equivalent at none of the pre-specified margins")
         self.put(f"{key}.n", e["n_pairs"])
 
 
@@ -145,17 +171,39 @@ def main() -> int:
     # --- census over the 45 B_n cells -----------------------------------------------------
     cells = {(m, mode): landing(ssot[m]["dims"]["B_n"][mode]) for m in FAMILIES for mode, _ in MODES}
     for cat in ("flat", "ns", "past"):
-        n = sum(1 for c in cells.values() if c == cat)
-        v.put(f"census.{cat}", n)
-        v.put(f"census.{cat}.w", word(n))
-        v.put(f"census.{cat}.W", word(n).capitalize())
+        v.count(f"census.{cat}", sum(1 for c in cells.values() if c == cat))
     inst = {m: cells[(m, "instruction")] for m in FAMILIES}
     ctrl = {m: cells[(m, "control")] for m in FAMILIES}
     for cat in ("flat", "ns", "past"):
-        v.put(f"inst.{cat}.w", word(sum(1 for c in inst.values() if c == cat)))
-        v.put(f"ctrl.{cat}.w", word(sum(1 for c in ctrl.values() if c == cat)))
+        v.count(f"inst.{cat}", sum(1 for c in inst.values() if c == cat))
+        v.count(f"ctrl.{cat}", sum(1 for c in ctrl.values() if c == cat))
     fs_flat = sum(1 for m in FAMILIES if cells[(m, "fewshot")] == "flat")
     v.put("fewshot.flat.w", word(fs_flat))
+    v.put("fewshot.flat.W", word(fs_flat).capitalize())
+    v.put("sr.past.w", word(sum(1 for m in FAMILIES if cells[(m, "self_refine")] == "past")))
+    ctrl_d = [ssot[m]["dims"]["B_n"]["control"]["median_delta_h_minus_ai"] for m in FAMILIES if ctrl[m] == "flat"]
+    v.put("ctrl.d.min", f3(min(ctrl_d)))
+    v.put("ctrl.d.max", f3(max(ctrl_d)))
+    anypast = [FAMILIES[m][1] for m in FAMILIES if any(cells[(m, mode)] == "past" for mode, _ in MODES)]
+    v.put("anypast.names", join_names(anypast) if anypast else "no model")
+    v.put("anypast.n", len(anypast))
+    npairs = [ssot[m]["dims"]["B_n"][mode]["n_pairs"] for m in FAMILIES for mode, _ in MODES]
+    v.put("npairs.min", min(npairs))
+    v.put("npairs.max", max(npairs))
+    for m, (k, _) in FAMILIES.items():
+        per = [ssot[m]["dims"]["B_n"][mode]["n_pairs"] for mode, _ in MODES]
+        v.put(f"{k}.npairs.min", min(per))
+        v.put(f"{k}.npairs.max", max(per))
+        v.put(f"{k}.npairs.range", f"{min(per)}" if min(per) == max(per) else f"{min(per)}--{max(per)}")
+    short = [FAMILIES[m][1] for m in FAMILIES if min(ssot[m]["dims"]["B_n"][mode]["n_pairs"] for mode, _ in MODES) < 200]
+    v.put("npairs.short.names", join_names(short) if short else "no model")
+    sd_h = review["human_spread"]["sd"]
+    v.put("ctrl.sd.lo", f"{min(ctrl_d) / sd_h:.1f}")
+    v.put("ctrl.sd.hi", f"{max(ctrl_d) / sd_h:.1f}")
+    for mg in MARGINS:
+        n_eq = sum(1 for m in FAMILIES
+                   if max(map(abs, ssot[m]["dims"]["B_n"]["instruction"]["median_delta_95ci"])) <= mg)
+        v.put(f"inst.eq{str(mg)[2:]}.w", word(n_eq))
     rb_top = sum(1 for m in FAMILIES if max(MODES, key=lambda md: ssot[m]["dims"]["B_n"][md[0]]["matched_rank_biserial"])[0] == "fewshot")
     med_top = sum(1 for m in FAMILIES if max(MODES, key=lambda md: ssot[m]["dims"]["B_n"][md[0]]["median_delta_h_minus_ai"])[0] == "fewshot")
     fs_gt_ctrl = sum(1 for m in FAMILIES if ssot[m]["dims"]["B_n"]["fewshot"]["median_delta_h_minus_ai"]
@@ -172,6 +220,17 @@ def main() -> int:
     v.put("sig.lostbh", len(lost))
     v.put("sig.lostbh.w", word(len(lost)))
     v.put("sig.lostbh.onBn", sum(1 for _, t in lost if t["metric"] == "B_n"))
+    v.put("sig.lostbh.onBn.w", word(sum(1 for _, t in lost if t["metric"] == "B_n")))
+    past_both = sum(1 for m in FAMILIES for mode, _ in MODES if cells[(m, mode)] == "past" and any(
+        t["metric"] == "B_n" and t["mode"] == mode and t["bh_survives"] and t["holm_survives"] for t in mult[m]["tests"]))
+    v.put("past.bothcorr.w", word(past_both))
+    n_past = sum(1 for c in cells.values() if c == "past")
+    fell = [f"{FAMILIES[m][1]}'s {dict(MODES)[mode].lower()} crossing" for m in FAMILIES for mode, _ in MODES
+            if cells[(m, mode)] == "past" and not any(t["metric"] == "B_n" and t["mode"] == mode and t["bh_survives"]
+                                                      and t["holm_survives"] for t in mult[m]["tests"])]
+    v.put("past.corr.phrase", (f"all {word(n_past)} survive both corrections" if not fell else
+                                f"{word(past_both)} survive both corrections; {join_names(fell)} "
+                                f"{'falls' if len(fell) == 1 else 'fall'} under Holm"))
 
     # --- paraphrase probe -----------------------------------------------------------------
     para = RES / "paraphrase_robustness"
@@ -185,6 +244,17 @@ def main() -> int:
     pd = [load(para / f"seed_avg_paired_para-v{i}.json")["dims"]["B_n"][f"instruction_v{i}"]["median_delta_h_minus_ai"] for i in (1, 2, 3)]
     v.put("para.d.lo", f3(min(pd)))
     v.put("para.d.hi", f3(max(pd)))
+    pp = [load(para / f"seed_avg_paired_para-v{i}.json")["dims"]["B_n"][f"instruction_v{i}"]["wilcoxon_p"] for i in (1, 2, 3)]
+    v.put("para.past.w", word(sum(1 for p, d in zip(pp, pd) if p < 0.05 and d < 0)))
+    v.put("para.ns.w", word(sum(1 for p in pp if p >= 0.05)))
+    pm = [max(map(abs, load(para / f"seed_avg_paired_para-v{i}.json")["dims"]["B_n"][f"instruction_v{i}"]["median_delta_95ci"])) for i in (1, 2, 3)]
+    v.put("para.mstar.lo", f3(min(pm)))
+    v.put("para.mstar.hi", f3(max(pm)))
+    cleared = [mg for mg in MARGINS if max(pm) <= mg]
+    v.put("para.eqphrase", f"clear only the ${cleared[0]}$ margin" if cleared and cleared[0] == MARGINS[-1]
+          else (f"clear the ${cleared[0]}$ margin" if cleared else "clear none of the pre-specified margins"))
+    v.put("para.ad.lo", f3(min(abs(x) for x in pd)))
+    v.put("para.ad.hi", f3(max(abs(x) for x in pd)))
 
     # --- review analyses ------------------------------------------------------------------
     hs = review["human_spread"]
@@ -208,9 +278,39 @@ def main() -> int:
     v.put("len.ratio.max", f"{max(ratios):.2f}")
     below = [c["frac_below_10_sentences"] for x in lens.values() for c in x.values()]
     v.put("len.below10.max", round(100 * max(below)))
+    con = review["mode_contrasts_B_n"]
     for m, (k, _) in FAMILIES.items():
-        for name, e in review["mode_contrasts_B_n"].get(m, {}).items():
+        for name, e in con.get(m, {}).items():
             v.stat(f"con.{k}.{name}", e, delta="median_delta")
+    # contrast = first mode minus second, in the model's own B_n: negative = first mode flatter
+    def sig(m, name, sign):
+        e = con.get(m, {}).get(name)
+        return e is not None and e["wilcoxon_p"] < 0.05 and (e["median_delta"] * sign > 0)
+    n_con = len([m for m in FAMILIES if m in con])
+    v.count("con.n", n_con)
+    v.put("con.widen.phrase", models_phrase(sum(sig(m, "instruction-control", -1) for m in FAMILIES)))
+    v.put("con.narrow.w", word(sum(sig(m, "instruction-control", +1) and inst[m] == "flat" for m in FAMILIES)))
+    n_fslt = sum(sig(m, "fewshot-instruction", -1) for m in FAMILIES)
+    v.put("con.fslt.w", of_total(n_fslt, n_con))
+    v.put("con.fslt.phrase", ("every model" if n_fslt == n_con == 9 else
+                               "every model with a contrast" if n_fslt == n_con else
+                               f"{word(n_fslt)} of the {word(n_con)} models with a contrast"))
+    v.put("con.fsltctrl.w", word(sum(sig(m, "fewshot-control", -1) for m in FAMILIES)))
+    v.put("con.fsgtctrl.w", word(sum(sig(m, "fewshot-control", +1) for m in FAMILIES)))
+    v.put("con.fsnsctrl.w", word(sum(1 for m in FAMILIES if m in con and not sig(m, "fewshot-control", -1) and not sig(m, "fewshot-control", +1))))
+    gf = review.get("guard_filtered_B_n", {})
+    g_changed = [(m, mode) for m in FAMILIES for mode, _ in MODES if m in gf and landing(
+        {"wilcoxon_p": gf[m][mode]["wilcoxon_p"], "median_delta_h_minus_ai": gf[m][mode]["median_delta"]}) != cells[(m, mode)]]
+    v.put("guard.changed.w", word(len(g_changed)))
+    v.put("guard.n", sum(1 for m in FAMILIES if m in gf) * len(MODES))
+    v.put("floor10.n", sum(1 for m in FAMILIES if m in review["floor10_B_n"]) * len(MODES))
+    hs_med = review["lengths"]["human"]["sentences_median"]
+    v.put("human.sent.median", int(hs_med) if float(hs_med).is_integer() else hs_med)
+    v.put("human.sent.min", review["lengths"]["human"]["min_sentences"])
+    for m, (k, _) in FAMILIES.items():
+        for mode, _ in MODES:
+            if m in gf:
+                v.stat(f"guardf.{k}.{mode}", gf[m][mode], delta="median_delta")
     f10 = review["floor10_B_n"]
     changed = [(m, mode) for m in FAMILIES for mode, _ in MODES
                if m in f10 and landing({"wilcoxon_p": f10[m][mode]["wilcoxon_p"],
@@ -232,6 +332,9 @@ def main() -> int:
         v.put("segfix.shift.max", f3(max(shifts)))
     else:
         old = None
+        for k in ("segfix.moved", "segfix.moved.w", "segfix.shift.min", "segfix.shift.max"):
+            v.put(k, "??")   # filled by the nine-leg re-score (revision/finish.sh archives the pre-fix SSOTs)
+        print("WARNING: no pre-segfix SSOTs; segfix macros are placeholders")
 
     # --- write ----------------------------------------------------------------------------
     lines = ["% Generated by paper/gen_bench_table.py -- do not hand-edit.",
@@ -243,7 +346,7 @@ def main() -> int:
     (OUT / "numbers.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     write_tables(ssot, mult, review, old)
-    print(f"wrote {len(v)} values and 6 tables to {OUT.relative_to(ROOT)}")
+    print(f"wrote {len(v)} values and 7 tables to {OUT.relative_to(ROOT)}")
     return 0
 
 
@@ -264,16 +367,19 @@ def write_tables(ssot, mult, review, old):
         mu, name = mult[m], FAMILIES[m][1]
         lost = [f"{t['mode'].replace('_', '-')} {dict((d, l) for d, _, l in DIMS)[t['metric']]}" for t in mu["tests"]
                 if t["raw_sig_05"] and not t["bh_survives"]]
-        census = (f"Within-family census: ${mu['n_raw_sig']}$ of $20$ cells per-cell significant; "
+        census = (f"Within-model census: ${mu['n_raw_sig']}$ of $20$ cells per-cell significant; "
                   f"${mu['n_bh']}$ survive Benjamini--Hochberg at $q=0.05$ and ${mu['n_holm']}$ survive Holm"
                   + (f" (lost under Benjamini--Hochberg: {', '.join(lost)})" if lost else "") + ".")
-        n = ssot[m]["dims"]["B_n"]["control"]["n_pairs"]
+        per = [ssot[m]["dims"]["B_n"][mode]["n_pairs"] for mode, _ in MODES]
+        n = f"{per[0]}" if min(per) == max(per) else "/".join(map(str, per)) + " per mode"
         conv = ("Seed-averaged Wilcoxon signed-rank paired tests over the matched headlines; median "
                 "$\\Delta =$ human $-$ model, so positive means the model sits \\emph{below} the human article "
                 "on that dimension. Matched rank-biserial in parentheses; $^{*}p<0.05$, $^{**}p<0.01$ "
                 "(per cell, two-sided)." if m == "qwen3.6-27b" else
                 "Design and conventions as in Table~\\ref{tab:promptceiling}.")
         cap = f"{name}, full grid ($n={n}$ headlines). {conv} {census} {GRID_NOTES.get(m, '')}".strip()
+        if min(per) != max(per):
+            cap = cap.replace(f"$n={n}$ headlines", f"$n={n}$ headlines, in Table~\\ref{{tab:ninefam}} order")
         label = "tab:promptceiling" if m == "qwen3.6-27b" else "tab:grid-" + FAMILIES[m][0]
         rows = [f"{lbl} & " + " & ".join(cell(ssot[m]["dims"][d][mode]) for d, _, _ in DIMS) + " \\\\"
                 for mode, lbl in MODES]
@@ -323,6 +429,15 @@ def write_tables(ssot, mult, review, old):
          "\\cmidrule(lr){2-3}\\cmidrule(lr){4-5}", "Model & Control & Instruction & Control & Instruction \\\\",
          "\\midrule", *rows, "\\bottomrule", "\\end{tabular}"]) + "\n", encoding="utf-8")
 
+    gf = review.get("guard_filtered_B_n", {})
+    gcell = lambda a, b: f"${f3(a['median_delta_h_minus_ai'])}{stars(a['wilcoxon_p'])}$ / ${f3(b['median_delta'])}{stars(b['wilcoxon_p'])}$"  # noqa: E731
+    rows = [f"{FAMILIES[m][1]} & " + " & ".join(gcell(ssot[m]["dims"]["B_n"][md], gf[m][md]) for md, _ in MODES) + " \\\\"
+            for m in FAMILIES if m in gf]
+    (OUT / "tab_guard.tex").write_text("\n".join(
+        ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lccccc}", "\\toprule",
+         "Model & " + " & ".join(lbl for _, lbl in MODES) + " \\\\", "\\midrule", *rows, "\\bottomrule", "\\end{tabular}"]) + "\n",
+        encoding="utf-8")
+
     f10, g, lens = review["floor10_B_n"], review["guard_rates"]["legs"], review["lengths"]
     rows = []
     for m in FAMILIES:
@@ -337,12 +452,13 @@ def write_tables(ssot, mult, review, old):
         r = list(g[m].values())
         lr = [c["word_ratio_median"] for c in lens[m].values()]
         b10 = max(c["frac_below_10_sentences"] for c in lens[m].values())
+        sm = [c["sentences_median"] for c in lens[m].values()]
         rows.append(f"{FAMILIES[m][1]} & ${moved_s}$ & ${moved_f}$ & ${round(100 * min(r))}$--${round(100 * max(r))}\\%$ & "
-                    f"${min(lr):.2f}$--${max(lr):.2f}$ & ${round(100 * b10)}\\%$ \\\\")
+                    f"${min(lr):.2f}$--${max(lr):.2f}$ & ${min(sm):g}$--${max(sm):g}$ & ${round(100 * b10)}\\%$ \\\\")
     (OUT / "tab_audit.tex").write_text("\n".join(
-        ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lccccc}", "\\toprule",
-         " & \\multicolumn{2}{c}{$B_n$ cells changing landing} & & & \\\\", "\\cmidrule(lr){2-3}",
-         "Model & segmenter fix & 10-sentence floor & guard flags & word ratio & $<10$ sentences \\\\",
+        ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lcccccc}", "\\toprule",
+         " & \\multicolumn{2}{c}{$B_n$ cells changing landing} & & & & \\\\", "\\cmidrule(lr){2-3}",
+         "Model & segmenter fix & 10-sentence floor & guard flags & word ratio & sentences & $<10$ sentences \\\\",
          "\\midrule", *rows, "\\bottomrule", "\\end{tabular}"]) + "\n", encoding="utf-8")
 
 

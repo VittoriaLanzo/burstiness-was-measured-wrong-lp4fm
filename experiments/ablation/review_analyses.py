@@ -11,6 +11,8 @@ generations, so nothing here is a parallel implementation of the protocol.
   variance_baseline   raw var(L) paired deltas beside B_n, and each statistic's correlation
                       with mean sentence length on the human articles
   guard_rates         Goodhart-guard flag rates on human articles and on every leg/mode
+  guard_filtered_B_n  the B_n benchmark re-scored without guard-flagged generations and
+                      without the human pairs the guard flags (side by side with the main scoring)
   floor10             the B_n benchmark re-scored with a ten-sentence floor (default floor: five)
   lengths             achieved word-count ratio and sentence counts per leg/mode
 
@@ -131,10 +133,12 @@ def main() -> int:
         "B_n": round(_corr([hm[k]["B_n"] for k in ks], [ml[k] for k in ks]), 2)}, "legs": {}}
 
     hflags = [gaming_flags(t) for t in htext.values()]
+    hclean = {k for k, g in zip(htext, hflags) if g["ok"]}
     out["guard_rates"] = {"human": {"flagged": sum(not g["ok"] for g in hflags), "n": len(hflags),
                                     "by_flag": dict(collections.Counter(k for g in hflags for k, v in g["flags"].items() if v))},
                           "legs": {}}
     out["mode_contrasts_B_n"], out["floor10_B_n"], out["lengths"] = {}, {}, {}
+    out["guard_filtered_B_n"] = {}
     hb10 = {k: _bn_floor10(t) for k, t in htext.items()}
 
     for f in sorted(a.norm_dir.glob("*.jsonl")):
@@ -150,16 +154,23 @@ def main() -> int:
         out["floor10_B_n"][mid] = {
             m: _paired([hb10[k] - b10[m][k] for k in b10[m] if hb10.get(k) is not None], rng) for m in MODES}
         flag_n, flag_k, wr, ns = collections.Counter(), collections.Counter(), collections.defaultdict(list), collections.defaultdict(list)
+        gb = collections.defaultdict(lambda: collections.defaultdict(list))
         for r in rows:
             t = r["text"]
             if not t.strip():
                 continue
             m = r["eval_prompt_id"]
             flag_n[m] += 1
-            flag_k[m] += not gaming_flags(t)["ok"]
+            ok = gaming_flags(t)["ok"]
+            flag_k[m] += not ok
+            v = (metrics(t) or {}).get("B_n")
+            if ok and v is not None:
+                gb[m][str(r["scenario_id"])].append(v)
             wr[m].append(len(t.split()) / hrows[str(r["scenario_id"])]["human_words"])
             ns[m].append(len(sentence_lengths(t)))
         out["guard_rates"]["legs"][mid] = {m: round(flag_k[m] / flag_n[m], 3) for m in MODES}
+        out["guard_filtered_B_n"][mid] = {
+            m: _paired([hm[k]["B_n"] - st.fmean(v) for k, v in gb[m].items() if k in hclean], rng) for m in MODES}
         out["lengths"][mid] = {m: {"word_ratio_median": round(st.median(wr[m]), 2),
                                    "sentences_median": st.median(ns[m]),
                                    "frac_below_10_sentences": round(sum(n < 10 for n in ns[m]) / len(ns[m]), 3)}
