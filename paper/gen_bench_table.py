@@ -1,278 +1,349 @@
 #!/usr/bin/env python3
-"""
-Generate the prompt-ceiling Table 1 and Figure 1 from the committed benchmark SSOT.
+"""Write every benchmark number the LP4FM paper prints, from the committed result JSONs.
 
-The paper's benchmark numbers are a pure function of the model's compiled eval at
-    experiments/results/benchmark/<model_id>/seed_avg_paired.json
-so a new run (or a new model) re-emits that JSON and the table + figure regenerate
-with no LaTeX edits. main.tex \\input's the two fragments this writes:
-    paper/tables/tab_promptceiling.tex
-    paper/tables/fig_promptceiling.tex
+Outputs go to paper/lp4fm/generated/ and main.tex \\input's them:
+  numbers.tex            \\val{key} macros for every number quoted in the prose
+  tab_ninefam.tex        Table 1: B_n, nine families x five modes
+  tab_family_grids.tex   Appendix B: one four-dimension grid per family (Qwen first)
+  tab_equivalence.tex    instruction-mode significance and equivalence, every family
+  tab_contrasts.tex      direct mode-vs-mode paired tests within family
+  tab_variance.tex       raw var(L) beside B_n
+  tab_audit.tex          segmenter-fix and ten-sentence-floor sensitivity, guard rates, lengths
 
-This replaces hand-transcribed numbers, closing the reproducibility gap: every value
-in Table 1 / Figure 1 traces to a committed artifact carried from the HF dataset
-ANONYMIZED/qwen36-news-gen.
+Nothing is hand-typed: rerun after any re-score and rebuild the paper.
 
-Run:
-    python3 paper/gen_bench_table.py                 # default model qwen3.6-27b
-    python3 paper/gen_bench_table.py --model qwen3.6-27b
+    python3 paper/gen_bench_table.py
 """
 from __future__ import annotations
 
-import argparse
 import json
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-BENCH = HERE.parent / "experiments" / "results" / "benchmark"
-OUT = HERE / "tables"
+ROOT = Path(__file__).resolve().parents[1]
+RES = ROOT / "experiments" / "results"
+BENCH = RES / "benchmark"
+OUT = ROOT / "paper" / "lp4fm" / "generated"
 
-# Presentation order and labels. The JSON dim keys are B_n, M, gini, seg_entropy;
-# the paper columns/axis order is B_n, Gini, Seg. entropy, Memory M.
-DIMS = [("B_n", "$B_n$"), ("gini", "Gini"), ("seg_entropy", "Seg.\\ entropy"), ("M", "Memory $M$")]
-MODES = [
-    ("control", "Control"),
-    ("instruction", "Instruction"),
-    ("fewshot", "Few-shot"),
-    ("plan", "Plan"),
-    ("self_refine", "Self-refine"),
-]
-# Horizontal dodge per mode within each dimension cluster (matches the shipped figure).
-DODGE = {"control": -0.28, "instruction": -0.14, "fewshot": 0.0, "plan": 0.14, "self_refine": 0.28}
-# Per-mode plot styles (matches the shipped figure).
-STYLE = {
-    "control": "only marks, mark=o, mark size=2.4pt, black, line width=0.7pt",
-    "instruction": "only marks, mark=square*, mark size=2.2pt, cbBlue",
-    "fewshot": "only marks, mark=triangle*, mark size=2.7pt, cbVermillion",
-    "plan": "only marks, mark=diamond*, mark size=2.7pt, cbGreen",
-    "self_refine": "only marks, mark=x, mark size=2.8pt, black, line width=0.9pt",
+# model_id -> (macro key, display name); table order = control-mode gap, Grok pair last
+FAMILIES = {
+    "gemini-3.1-pro": ("gemini", "Gemini 3.1 Pro"),
+    "glm-5.2": ("glm", "GLM-5.2"),
+    "opus-4.8": ("opus", "Claude Opus 4.8"),
+    "qwen3.6-27b": ("qwen", "Qwen3.6-27B"),
+    "kimi-k2.6": ("kimi", "Kimi K2.6"),
+    "gemma-3-27b": ("gemma", "Gemma 3 27B"),
+    "deepseek-v4-pro": ("deepseek", "DeepSeek V4 Pro"),
+    "grok-4.3": ("grok43", "Grok 4.3"),
+    "grok-4.5": ("grok45", "Grok 4.5"),
+}
+GROK_PAIR = ["grok-4.3", "grok-4.5"]
+MODES = [("control", "Control"), ("instruction", "Instruction"), ("fewshot", "Few-shot"),
+         ("plan", "Plan"), ("self_refine", "Self-refine")]
+DIMS = [("B_n", "Bn", "$B_n$"), ("gini", "gini", "Gini"), ("seg_entropy", "seg", "Seg.\\ entropy"),
+        ("M", "M", "Memory $M$")]
+MARGINS = [0.03, 0.05, 0.08]
+WORDS = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen " \
+        "sixteen seventeen eighteen nineteen twenty".split()
+TENS = {20: "twenty", 30: "thirty", 40: "forty", 50: "fifty"}
+
+# Family-specific caption notes for the appendix grids (facts about the run, not results).
+GRID_NOTES = {
+    "glm-5.2": "Silent-refusal empty cells are excluded by the seed-averaging protocol (Section~\\ref{sec:ninefam}).",
+    "kimi-k2.6": "Provider content-filter refusals are excluded by the seed-averaging protocol (Section~\\ref{sec:ninefam}).",
+    "opus-4.8": "Ran at effort high with a 32{,}000-token cap (Section~\\ref{sec:ninefam}).",
+    "deepseek-v4-pro": "Ran with a 32{,}000-token cap (Section~\\ref{sec:ninefam}).",
 }
 
 
-def _stars(p: float) -> str:
+def word(n: int) -> str:
+    if n < 21:
+        return WORDS[n]
+    t, u = divmod(n, 10)
+    return TENS[t * 10] + ("" if u == 0 else "-" + WORDS[u])
+
+
+def f3(x):
+    s = f"{x:.3f}"
+    return "0.000" if s == "-0.000" else s
+
+
+def peq(p: float) -> str:
+    """p as the paper prints it, math mode without $: p=0.002, p=3\\times10^{-5}, p<10^{-5}."""
+    if p < 1e-5:
+        return "p<10^{-5}"
+    if p < 1e-3:
+        m, e = f"{p:.0e}".split("e")
+        return f"p={m}\\times10^{{{int(e)}}}"
     if p < 0.01:
-        return "^{**}"
-    if p < 0.05:
-        return "^{*}"
-    return ""
+        return f"p={p:.3f}"
+    return f"p={p:.2f}" if round(p, 2) != 0.05 else f"p={p:.3f}"
 
 
-def _cell(e: dict) -> str:
-    delta = e["median_delta_h_minus_ai"]
-    rb = e["matched_rank_biserial"]
-    return f"${delta:.3f}\\;({rb:.2f}){_stars(e['wilcoxon_p'])}$"
+def stars(p):
+    return "^{**}" if p < 0.01 else ("^{*}" if p < 0.05 else "")
 
 
-def gen_table(d: dict) -> str:
-    dims = d["dims"]
-    n_pairs = dims["B_n"]["control"]["n_pairs"]
-    rows = []
-    for mkey, mlabel in MODES:
-        cells = " & ".join(_cell(dims[dkey][mkey]) for dkey, _ in DIMS)
-        rows.append(f"{mlabel} & {cells}")
-    body = " \\\\\n".join(rows)
-    caption = (
-        "The prompt ceiling: seed-averaged Wilcoxon signed-rank paired tests over "
-        f"${n_pairs}$ matched\n"
-        "headlines per mode. Median $\\Delta =$ human $-$ model, so the sign reads as a "
-        "direction:\n"
-        "$\\Delta > 0$ means the model sits \\emph{below} the human article on that dimension "
-        "(the flatness\n"
-        "direction; e.g.\\ $\\Delta_{B_n} = +0.05$ says human prose is $0.05$ more dispersed), "
-        "and $\\Delta < 0$\n"
-        "means the model \\emph{exceeds} the human article (dispersion overshoot). Matched "
-        "rank-biserial in\n"
-        "parentheses, same sign convention; $^{*}p<0.05$, $^{**}p<0.01$ (nominal, two-sided)."
-    )
-    header = "Mode & " + " & ".join(lbl for _, lbl in DIMS)
-    return (
-        "% Generated by paper/gen_bench_table.py from "
-        "experiments/results/benchmark/<model>/seed_avg_paired.json -- do not hand-edit.\n"
-        "\\begin{table}[t]\n\\centering\n"
-        f"\\caption{{{caption}}}\n\\label{{tab:promptceiling}}\n"
-        "\\begin{tabular}{lcccc}\n\\toprule\n"
-        f"{header} \\\\\n\\midrule\n{body} \\\\\n\\bottomrule\n"
-        "\\end{tabular}\n\\end{table}\n"
-    )
+def cell(e):
+    return f"${f3(e['median_delta_h_minus_ai'])}\\;({e['matched_rank_biserial']:.2f}){stars(e['wilcoxon_p'])}$"
 
 
-def gen_figure(d: dict) -> str:
-    dims = d["dims"]
-    dim_x = {dkey: i + 1 for i, (dkey, _) in enumerate(DIMS)}  # B_n=1 .. M=4
-    plots = []
-    for mkey, mlabel in MODES:
-        coords = " ".join(
-            f"({dim_x[dkey] + DODGE[mkey]:.2f},{dims[dkey][mkey]['matched_rank_biserial']:.2f})"
-            for dkey, _ in DIMS
-        )
-        plots.append(f"\\addplot[{STYLE[mkey]}]\n    coordinates {{{coords}}};\n"
-                     f"\\addlegendentry{{{mlabel}}}")
-    plot_block = "\n".join(plots)
-    return (
-        "% Generated by paper/gen_bench_table.py from "
-        "experiments/results/benchmark/<model>/seed_avg_paired.json -- do not hand-edit.\n"
-        "\\begin{figure}[t]\n\\centering\n\\begin{tikzpicture}\n"
-        "\\definecolor{cbBlue}{RGB}{0,114,178}\n"
-        "\\definecolor{cbVermillion}{RGB}{213,94,0}\n"
-        "\\definecolor{cbGreen}{RGB}{0,158,115}\n"
-        "\\begin{axis}[\n"
-        "    width=0.92\\textwidth,\n    height=6.4cm,\n"
-        "    xmin=0.45, xmax=4.55,\n    ymin=-0.42, ymax=0.92,\n"
-        "    xtick={1,2,3,4},\n"
-        "    xticklabels={$B_n$, Gini, Seg.\\ entropy, Memory $M$},\n"
-        "    ytick={-0.4,-0.2,0,0.2,0.4,0.6,0.8},\n"
-        "    ylabel={Matched rank-biserial (positive: model below human)},\n"
-        "    ylabel style={font=\\small},\n"
-        "    tick label style={font=\\small},\n"
-        "    ymajorgrids=true,\n"
-        "    grid style={line width=0.3pt, draw=gray!20},\n"
-        "    axis line style={line width=0.5pt},\n"
-        "    tick style={draw=gray!60},\n"
-        "    legend style={at={(0.5,-0.16)}, anchor=north, legend columns=5,\n"
-        "        draw=none, font=\\small, /tikz/every even column/.append style={column sep=0.6em}},\n"
-        "    legend cell align=left,\n"
-        "    clip=false,\n"
-        "]\n"
-        "\\draw[gray!70, line width=0.4pt] (axis cs:0.45,0) -- (axis cs:4.55,0);\n"
-        "\\node[anchor=north west, font=\\footnotesize, text=gray!90!black]\n"
-        "    at (axis cs:0.5,-0.015) {human parity};\n"
-        f"{plot_block}\n"
-        "\\end{axis}\n\\end{tikzpicture}\n"
-        "\\caption{Matched rank-biserial effect sizes from Table~\\ref{tab:promptceiling}, five prompting\n"
-        "modes on each of the four metric dimensions, with the gray line marking human parity. Positive\n"
-        "values place the model below the human article on that dimension: instruction sits nearest\n"
-        "parity on $B_n$, Gini, and segmentation entropy; few-shot is highest on $B_n$ and Gini; plan is\n"
-        "highest on segmentation entropy; and memory\n"
-        "$M$ is negative (model overshoot) for every mode except self-refine.}\n"
-        "\\label{fig:promptceiling}\n\\end{figure}\n"
-    )
+def landing(e):
+    """flat / ns / past for one median delta (human - model) and its test."""
+    if e["wilcoxon_p"] >= 0.05:
+        return "ns"
+    return "flat" if e["median_delta_h_minus_ai"] > 0 else "past"
 
 
-def gen_models_comparison(models: dict) -> str:
-    """Cross-model table: instruction-mode rank-biserial per dimension, one row per model.
-
-    Emitted only when >=2 model families are present. Lower (closer to 0) means the model
-    gets closer to the human article under a plain instruction. This is the drop-in payoff of
-    the model-keyed format: adding a model directory extends this table with no LaTeX edits.
-    """
-    rows = []
-    for mid in sorted(models):
-        dims = models[mid]["dims"]
-        cells = " & ".join(f"{dims[dkey]['instruction']['matched_rank_biserial']:.2f}"
-                            for dkey, _ in DIMS)
-        rows.append(f"{mid.replace('_', '-')} & {cells}")
-    body = " \\\\\n".join(rows)
-    header = "Model & " + " & ".join(lbl for _, lbl in DIMS)
-    caption = ("Cross-model prompt ceiling under a plain instruction: matched rank-biserial per "
-               "dimension (positive means the model stays below the human article; closer to $0$ is "
-               "closer to human rhythm). One row per generator family.")
-    return (
-        "% Generated by paper/gen_bench_table.py (multi-model) -- do not hand-edit.\n"
-        "\\begin{table}[t]\n\\centering\n"
-        f"\\caption{{{caption}}}\n\\label{{tab:benchmarkmodels}}\n"
-        "\\begin{tabular}{lcccc}\n\\toprule\n"
-        f"{header} \\\\\n\\midrule\n{body} \\\\\n\\bottomrule\n"
-        "\\end{tabular}\n\\end{table}\n"
-    )
+def load(p: Path):
+    return json.loads(p.read_text(encoding="utf-8"))
 
 
-def _load_all_models() -> dict:
-    out = {}
-    if BENCH.exists():
-        for d in sorted(BENCH.iterdir()):
-            f = d / "seed_avg_paired.json"
-            if f.is_file():
-                out[d.name] = json.loads(f.read_text())
-    return out
+class Vals(dict):
+    def put(self, key, v):
+        assert key not in self, f"duplicate macro key {key}"
+        self[key] = str(v)
 
-
-# Body-table row order: descending control-mode B_n delta, with the within-vendor
-# Grok pair bracketed below the rule as the non-monotonicity contrast.
-# Main group ordered by control-mode dispersion gap (largest first); the bracket keeps the two
-# Grok generations adjacent as a within-lab pair. Widened 6 -> 9 for PR #48 Q3 (scope
-# call): glm-5.2, kimi-k2.6 and opus-4.8 slot into the order by the same rule.
-SIXFAM_ORDER = ["gemini-3.1-pro", "glm-5.2", "opus-4.8", "qwen3.6-27b", "kimi-k2.6",
-                "gemma-3-27b", "deepseek-v4-pro"]
-SIXFAM_BRACKET = ["grok-4.3", "grok-4.5"]
-
-
-def _display_name(mid: str) -> str:
-    meta = BENCH / mid / "meta.json"
-    if meta.is_file():
-        try:
-            return json.loads(meta.read_text(encoding="utf-8"))["display_name"]
-        except Exception:
-            pass
-    return mid
-
-
-def gen_sixfam_dispersion(models: dict) -> str:
-    """Body Table 2: every family x every mode on B_n, so no family reads as an add-on.
-
-    One row per family, five mode columns, cells in the Table-1 format
-    $<delta:.3f>\\;(<rb:.2f>)^{<stars>}$ sourced from each family's SSOT.
-    """
-    def row(mid: str) -> str:
-        dims = models[mid]["dims"]
-        cells = " & ".join(_cell(dims["B_n"][mkey]) for mkey, _ in MODES)
-        return f"{_display_name(mid)} & {cells}"
-
-    top = " \\\\\n".join(row(m) for m in SIXFAM_ORDER if m in models)
-    bottom = " \\\\\n".join(row(m) for m in SIXFAM_BRACKET if m in models)
-    header = "Model & " + " & ".join(lbl for _, lbl in MODES)
-    return (
-        "% Generated by paper/gen_bench_table.py (cross-family dispersion) -- do not hand-edit.\n"
-        "\\begin{table}[tb]\n\\centering\n\\footnotesize\n\\setlength{\\tabcolsep}{3pt}\n"
-        "\\caption{CAPTION-PLACEHOLDER}\n\\label{tab:sixfam}\n"
-        "\\begin{tabular}{lccccc}\n\\toprule\n"
-        f"{header} \\\\\n\\midrule\n{top} \\\\\n\\midrule\n{bottom} \\\\\n\\bottomrule\n"
-        "\\end{tabular}\n\\end{table}\n"
-    )
-
-
-def gen_family_grid(mid: str, d: dict) -> str:
-    """Appendix grid: one family's full five-mode x four-dimension table (Table-1 shape)."""
-    dims = d["dims"]
-    rows = []
-    for mkey, mlabel in MODES:
-        cells = " & ".join(_cell(dims[dkey][mkey]) for dkey, _ in DIMS)
-        rows.append(f"{mlabel} & {cells}")
-    body = " \\\\\n".join(rows)
-    header = "Mode & " + " & ".join(lbl for _, lbl in DIMS)
-    label = "tab:grid-" + mid.replace(".", "").replace("_", "-")
-    return (
-        f"% Generated by paper/gen_bench_table.py (family grid {mid}) -- do not hand-edit.\n"
-        "\\begin{table}[htbp]\n\\centering\n\\small\n"
-        f"\\caption{{CAPTION-PLACEHOLDER-{mid}}}\n\\label{{{label}}}\n"
-        "\\begin{tabular}{lcccc}\n\\toprule\n"
-        f"{header} \\\\\n\\midrule\n{body} \\\\\n\\bottomrule\n"
-        "\\end{tabular}\n\\end{table}\n"
-    )
+    def stat(self, key, e, delta="median_delta_h_minus_ai"):
+        d = e[delta]
+        self.put(f"{key}.d", f3(d))
+        self.put(f"{key}.ad", f3(abs(d)))
+        self.put(f"{key}.rb", f"{e['matched_rank_biserial']:.2f}")
+        self.put(f"{key}.p", peq(e["wilcoxon_p"]))
+        ci = e.get("median_delta_95ci")
+        if ci:
+            self.put(f"{key}.ci", f"[{f3(ci[0])}, {f3(ci[1])}]")
+            self.put(f"{key}.mstar", f3(max(abs(ci[0]), abs(ci[1]))))
+        self.put(f"{key}.n", e["n_pairs"])
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="qwen3.6-27b", help="model_id under experiments/results/benchmark/")
-    args = ap.parse_args()
-    src = BENCH / args.model / "seed_avg_paired.json"
-    if not src.exists():
-        raise SystemExit(f"No compiled eval at {src}")
-    d = json.loads(src.read_text())
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "tab_promptceiling.tex").write_text(gen_table(d), encoding="utf-8")
-    (OUT / "fig_promptceiling.tex").write_text(gen_figure(d), encoding="utf-8")
-    msg = f"Wrote paper/tables/tab_promptceiling.tex + fig_promptceiling.tex from {args.model}"
+    ssot = {m: load(BENCH / m / "seed_avg_paired.json") for m in FAMILIES}
+    mult = {m: load(BENCH / m / "multiplicity.json") for m in FAMILIES}
+    review = load(RES / "review_analyses.json")
+    v = Vals()
 
-    models = _load_all_models()
-    if len(models) >= 2:
-        (OUT / "tab_benchmark_models.tex").write_text(gen_models_comparison(models), encoding="utf-8")
-        (OUT / "tab_sixfam_dispersion.tex").write_text(gen_sixfam_dispersion(models), encoding="utf-8")
-        grids = "\n".join(gen_family_grid(m, models[m]) for m in SIXFAM_ORDER + SIXFAM_BRACKET
-                          if m in models and m != args.model)
-        (OUT / "tab_family_grids.tex").write_text(grids, encoding="utf-8")
-        msg += f"; wrote tab_benchmark_models.tex + sixfam + family grids across {len(models)} models"
-    print(msg)
+    # --- per-cell stats -------------------------------------------------------------------
+    for m, (k, _) in FAMILIES.items():
+        for dim, dk, _ in DIMS:
+            for mode, _ in MODES:
+                v.stat(f"{k}.{dk}.{mode}", ssot[m]["dims"][dim][mode])
+        cons = ssot[m].get("consistency_B_n_rank_biserial", {})
+        for mode, its in cons.items():
+            vals = [x for x in its.values() if x == x]
+            v.put(f"{k}.cons.{mode}.min", f"{min(vals):.2f}")
+            v.put(f"{k}.cons.{mode}.max", f"{max(vals):.2f}")
+        v.put(f"{k}.npairs", ssot[m]["dims"]["B_n"]["control"]["n_pairs"])
+    raw = load(BENCH / "qwen3.6-27b" / "seed_avg_paired.raw-archive.json")
+    for dim, dk, _ in DIMS:
+        for mode, _ in MODES:
+            v.stat(f"qwenraw.{dk}.{mode}", raw["dims"][dim][mode])
+    for mode, its in raw["consistency_B_n_rank_biserial"].items():
+        v.put(f"qwenraw.cons.{mode}.min", f"{min(its.values()):.2f}")
+        v.put(f"qwenraw.cons.{mode}.max", f"{max(its.values()):.2f}")
+
+    # --- census over the 45 B_n cells -----------------------------------------------------
+    cells = {(m, mode): landing(ssot[m]["dims"]["B_n"][mode]) for m in FAMILIES for mode, _ in MODES}
+    for cat in ("flat", "ns", "past"):
+        n = sum(1 for c in cells.values() if c == cat)
+        v.put(f"census.{cat}", n)
+        v.put(f"census.{cat}.w", word(n))
+        v.put(f"census.{cat}.W", word(n).capitalize())
+    inst = {m: cells[(m, "instruction")] for m in FAMILIES}
+    ctrl = {m: cells[(m, "control")] for m in FAMILIES}
+    for cat in ("flat", "ns", "past"):
+        v.put(f"inst.{cat}.w", word(sum(1 for c in inst.values() if c == cat)))
+        v.put(f"ctrl.{cat}.w", word(sum(1 for c in ctrl.values() if c == cat)))
+    fs_flat = sum(1 for m in FAMILIES if cells[(m, "fewshot")] == "flat")
+    v.put("fewshot.flat.w", word(fs_flat))
+    rb_top = sum(1 for m in FAMILIES if max(MODES, key=lambda md: ssot[m]["dims"]["B_n"][md[0]]["matched_rank_biserial"])[0] == "fewshot")
+    med_top = sum(1 for m in FAMILIES if max(MODES, key=lambda md: ssot[m]["dims"]["B_n"][md[0]]["median_delta_h_minus_ai"])[0] == "fewshot")
+    fs_gt_ctrl = sum(1 for m in FAMILIES if ssot[m]["dims"]["B_n"]["fewshot"]["median_delta_h_minus_ai"]
+                     > ssot[m]["dims"]["B_n"]["control"]["median_delta_h_minus_ai"])
+    v.put("fewshot.rbtop.w", word(rb_top))
+    v.put("fewshot.medtop.w", word(med_top))
+    v.put("fewshot.gtctrl.w", word(fs_gt_ctrl))
+
+    # --- multiplicity ---------------------------------------------------------------------
+    v.put("sig.raw", sum(x["n_raw_sig"] for x in mult.values()))
+    v.put("sig.bh", sum(x["n_bh"] for x in mult.values()))
+    v.put("sig.holm", sum(x["n_holm"] for x in mult.values()))
+    lost = [(m, t) for m, x in mult.items() for t in x["tests"] if t["raw_sig_05"] and not t["bh_survives"]]
+    v.put("sig.lostbh", len(lost))
+    v.put("sig.lostbh.w", word(len(lost)))
+    v.put("sig.lostbh.onBn", sum(1 for _, t in lost if t["metric"] == "B_n"))
+
+    # --- paraphrase probe -----------------------------------------------------------------
+    para = RES / "paraphrase_robustness"
+    ns = []
+    for i in (1, 2, 3):
+        e = load(para / f"seed_avg_paired_para-v{i}.json")["dims"]["B_n"][f"instruction_v{i}"]
+        v.stat(f"para.v{i}", e)
+        ns.append(e["n_pairs"])
+    v.put("para.n.min", min(ns))
+    v.put("para.n.max", max(ns))
+    pd = [load(para / f"seed_avg_paired_para-v{i}.json")["dims"]["B_n"][f"instruction_v{i}"]["median_delta_h_minus_ai"] for i in (1, 2, 3)]
+    v.put("para.d.lo", f3(min(pd)))
+    v.put("para.d.hi", f3(max(pd)))
+
+    # --- review analyses ------------------------------------------------------------------
+    hs = review["human_spread"]
+    v.put("human.median", f3(hs["median"]))
+    v.put("human.sd", f3(hs["sd"]))
+    v.put("human.iqr", f"[{f3(hs['iqr'][0])}, {f3(hs['iqr'][1])}]")
+    for mg, x in hs["margins_in_sd"].items():
+        v.put(f"human.margin{mg}.sd", f"{x:.2f}")
+    vb = review["variance_baseline"]["human_corr_with_mean_sentence_length"]
+    v.put("var.corr.varL", f"{vb['var_L']:.2f}")
+    v.put("var.corr.Bn", f"{vb['B_n']:.2f}")
+    g = review["guard_rates"]
+    v.put("guard.human.k", g["human"]["flagged"])
+    v.put("guard.human.pct", round(100 * g["human"]["flagged"] / g["human"]["n"]))
+    rates = [r for leg in g["legs"].values() for r in leg.values()]
+    v.put("guard.legs.min", round(100 * min(rates)))
+    v.put("guard.legs.max", round(100 * max(rates)))
+    lens = {m: x for m, x in review["lengths"].items() if m != "human"}
+    ratios = [c["word_ratio_median"] for x in lens.values() for c in x.values()]
+    v.put("len.ratio.min", f"{min(ratios):.2f}")
+    v.put("len.ratio.max", f"{max(ratios):.2f}")
+    below = [c["frac_below_10_sentences"] for x in lens.values() for c in x.values()]
+    v.put("len.below10.max", round(100 * max(below)))
+    for m, (k, _) in FAMILIES.items():
+        for name, e in review["mode_contrasts_B_n"].get(m, {}).items():
+            v.stat(f"con.{k}.{name}", e, delta="median_delta")
+    f10 = review["floor10_B_n"]
+    changed = [(m, mode) for m in FAMILIES for mode, _ in MODES
+               if m in f10 and landing({"wilcoxon_p": f10[m][mode]["wilcoxon_p"],
+                                        "median_delta_h_minus_ai": f10[m][mode]["median_delta"]}) != cells[(m, mode)]]
+    v.put("floor10.changed", len(changed))
+    v.put("floor10.changed.w", word(len(changed)))
+
+    # --- segmenter-fix audit (needs the archived pre-fix SSOTs) ---------------------------
+    pre = {m: BENCH / m / "seed_avg_paired.pre-segfix.json" for m in FAMILIES}
+    if all(p.exists() for p in pre.values()):
+        old = {m: load(p) for m, p in pre.items()}
+        moved = [(m, mode) for m in FAMILIES for mode, _ in MODES
+                 if landing(old[m]["dims"]["B_n"][mode]) != cells[(m, mode)]]
+        shifts = [ssot[m]["dims"]["B_n"][mode]["median_delta_h_minus_ai"] - old[m]["dims"]["B_n"][mode]["median_delta_h_minus_ai"]
+                  for m in FAMILIES for mode, _ in MODES]
+        v.put("segfix.moved", len(moved))
+        v.put("segfix.moved.w", word(len(moved)))
+        v.put("segfix.shift.min", f3(min(shifts)))
+        v.put("segfix.shift.max", f3(max(shifts)))
+    else:
+        old = None
+
+    # --- write ----------------------------------------------------------------------------
+    lines = ["% Generated by paper/gen_bench_table.py -- do not hand-edit.",
+             "\\makeatletter",
+             "\\newcommand{\\val}[1]{\\ifcsname val@#1\\endcsname\\csname val@#1\\endcsname"
+             "\\else\\PackageError{numbers}{Undefined value #1}{Rerun paper/gen_bench_table.py}\\fi}"]
+    lines += [f"\\expandafter\\def\\csname val@{k}\\endcsname{{{x}}}" for k, x in sorted(v.items())]
+    lines.append("\\makeatother")
+    (OUT / "numbers.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    write_tables(ssot, mult, review, old)
+    print(f"wrote {len(v)} values and 6 tables to {OUT.relative_to(ROOT)}")
     return 0
+
+
+def write_tables(ssot, mult, review, old):
+    def row(m, fn):
+        return f"{FAMILIES[m][1]} & " + " & ".join(fn(m, mode) for mode, _ in MODES) + " \\\\"
+
+    head = "Model & " + " & ".join(lbl for _, lbl in MODES) + " \\\\"
+    main = [m for m in FAMILIES if m not in GROK_PAIR]
+    body = [row(m, lambda m, md: cell(ssot[m]["dims"]["B_n"][md])) for m in main]
+    pair = [row(m, lambda m, md: cell(ssot[m]["dims"]["B_n"][md])) for m in GROK_PAIR]
+    (OUT / "tab_ninefam.tex").write_text("\n".join(
+        ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lccccc}", "\\toprule", head, "\\midrule",
+         *body, "\\midrule", *pair, "\\bottomrule", "\\end{tabular}"]) + "\n", encoding="utf-8")
+
+    grids = []
+    for m in ["qwen3.6-27b"] + [x for x in FAMILIES if x != "qwen3.6-27b"]:
+        mu, name = mult[m], FAMILIES[m][1]
+        lost = [f"{t['mode'].replace('_', '-')} {dict((d, l) for d, _, l in DIMS)[t['metric']]}" for t in mu["tests"]
+                if t["raw_sig_05"] and not t["bh_survives"]]
+        census = (f"Within-family census: ${mu['n_raw_sig']}$ of $20$ cells per-cell significant; "
+                  f"${mu['n_bh']}$ survive Benjamini--Hochberg at $q=0.05$ and ${mu['n_holm']}$ survive Holm"
+                  + (f" (lost under Benjamini--Hochberg: {', '.join(lost)})" if lost else "") + ".")
+        n = ssot[m]["dims"]["B_n"]["control"]["n_pairs"]
+        conv = ("Seed-averaged Wilcoxon signed-rank paired tests over the matched headlines; median "
+                "$\\Delta =$ human $-$ model, so positive means the model sits \\emph{below} the human article "
+                "on that dimension. Matched rank-biserial in parentheses; $^{*}p<0.05$, $^{**}p<0.01$ "
+                "(per cell, two-sided)." if m == "qwen3.6-27b" else
+                "Design and conventions as in Table~\\ref{tab:promptceiling}.")
+        cap = f"{name}, full grid ($n={n}$ headlines). {conv} {census} {GRID_NOTES.get(m, '')}".strip()
+        label = "tab:promptceiling" if m == "qwen3.6-27b" else "tab:grid-" + FAMILIES[m][0]
+        rows = [f"{lbl} & " + " & ".join(cell(ssot[m]["dims"][d][mode]) for d, _, _ in DIMS) + " \\\\"
+                for mode, lbl in MODES]
+        grids += ["\\begin{table}[htbp]", "\\centering", "\\small", f"\\caption{{{cap}}}", f"\\label{{{label}}}",
+                  "\\begin{tabular}{lcccc}", "\\toprule",
+                  "Mode & " + " & ".join(l for _, _, l in DIMS) + " \\\\", "\\midrule", *rows,
+                  "\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
+    (OUT / "tab_family_grids.tex").write_text("% Generated by paper/gen_bench_table.py -- do not hand-edit.\n"
+                                              + "\n".join(grids), encoding="utf-8")
+
+    eq = review["equivalence_instruction_B_n"]
+    yes = lambda b: "\\checkmark" if b else "--"  # noqa: E731
+    rows = []
+    for m in FAMILIES:
+        e = eq[m]
+        rows.append(f"{FAMILIES[m][1]} & ${f3(e['median_delta'])}$ & $[{f3(e['ci95'][0])}, {f3(e['ci95'][1])}]$ & "
+                    f"${peq(e['wilcoxon_p'])}$ & ${f3(e['m_star'])}$ & "
+                    + " & ".join(yes(e["equivalent_at"][str(mg)]) for mg in MARGINS) + " \\\\")
+    (OUT / "tab_equivalence.tex").write_text("\n".join(
+        ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lccccccc}", "\\toprule",
+         "Model & median $\\Delta B_n$ & 95\\% CI & Wilcoxon & $m^{*}$ & $0.03$ & $0.05$ & $0.08$ \\\\",
+         "\\midrule", *rows, "\\bottomrule", "\\end{tabular}"]) + "\n", encoding="utf-8")
+
+    con = review["mode_contrasts_B_n"]
+    pairs = [("instruction-control", "Instr.\\ $-$ control"), ("fewshot-control", "Few-shot $-$ control"),
+             ("fewshot-instruction", "Few-shot $-$ instr.")]
+    ccell = lambda e: f"${f3(e['median_delta'])}\\;({e['matched_rank_biserial']:.2f}){stars(e['wilcoxon_p'])}$"  # noqa: E731
+    rows = [f"{FAMILIES[m][1]} & " + " & ".join(ccell(con[m][k]) for k, _ in pairs) + " \\\\" for m in FAMILIES if m in con]
+    (OUT / "tab_contrasts.tex").write_text("\n".join(
+        ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lccc}", "\\toprule",
+         "Model & " + " & ".join(l for _, l in pairs) + " \\\\", "\\midrule", *rows, "\\bottomrule", "\\end{tabular}"]) + "\n",
+        encoding="utf-8")
+
+    var = review["variance_baseline"]["legs"]
+    vcell = lambda e: f"${e['matched_rank_biserial']:.2f}{stars(e['wilcoxon_p'])}$"  # noqa: E731
+    rows = []
+    for m in FAMILIES:
+        if m not in var:
+            continue
+        bn = " & ".join(vcell({"matched_rank_biserial": ssot[m]["dims"]["B_n"][md]["matched_rank_biserial"],
+                               "wilcoxon_p": ssot[m]["dims"]["B_n"][md]["wilcoxon_p"]}) for md in ("control", "instruction"))
+        vl = " & ".join(vcell(var[m][md]) for md in ("control", "instruction"))
+        rows.append(f"{FAMILIES[m][1]} & {bn} & {vl} \\\\")
+    (OUT / "tab_variance.tex").write_text("\n".join(
+        ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lcccc}", "\\toprule",
+         " & \\multicolumn{2}{c}{$B_n$} & \\multicolumn{2}{c}{raw $\\mathrm{var}(L)$} \\\\",
+         "\\cmidrule(lr){2-3}\\cmidrule(lr){4-5}", "Model & Control & Instruction & Control & Instruction \\\\",
+         "\\midrule", *rows, "\\bottomrule", "\\end{tabular}"]) + "\n", encoding="utf-8")
+
+    f10, g, lens = review["floor10_B_n"], review["guard_rates"]["legs"], review["lengths"]
+    rows = []
+    for m in FAMILIES:
+        if m not in g:
+            continue
+        cur = [landing(ssot[m]["dims"]["B_n"][md]) for md, _ in MODES]
+        fl = [landing({"wilcoxon_p": f10[m][md]["wilcoxon_p"], "median_delta_h_minus_ai": f10[m][md]["median_delta"]})
+              for md, _ in MODES]
+        moved_f = sum(a != b for a, b in zip(cur, fl))
+        moved_s = (sum(landing(old[m]["dims"]["B_n"][md]) != c for (md, _), c in zip(MODES, cur))
+                   if old else "--")
+        r = list(g[m].values())
+        lr = [c["word_ratio_median"] for c in lens[m].values()]
+        b10 = max(c["frac_below_10_sentences"] for c in lens[m].values())
+        rows.append(f"{FAMILIES[m][1]} & ${moved_s}$ & ${moved_f}$ & ${round(100 * min(r))}$--${round(100 * max(r))}\\%$ & "
+                    f"${min(lr):.2f}$--${max(lr):.2f}$ & ${round(100 * b10)}\\%$ \\\\")
+    (OUT / "tab_audit.tex").write_text("\n".join(
+        ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lccccc}", "\\toprule",
+         " & \\multicolumn{2}{c}{$B_n$ cells changing landing} & & & \\\\", "\\cmidrule(lr){2-3}",
+         "Model & segmenter fix & 10-sentence floor & guard flags & word ratio & $<10$ sentences \\\\",
+         "\\midrule", *rows, "\\bottomrule", "\\end{tabular}"]) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
