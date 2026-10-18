@@ -15,6 +15,7 @@ experiments/results/benchmark/
     meta.json              # model, decoding, corpus, design, exclusions, provenance
     multiplicity.json      # BH and Holm census over the 20 tests (multiplicity_correction.py)
     equivalence.json       # instruction-mode equivalence margins (equivalence_test.py)
+    seed_avg_paired.pre-segfix.json   # the same eval scored with the released segmenter
   qwen3.6-27b/
     seed_avg_paired.raw-archive.json   # the audited leg scored under the raw protocol
 ```
@@ -37,7 +38,9 @@ The two open-weights legs were generated locally with `bench/gen_vllm.py`; the
 api legs with `bench/run.py` (`opus-4.8` with `bench/run_batch.py`). Every leg
 is scored under the normalized protocol (`normalize_generation.py`, then
 `seed_avg_paired.py`); `qwen3.6-27b` additionally carries its raw-protocol
-scoring as `seed_avg_paired.raw-archive.json`.
+scoring as `seed_avg_paired.raw-archive.json`. `seed_avg_paired.pre-segfix.json` is
+the evaluation as reviewed, scored before the segmenter mapped typographic
+closing quotes to ASCII; the paper's segmentation audit compares the two.
 
 ## seed_avg_paired.json schema
 
@@ -53,6 +56,9 @@ note:   str                       # analysis note (seed-averaged, delta = human 
 
 `delta = human - model` (positive = model below human on that dimension, the
 flatness direction). Significance stars in the paper: `*` p<0.05, `**` p<0.01.
+`median_delta_95ci` is stored unrounded; the equivalence margins are compared
+with these values, and the paper prints the bounds rounded outward to three
+decimals. `M` carries the +1/(n-1) small-sample term (`memory_M_corrected`).
 
 ## Adding a model
 
@@ -73,6 +79,5 @@ flatness direction). Significance stars in the paper: `*` p<0.05, `**` p<0.01.
 Raw generations are not in git; the small scored `seed_avg_paired.json` is
 carried here so every published number traces to a committed artifact. Each
 model's `meta.json` gives the dataset refs (ids masked in this release); the
-top-level README describes the `hf-datasets.zip` mirror, which holds raw
-generations for eight of the nine legs (the Claude Opus 4.8 leg ships as its
-compiled scored evaluation only).
+top-level README describes the `hf-datasets.zip` mirror, which holds the raw
+generations of all nine legs.

@@ -74,10 +74,8 @@ scripts run from this directory as the working root.
 - hf-datasets.zip: mirror of the HuggingFace datasets the pipeline consumes,
   masked ids restored by path. Contains the frozen human baseline
   (prompts_200_human.jsonl, 200 paired Wikinews articles), the ablation-corpus
-  pairs, and raw generations for eight of the nine benchmark legs (released
-  post-scrub revisions). Claude Opus 4.8 raw generations were never mirrored to
-  a dataset release; that leg ships as its compiled scored evaluation only.
-  See the README inside the zip.
+  pairs, and the raw generations of all nine benchmark legs (released
+  post-scrub revisions). See the README inside the zip.
 - research-db.zip: the SQLite research corpus behind the literature curation
   (papers with verified arXiv ids, queries, findings, learnings, session
   provenance), with its seed script and schemas. Cell-scrubbed and VACUUMed;

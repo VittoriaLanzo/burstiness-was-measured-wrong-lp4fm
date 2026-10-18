@@ -30,8 +30,8 @@ which is -1 at r = 0, 0 at the finite-n Poisson value r = sqrt((n-1)/(n+1)), and
 the largest r attainable with n intervals, sqrt(n-1). It depends on n as well as on r.
 
 CLI:
-    python experiments/burstiness_pp.py --demo            # self-check
-    python experiments/burstiness_pp.py --text "..."      # B, B_n, M of a doc
+    python -m experiments.burstiness_pp --demo            # self-check
+    python -m experiments.burstiness_pp --text "..."      # B, B_n, M of a doc
 
 Design
     burstiness     B = [B_n, M]          B_n = Goh-Barabasi/Kim-Jo (primary), Gini = robustness check
@@ -117,9 +117,9 @@ def memory_M(intervals: Sequence[float]) -> Optional[float]:
     similar-length sentences cluster (clumping). Negative M: lengths alternate.
     Returns None when undefined (fewer than 3 intervals, or a flat run).
 
-    Lag-1 autocorrelation is biased by about -1/(n-1) at small n, so cross-document
-    comparison at differing n adds 1/(n-1) (paired_test.m_corr does this); the guards in
-    gaming_flags use raw M.
+    Lag-1 autocorrelation is biased by about -1/(n-1) at small n; memory_M_corrected adds
+    that term back for cross-document comparison at differing n. The guards in gaming_flags
+    use raw M.
     """
     n = len(intervals)
     if n < 3:
@@ -132,6 +132,12 @@ def memory_M(intervals: Sequence[float]) -> Optional[float]:
         return None
     cov = fmean((x - m1) * (y - m2) for x, y in zip(a, b))
     return cov / (s1 * s2)
+
+
+def memory_M_corrected(intervals: Sequence[float]) -> Optional[float]:
+    """memory_M plus 1/(n-1), n the number of intervals: the M the benchmark scores."""
+    m = memory_M(intervals)
+    return None if m is None else m + 1.0 / (len(intervals) - 1)
 
 
 # ---------------------------------------------------------------------------
@@ -260,7 +266,7 @@ def gini(intervals: Sequence[float]) -> float:
     return sum(abs(a - b) for a in intervals for b in intervals) / (2.0 * n * (n - 1) * m)
 
 
-_TYPO_QUOTES = str.maketrans({"“": '"', "”": '"', "‘": "'", "’": "'"})
+_TYPO_QUOTES = str.maketrans({"\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'"})
 
 
 def segmentation_entropy(text: str) -> float:
@@ -356,7 +362,7 @@ def burstiness_pp(text: str) -> dict:
     n = len(L)
     return {
         "B_n": burstiness_B_corrected(L),     # primary dispersion (Goh-Barabasi/Kim-Jo)
-        "M": memory_M(L),                     # lag-1 clumping
+        "M": memory_M_corrected(L),           # lag-1 clumping, bias-corrected
         "gini": gini(L),                      # robustness check (Gini 1912)
         "multiscale": multiscale_burstiness(text),
         "n_sentences": n,

@@ -1,21 +1,20 @@
 {
   "alpha": 0.05,
   "n_tests": 20,
-  "n_raw_sig": 13,
+  "n_raw_sig": 14,
   "n_holm": 12,
-  "n_bh": 12,
-  "lost_under_bh": [
-    "instruction/M (p=0.045)"
-  ],
+  "n_bh": 14,
+  "lost_under_bh": [],
   "lost_under_holm": [
-    "instruction/M (p=0.045)"
+    "instruction/M (p=0.012)",
+    "plan/M (p=0.024)"
   ],
   "tests": [
     {
       "metric": "B_n",
       "mode": "control",
       "p": 0.0,
-      "rb": 0.673,
+      "rb": 0.703,
       "raw_sig_05": true,
       "holm_survives": true,
       "bh_survives": true,
@@ -34,8 +33,8 @@
     {
       "metric": "B_n",
       "mode": "instruction",
-      "p": 3e-05,
-      "rb": 0.343,
+      "p": 2e-05,
+      "rb": 0.351,
       "raw_sig_05": true,
       "holm_survives": true,
       "bh_survives": true,
@@ -45,7 +44,7 @@
       "metric": "B_n",
       "mode": "plan",
       "p": 0.0,
-      "rb": 0.405,
+      "rb": 0.421,
       "raw_sig_05": true,
       "holm_survives": true,
       "bh_survives": true,
@@ -54,8 +53,8 @@
     {
       "metric": "B_n",
       "mode": "self_refine",
-      "p": 0.00179,
-      "rb": 0.255,
+      "p": 0.00114,
+      "rb": 0.265,
       "raw_sig_05": true,
       "holm_survives": true,
       "bh_survives": true,
@@ -64,8 +63,8 @@
     {
       "metric": "M",
       "mode": "control",
-      "p": 0.5202,
-      "rb": -0.052,
+      "p": 0.20228,
+      "rb": -0.104,
       "raw_sig_05": false,
       "holm_survives": false,
       "bh_survives": false,
@@ -84,28 +83,28 @@
     {
       "metric": "M",
       "mode": "instruction",
-      "p": 0.04512,
-      "rb": -0.163,
+      "p": 0.01208,
+      "rb": -0.205,
       "raw_sig_05": true,
       "holm_survives": false,
-      "bh_survives": false,
+      "bh_survives": true,
       "fragile": true
     },
     {
       "metric": "M",
       "mode": "plan",
-      "p": 0.427,
-      "rb": -0.065,
-      "raw_sig_05": false,
+      "p": 0.02406,
+      "rb": -0.184,
+      "raw_sig_05": true,
       "holm_survives": false,
-      "bh_survives": false,
-      "fragile": false
+      "bh_survives": true,
+      "fragile": true
     },
     {
       "metric": "M",
       "mode": "self_refine",
-      "p": 0.27535,
-      "rb": 0.089,
+      "p": 0.51783,
+      "rb": 0.053,
       "raw_sig_05": false,
       "holm_survives": false,
       "bh_survives": false,
@@ -115,7 +114,7 @@
       "metric": "gini",
       "mode": "control",
       "p": 0.0,
-      "rb": 0.672,
+      "rb": 0.696,
       "raw_sig_05": true,
       "holm_survives": true,
       "bh_survives": true,
@@ -134,8 +133,8 @@
     {
       "metric": "gini",
       "mode": "instruction",
-      "p": 0.00047,
-      "rb": 0.285,
+      "p": 0.00034,
+      "rb": 0.292,
       "raw_sig_05": true,
       "holm_survives": true,
       "bh_survives": true,
@@ -144,8 +143,8 @@
     {
       "metric": "gini",
       "mode": "plan",
-      "p": 2e-05,
-      "rb": 0.351,
+      "p": 1e-05,
+      "rb": 0.358,
       "raw_sig_05": true,
       "holm_survives": true,
       "bh_survives": true,
@@ -154,8 +153,8 @@
     {
       "metric": "gini",
       "mode": "self_refine",
-      "p": 0.00289,
-      "rb": 0.243,
+      "p": 0.0024,
+      "rb": 0.248,
       "raw_sig_05": true,
       "holm_survives": true,
       "bh_survives": true,

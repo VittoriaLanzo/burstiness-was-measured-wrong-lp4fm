@@ -46,7 +46,7 @@ CONTRASTS = [("instruction", "control"), ("fewshot", "control"), ("plan", "contr
 
 def _boot_ci(d, rng):
     meds = sorted(st.median(rng.choice(d) for _ in d) for _ in range(2000))
-    return [round(meds[50], 3), round(meds[1949], 3)]
+    return [meds[50], meds[1949]]
 
 
 def _q(a, p):
@@ -120,7 +120,7 @@ def main() -> int:
         ci = e["median_delta_95ci"]
         m_star = max(abs(ci[0]), abs(ci[1]))
         eq[d.name] = {"median_delta": e["median_delta_h_minus_ai"], "ci95": ci, "wilcoxon_p": e["wilcoxon_p"],
-                      "significant_05": e["wilcoxon_p"] < 0.05, "m_star": round(m_star, 3),
+                      "significant_05": e["wilcoxon_p"] < 0.05, "m_star": m_star,
                       "equivalent_at": {str(m): m_star <= m for m in MARGINS}}
     out["equivalence_instruction_B_n"] = eq
 

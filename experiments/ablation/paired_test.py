@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # repo root on path for `experiments`
 from experiments.burstiness_metrics import sentence_lengths
-from experiments.burstiness_pp import burstiness_B_corrected, gini, memory_M, segmentation_entropy
+from experiments.burstiness_pp import burstiness_B_corrected, gini, memory_M_corrected, segmentation_entropy
 
 random.seed(0)
 
@@ -36,8 +36,7 @@ def _corpus_path():
 
 
 def m_corr(L):
-    m = memory_M(L)
-    return None if m is None else m + 1.0 / (len(L) - 1)
+    return memory_M_corrected(L)
 
 
 def metrics(text):

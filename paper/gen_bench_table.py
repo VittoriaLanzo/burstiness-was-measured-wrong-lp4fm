@@ -18,6 +18,7 @@ Nothing is hand-typed: rerun after any re-score and rebuild the paper.
 from __future__ import annotations
 
 import json
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -83,6 +84,21 @@ def f3(x):
     return "0.000" if s == "-0.000" else s
 
 
+def _f3out(x, rounding):
+    s = str(Decimal(repr(float(x))).quantize(Decimal("0.001"), rounding=rounding))
+    return "0.000" if s == "-0.000" else s
+
+
+def f3lo(x):
+    """Lower interval bound printed to three decimals, rounded outward (down)."""
+    return _f3out(x, ROUND_FLOOR)
+
+
+def f3hi(x):
+    """Upper interval bound, or a tightest margin, printed to three decimals, rounded outward (up)."""
+    return _f3out(x, ROUND_CEILING)
+
+
 def peq(p: float) -> str:
     """p as the paper prints it, math mode without $: p=0.002, p=3\\times10^{-5}, p<10^{-5}."""
     if p < 1e-5:
@@ -134,8 +150,9 @@ class Vals(dict):
         ci = e.get("median_delta_95ci")
         if ci:
             m_star = max(abs(ci[0]), abs(ci[1]))
-            self.put(f"{key}.ci", f"[{f3(ci[0])}, {f3(ci[1])}]")
-            self.put(f"{key}.mstar", f3(m_star))
+            self.put(f"{key}.ci", f"[{f3lo(ci[0])}, {f3hi(ci[1])}]")
+            self.put(f"{key}.mstar", f3hi(m_star))
+            self.put(f"{key}.hi4", f"{ci[1]:.4f}")
             cleared = [m for m in MARGINS if m_star <= m]
             self.put(f"{key}.eqphrase", f"equivalent at the ${cleared[0]}$ margin" if cleared
                      else "equivalent at none of the pre-specified margins")
@@ -221,6 +238,13 @@ def main() -> int:
     v.put("sig.lostbh.w", word(len(lost)))
     v.put("sig.lostbh.onBn", sum(1 for _, t in lost if t["metric"] == "B_n"))
     v.put("sig.lostbh.onBn.w", word(sum(1 for _, t in lost if t["metric"] == "B_n")))
+    dimname = {d: l.replace("\\", "").replace("$", "").replace("Seg. entropy", "segmentation entropy").replace("Memory M", "memory") for d, _, l in DIMS}
+    v.put("sig.lostbh.names", join_names([f"{FAMILIES[m][1]}'s {t['mode'].replace('_', '-')}-mode {dimname[t['metric']]}" for m, t in lost]) if lost else "none")
+    v.put("fs.Mover.w", word(sum(1 for m in FAMILIES if ssot[m]["dims"]["M"]["fewshot"]["median_delta_h_minus_ai"] < 0
+                                 and ssot[m]["dims"]["M"]["fewshot"]["wilcoxon_p"] < 0.05)))
+    for m, k in (("grok-4.5", "grok45"), ("deepseek-v4-pro", "deepseek")):
+        se = ssot[m]["dims"]["seg_entropy"]
+        v.put(f"{k}.segabove.w", word(sum(1 for mode, _ in MODES if se[mode]["median_delta_h_minus_ai"] < 0 and se[mode]["wilcoxon_p"] < 0.05)))
     past_both = sum(1 for m in FAMILIES for mode, _ in MODES if cells[(m, mode)] == "past" and any(
         t["metric"] == "B_n" and t["mode"] == mode and t["bh_survives"] and t["holm_survives"] for t in mult[m]["tests"]))
     v.put("past.bothcorr.w", word(past_both))
@@ -302,6 +326,8 @@ def main() -> int:
     g_changed = [(m, mode) for m in FAMILIES for mode, _ in MODES if m in gf and landing(
         {"wilcoxon_p": gf[m][mode]["wilcoxon_p"], "median_delta_h_minus_ai": gf[m][mode]["median_delta"]}) != cells[(m, mode)]]
     v.put("guard.changed.w", word(len(g_changed)))
+    cellname = lambda m, mode: f"{FAMILIES[m][1]}'s {mode.replace('_', '-')} cell"  # noqa: E731
+    v.put("guard.changed.names", join_names([cellname(m, mode) for m, mode in g_changed]) if g_changed else "none")
     v.put("guard.n", sum(1 for m in FAMILIES if m in gf) * len(MODES))
     v.put("floor10.n", sum(1 for m in FAMILIES if m in review["floor10_B_n"]) * len(MODES))
     hs_med = review["lengths"]["human"]["sentences_median"]
@@ -317,6 +343,11 @@ def main() -> int:
                                         "median_delta_h_minus_ai": f10[m][mode]["median_delta"]}) != cells[(m, mode)]]
     v.put("floor10.changed", len(changed))
     v.put("floor10.changed.w", word(len(changed)))
+    v.put("floor10.changed.names", join_names([cellname(m, mode) for m, mode in changed]) if changed else "none")
+    for m, (k, _) in FAMILIES.items():
+        for mode, _ in MODES:
+            if m in f10:
+                v.stat(f"floor10.{k}.{mode}", f10[m][mode], delta="median_delta")
 
     # --- segmenter-fix audit (needs the archived pre-fix SSOTs) ---------------------------
     pre = {m: BENCH / m / "seed_avg_paired.pre-segfix.json" for m in FAMILIES}
@@ -328,11 +359,15 @@ def main() -> int:
                   for m in FAMILIES for mode, _ in MODES]
         v.put("segfix.moved", len(moved))
         v.put("segfix.moved.w", word(len(moved)))
+        v.put("segfix.moved.names", join_names([cellname(m, mode) for m, mode in moved]) if moved else "none")
+        for m, (k, _) in FAMILIES.items():
+            for mode, _ in MODES:
+                v.stat(f"pre.{k}.{mode}", old[m]["dims"]["B_n"][mode])
         v.put("segfix.shift.min", f3(min(shifts)))
         v.put("segfix.shift.max", f3(max(shifts)))
     else:
         old = None
-        for k in ("segfix.moved", "segfix.moved.w", "segfix.shift.min", "segfix.shift.max"):
+        for k in ("segfix.moved", "segfix.moved.w", "segfix.moved.names", "segfix.shift.min", "segfix.shift.max"):
             v.put(k, "??")   # placeholders until every family has a seed_avg_paired.pre-segfix.json
         print("WARNING: no pre-segfix SSOTs; segfix macros are placeholders")
 
@@ -371,15 +406,14 @@ def write_tables(ssot, mult, review, old):
                   f"${mu['n_bh']}$ survive Benjamini--Hochberg at $q=0.05$ and ${mu['n_holm']}$ survive Holm"
                   + (f" (lost under Benjamini--Hochberg: {', '.join(lost)})" if lost else "") + ".")
         per = [ssot[m]["dims"]["B_n"][mode]["n_pairs"] for mode, _ in MODES]
-        n = f"{per[0]}" if min(per) == max(per) else "/".join(map(str, per)) + " per mode"
+        n = (f"$n={per[0]}$ headlines" if min(per) == max(per) else
+             "$n=" + "/".join(map(str, per)) + "$ headlines per mode, in Table~\\ref{tab:ninefam} order")
         conv = ("Seed-averaged Wilcoxon signed-rank paired tests over the matched headlines; median "
                 "$\\Delta =$ human $-$ model, so positive means the model sits \\emph{below} the human article "
                 "on that dimension. Matched rank-biserial in parentheses; $^{*}p<0.05$, $^{**}p<0.01$ "
                 "(per cell, two-sided)." if m == "qwen3.6-27b" else
                 "Design and conventions as in Table~\\ref{tab:promptceiling}.")
-        cap = f"{name}, full grid ($n={n}$ headlines). {conv} {census} {GRID_NOTES.get(m, '')}".strip()
-        if min(per) != max(per):
-            cap = cap.replace(f"$n={n}$ headlines", f"$n={n}$ headlines, in Table~\\ref{{tab:ninefam}} order")
+        cap = f"{name}, full grid ({n}). {conv} {census} {GRID_NOTES.get(m, '')}".strip()
         label = "tab:promptceiling" if m == "qwen3.6-27b" else "tab:grid-" + FAMILIES[m][0]
         rows = [f"{lbl} & " + " & ".join(cell(ssot[m]["dims"][d][mode]) for d, _, _ in DIMS) + " \\\\"
                 for mode, lbl in MODES]
@@ -395,8 +429,8 @@ def write_tables(ssot, mult, review, old):
     rows = []
     for m in FAMILIES:
         e = eq[m]
-        rows.append(f"{FAMILIES[m][1]} & ${f3(e['median_delta'])}$ & $[{f3(e['ci95'][0])}, {f3(e['ci95'][1])}]$ & "
-                    f"${peq(e['wilcoxon_p'])}$ & ${f3(e['m_star'])}$ & "
+        rows.append(f"{FAMILIES[m][1]} & ${f3(e['median_delta'])}$ & $[{f3lo(e['ci95'][0])}, {f3hi(e['ci95'][1])}]$ & "
+                    f"${peq(e['wilcoxon_p'])}$ & ${f3hi(e['m_star'])}$ & "
                     + " & ".join(yes(e["equivalent_at"][str(mg)]) for mg in MARGINS) + " \\\\")
     (OUT / "tab_equivalence.tex").write_text("\n".join(
         ["% Generated by paper/gen_bench_table.py -- do not hand-edit.", "\\begin{tabular}{lccccccc}", "\\toprule",

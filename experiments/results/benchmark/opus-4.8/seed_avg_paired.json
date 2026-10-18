@@ -6,8 +6,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.119,
         "median_delta_95ci": [
-          0.091,
-          0.141
+          0.09119267472494086,
+          0.14067643056795462
         ],
         "wilcoxon_z": 9.8,
         "wilcoxon_p": 0.0,
@@ -18,8 +18,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.039,
         "median_delta_95ci": [
-          0.011,
-          0.058
+          0.010536892009758186,
+          0.05824460459617678
         ],
         "wilcoxon_z": 4.11,
         "wilcoxon_p": 4e-05,
@@ -30,8 +30,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.037,
         "median_delta_95ci": [
-          -0.06,
-          -0.013
+          -0.060114828114470414,
+          -0.01310758792020253
         ],
         "wilcoxon_z": -3.12,
         "wilcoxon_p": 0.00184,
@@ -42,8 +42,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.0,
         "median_delta_95ci": [
-          -0.022,
-          0.022
+          -0.022241867531515802,
+          0.022006762422659976
         ],
         "wilcoxon_z": 0.18,
         "wilcoxon_p": 0.86053,
@@ -54,8 +54,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.065,
         "median_delta_95ci": [
-          -0.088,
-          -0.045
+          -0.08775336853353391,
+          -0.04493708396353571
         ],
         "wilcoxon_z": -6.18,
         "wilcoxon_p": 0.0,
@@ -68,8 +68,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.069,
         "median_delta_95ci": [
-          -0.124,
-          -0.032
+          -0.12369586527166741,
+          -0.03234378240692384
         ],
         "wilcoxon_z": -2.98,
         "wilcoxon_p": 0.0029,
@@ -80,8 +80,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.045,
         "median_delta_95ci": [
-          -0.108,
-          -0.001
+          -0.10805015968845721,
+          -0.0008978078912765877
         ],
         "wilcoxon_z": -3.09,
         "wilcoxon_p": 0.00201,
@@ -92,8 +92,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.117,
         "median_delta_95ci": [
-          -0.16,
-          -0.066
+          -0.15972153562614777,
+          -0.06582441269009942
         ],
         "wilcoxon_z": -4.66,
         "wilcoxon_p": 0.0,
@@ -104,8 +104,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.059,
         "median_delta_95ci": [
-          -0.11,
-          -0.009
+          -0.10984496813926681,
+          -0.008520125082124151
         ],
         "wilcoxon_z": -3.04,
         "wilcoxon_p": 0.00235,
@@ -116,8 +116,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.039,
         "median_delta_95ci": [
-          0.001,
-          0.08
+          0.0013514752690243492,
+          0.08022922963975816
         ],
         "wilcoxon_z": 2.16,
         "wilcoxon_p": 0.0308,
@@ -130,8 +130,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.054,
         "median_delta_95ci": [
-          0.045,
-          0.07
+          0.04501482959072098,
+          0.06999577360756623
         ],
         "wilcoxon_z": 9.43,
         "wilcoxon_p": 0.0,
@@ -142,8 +142,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.012,
         "median_delta_95ci": [
-          0.002,
-          0.03
+          0.0024166064065170856,
+          0.030094357823233053
         ],
         "wilcoxon_z": 3.2,
         "wilcoxon_p": 0.00135,
@@ -154,8 +154,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.031,
         "median_delta_95ci": [
-          -0.043,
-          -0.018
+          -0.042625337066424684,
+          -0.017502130128733917
         ],
         "wilcoxon_z": -4.42,
         "wilcoxon_p": 1e-05,
@@ -166,8 +166,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.004,
         "median_delta_95ci": [
-          -0.024,
-          0.004
+          -0.023806306041317032,
+          0.004080267603878779
         ],
         "wilcoxon_z": -1.24,
         "wilcoxon_p": 0.21509,
@@ -178,8 +178,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.043,
         "median_delta_95ci": [
-          -0.054,
-          -0.033
+          -0.05448729655945306,
+          -0.032751791758026144
         ],
         "wilcoxon_z": -7.23,
         "wilcoxon_p": 0.0,
@@ -192,8 +192,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.116,
         "median_delta_95ci": [
-          0.053,
-          0.173
+          0.05262163247870699,
+          0.17349876167703604
         ],
         "wilcoxon_z": 4.76,
         "wilcoxon_p": 0.0,
@@ -204,8 +204,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.253,
         "median_delta_95ci": [
-          0.202,
-          0.298
+          0.2021508875953415,
+          0.2977025121276258
         ],
         "wilcoxon_z": 9.16,
         "wilcoxon_p": 0.0,
@@ -216,8 +216,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.032,
         "median_delta_95ci": [
-          -0.043,
-          0.072
+          -0.04346224587786929,
+          0.07247320780454425
         ],
         "wilcoxon_z": 1.07,
         "wilcoxon_p": 0.28293,
@@ -228,8 +228,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.108,
         "median_delta_95ci": [
-          0.062,
-          0.16
+          0.061696302751369725,
+          0.15952359008229866
         ],
         "wilcoxon_z": 4.23,
         "wilcoxon_p": 2e-05,
@@ -240,8 +240,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.005,
         "median_delta_95ci": [
-          -0.049,
-          0.048
+          -0.04873720052794006,
+          0.04832035879746854
         ],
         "wilcoxon_z": 0.14,
         "wilcoxon_p": 0.88648,

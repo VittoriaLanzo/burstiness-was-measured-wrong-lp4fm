@@ -6,20 +6,20 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.128,
         "median_delta_95ci": [
-          0.102,
-          0.14
+          0.10207412539362981,
+          0.13928017430729267
         ],
-        "wilcoxon_z": 10.44,
+        "wilcoxon_z": 10.5,
         "wilcoxon_p": 0.0,
-        "matched_rank_biserial": 0.852,
-        "paired_dz": 0.998
+        "matched_rank_biserial": 0.856,
+        "paired_dz": 1.002
       },
       "fewshot": {
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.169,
         "median_delta_95ci": [
-          0.148,
-          0.183
+          0.1483379964192752,
+          0.18338568767817962
         ],
         "wilcoxon_z": 11.57,
         "wilcoxon_p": 0.0,
@@ -30,58 +30,58 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.071,
         "median_delta_95ci": [
-          0.05,
-          0.09
+          0.05024799371415073,
+          0.08981720895786063
         ],
-        "wilcoxon_z": 6.83,
+        "wilcoxon_z": 6.87,
         "wilcoxon_p": 0.0,
-        "matched_rank_biserial": 0.557,
-        "paired_dz": 0.546
+        "matched_rank_biserial": 0.56,
+        "paired_dz": 0.548
       },
       "plan": {
         "n_pairs": 200,
-        "median_delta_h_minus_ai": 0.07,
+        "median_delta_h_minus_ai": 0.071,
         "median_delta_95ci": [
-          0.049,
-          0.088
+          0.05297110321210344,
+          0.08624737061735332
         ],
-        "wilcoxon_z": 7.13,
+        "wilcoxon_z": 7.11,
         "wilcoxon_p": 0.0,
-        "matched_rank_biserial": 0.581,
-        "paired_dz": 0.561
+        "matched_rank_biserial": 0.58,
+        "paired_dz": 0.559
       },
       "self_refine": {
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.039,
         "median_delta_95ci": [
-          0.016,
-          0.053
+          0.01593084703106218,
+          0.05610027745424673
         ],
-        "wilcoxon_z": 3.33,
-        "wilcoxon_p": 0.00086,
-        "matched_rank_biserial": 0.272,
-        "paired_dz": 0.26
+        "wilcoxon_z": 3.4,
+        "wilcoxon_p": 0.00068,
+        "matched_rank_biserial": 0.277,
+        "paired_dz": 0.263
       }
     },
     "M": {
       "control": {
         "n_pairs": 200,
-        "median_delta_h_minus_ai": 0.043,
+        "median_delta_h_minus_ai": 0.041,
         "median_delta_95ci": [
-          -0.012,
-          0.097
+          -0.023758834337635627,
+          0.09655489307551114
         ],
-        "wilcoxon_z": 2.22,
-        "wilcoxon_p": 0.02621,
-        "matched_rank_biserial": 0.181,
-        "paired_dz": 0.168
+        "wilcoxon_z": 2.09,
+        "wilcoxon_p": 0.03628,
+        "matched_rank_biserial": 0.171,
+        "paired_dz": 0.16
       },
       "fewshot": {
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.051,
         "median_delta_95ci": [
-          0.009,
-          0.088
+          0.009118976518044181,
+          0.08778538939083322
         ],
         "wilcoxon_z": 2.94,
         "wilcoxon_p": 0.00324,
@@ -92,37 +92,37 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.109,
         "median_delta_95ci": [
-          0.037,
-          0.146
+          0.03668395711401623,
+          0.14589188990296026
         ],
-        "wilcoxon_z": 4.65,
-        "wilcoxon_p": 0.0,
-        "matched_rank_biserial": 0.379,
-        "paired_dz": 0.336
+        "wilcoxon_z": 4.48,
+        "wilcoxon_p": 1e-05,
+        "matched_rank_biserial": 0.366,
+        "paired_dz": 0.319
       },
       "plan": {
         "n_pairs": 200,
-        "median_delta_h_minus_ai": 0.114,
+        "median_delta_h_minus_ai": 0.112,
         "median_delta_95ci": [
-          0.067,
-          0.162
+          0.0643571430544297,
+          0.1572014668742172
         ],
-        "wilcoxon_z": 5.72,
+        "wilcoxon_z": 5.63,
         "wilcoxon_p": 0.0,
-        "matched_rank_biserial": 0.466,
-        "paired_dz": 0.429
+        "matched_rank_biserial": 0.459,
+        "paired_dz": 0.425
       },
       "self_refine": {
         "n_pairs": 200,
-        "median_delta_h_minus_ai": 0.047,
+        "median_delta_h_minus_ai": 0.046,
         "median_delta_95ci": [
-          -0.013,
-          0.09
+          -0.010791497299420055,
+          0.0875311519540168
         ],
-        "wilcoxon_z": 1.46,
-        "wilcoxon_p": 0.14314,
-        "matched_rank_biserial": 0.119,
-        "paired_dz": 0.083
+        "wilcoxon_z": 1.54,
+        "wilcoxon_p": 0.12419,
+        "matched_rank_biserial": 0.125,
+        "paired_dz": 0.089
       }
     },
     "gini": {
@@ -130,20 +130,20 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.056,
         "median_delta_95ci": [
-          0.047,
-          0.066
+          0.04694322422328345,
+          0.06594324818266951
         ],
-        "wilcoxon_z": 9.95,
+        "wilcoxon_z": 10.01,
         "wilcoxon_p": 0.0,
-        "matched_rank_biserial": 0.812,
-        "paired_dz": 0.908
+        "matched_rank_biserial": 0.816,
+        "paired_dz": 0.916
       },
       "fewshot": {
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.08,
         "median_delta_95ci": [
-          0.07,
-          0.091
+          0.06960607861493139,
+          0.09073819304309325
         ],
         "wilcoxon_z": 11.35,
         "wilcoxon_p": 0.0,
@@ -154,37 +154,37 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.026,
         "median_delta_95ci": [
-          0.019,
-          0.037
+          0.016267317400826445,
+          0.035857564151746416
         ],
         "wilcoxon_z": 5.8,
         "wilcoxon_p": 0.0,
         "matched_rank_biserial": 0.473,
-        "paired_dz": 0.45
+        "paired_dz": 0.451
       },
       "plan": {
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.028,
         "median_delta_95ci": [
-          0.017,
-          0.043
+          0.01698026342922626,
+          0.04299470816275691
         ],
-        "wilcoxon_z": 5.88,
+        "wilcoxon_z": 5.86,
         "wilcoxon_p": 0.0,
-        "matched_rank_biserial": 0.479,
-        "paired_dz": 0.448
+        "matched_rank_biserial": 0.478,
+        "paired_dz": 0.446
       },
       "self_refine": {
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.013,
         "median_delta_95ci": [
-          0.003,
-          0.024
+          0.0031542615032759125,
+          0.02451693140122084
         ],
-        "wilcoxon_z": 2.59,
-        "wilcoxon_p": 0.00952,
-        "matched_rank_biserial": 0.211,
-        "paired_dz": 0.201
+        "wilcoxon_z": 2.64,
+        "wilcoxon_p": 0.00828,
+        "matched_rank_biserial": 0.215,
+        "paired_dz": 0.202
       }
     },
     "seg_entropy": {
@@ -192,8 +192,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.062,
         "median_delta_95ci": [
-          -0.105,
-          -0.003
+          -0.10507713455810408,
+          -0.0030403028109227126
         ],
         "wilcoxon_z": -2.31,
         "wilcoxon_p": 0.02083,
@@ -204,8 +204,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": 0.117,
         "median_delta_95ci": [
-          0.059,
-          0.153
+          0.05895128108685277,
+          0.15290757804126454
         ],
         "wilcoxon_z": 4.74,
         "wilcoxon_p": 0.0,
@@ -216,8 +216,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.053,
         "median_delta_95ci": [
-          -0.088,
-          -0.012
+          -0.08806512433848268,
+          -0.012007421528197781
         ],
         "wilcoxon_z": -1.95,
         "wilcoxon_p": 0.05062,
@@ -228,8 +228,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.026,
         "median_delta_95ci": [
-          -0.061,
-          0.04
+          -0.06107800980924383,
+          0.03955783760305476
         ],
         "wilcoxon_z": -0.79,
         "wilcoxon_p": 0.42985,
@@ -240,8 +240,8 @@
         "n_pairs": 200,
         "median_delta_h_minus_ai": -0.051,
         "median_delta_95ci": [
-          -0.1,
-          0.023
+          -0.09993082985376389,
+          0.022895784127283436
         ],
         "wilcoxon_z": -1.43,
         "wilcoxon_p": 0.15166,
@@ -253,8 +253,8 @@
   "consistency_B_n_rank_biserial": {
     "control": {
       "it0": 0.793,
-      "it1": 0.835,
-      "it2": 0.782
+      "it1": 0.842,
+      "it2": 0.788
     },
     "fewshot": {
       "it0": 0.914,
@@ -262,19 +262,19 @@
       "it2": 0.925
     },
     "instruction": {
-      "it0": 0.494,
-      "it1": 0.542,
-      "it2": 0.507
+      "it0": 0.492,
+      "it1": 0.545,
+      "it2": 0.506
     },
     "plan": {
       "it0": 0.56,
-      "it1": 0.541,
-      "it2": 0.454
+      "it1": 0.549,
+      "it2": 0.448
     },
     "self_refine": {
-      "it0": 0.227,
-      "it1": 0.24,
-      "it2": 0.28
+      "it0": 0.223,
+      "it1": 0.244,
+      "it2": 0.287
     }
   },
   "note": "Per headline: metric vector averaged across available seeds, then ONE paired Wilcoxon on independent headline pairs (pooling seeds as pairs would pseudo-replicate the human docs). delta = human - model."

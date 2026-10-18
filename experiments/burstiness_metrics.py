@@ -58,7 +58,7 @@ _ABBREVIATIONS = {
 _SENT_SPLIT = re.compile(r'([.!?]+["\')\]]?)\s+')
 
 # Symbols counted for the punctuation/segmentation entropy.
-_PUNCT_SYMBOLS = re.compile(r'[.!?,;:\-—()"\']')
+_PUNCT_SYMBOLS = re.compile(r'[.!?,;:\-\u2014()"\']')
 
 # Typographic quotes are mapped to ASCII before segmentation. The split pattern's
 # closing-quote class is ASCII-only, so without the mapping a sentence ending in a curly

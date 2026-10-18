@@ -71,7 +71,7 @@ def main():
             meds = sorted(st.median(random.choice(diffs) for _ in diffs) for _ in range(2000))
             out["dims"][dim][mode] = {
                 "n_pairs": len(diffs), "median_delta_h_minus_ai": round(st.median(diffs), 3),
-                "median_delta_95ci": [round(meds[50], 3), round(meds[1949], 3)],
+                "median_delta_95ci": [meds[50], meds[1949]],
                 "wilcoxon_z": z, "wilcoxon_p": p, "matched_rank_biserial": rb,
                 "paired_dz": round(dz, 3)}
             print(f"{dim:<12}{mode:<13}n={len(diffs):<5}median_d={st.median(diffs):>7.3f}  "
