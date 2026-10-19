@@ -36,16 +36,16 @@ CLI:
 Design
     burstiness     B = [B_n, M]          B_n = Goh-Barabasi/Kim-Jo (primary), Gini = robustness check
     segmentation   S = [punct_entropy]   separate axis (segmentation_entropy here; see burstiness_metrics)
-    predictability P = [mean_surprisal, fluc_dabs]   reported covariate, not steered (not in this module)
+    predictability P = [mean_surprisal, fluc_dabs]   kept outside the construct, not scored (not in this module)
     diagnostics    var_L, mean_len
-    Goodhart guard gaming_flags()        reject degenerate hits before B is counted
+    Goodhart guard gaming_flags()        flag degenerate hits
     multi-scale    multiscale_burstiness()
 
 Limitations
     - genre/register relativity: B has no absolute meaning; a terse human register reads
       "flat", so a target B must be genre-conditioned.
-    - short-document floor: fewer than RELIABILITY_FLOOR sentences gives noisy, biased
-      estimates; flagged via burstiness_pp()["reliable"].
+    - short-document floor: fewer than RELIABILITY_FLOOR sentences gives noisy
+      per-document estimates; flagged via burstiness_pp()["reliable"].
     - syntactic complexity is unmeasured (length and punctuation only); see
       syntactic_complexity().
     - long-range temporality: only lag-1 M and the coarse multiscale profile; a DFA/Hurst
@@ -61,8 +61,8 @@ import math
 from statistics import fmean, pstdev
 from typing import List, Optional, Sequence
 
-# Short-document floor: below this many sentences, B_n / M estimates are noisy and
-# biased. Flagged at runtime via burstiness_pp()["reliable"] and gaming_flags()["gate_ok"];
+# Short-document floor: below this many sentences, a single document's B_n / M estimates
+# are noisy. Flagged at runtime via burstiness_pp()["reliable"] and gaming_flags()["gate_ok"];
 # the estimates are not adjusted.
 RELIABILITY_FLOOR = 10
 
@@ -141,7 +141,7 @@ def memory_M_corrected(intervals: Sequence[float]) -> Optional[float]:
 
 
 # ---------------------------------------------------------------------------
-# Goodhart guard: reject texts that hit the metric via degenerate patterns
+# Goodhart guard: flag texts that hit the metric via degenerate patterns
 # ---------------------------------------------------------------------------
 
 
@@ -172,10 +172,10 @@ def gaming_flags(text, *, loo_delta=0.25, m_floor=-0.5, m_ceiling=0.7,
     """Goodhart guards: flag texts that hit the metric via degenerate patterns.
 
     Returns {"ok", "gate_ok", "flags", "detail"}. ``ok`` = no gaming pattern; ``gate_ok``
-    = ok and reliable (n >= RELIABILITY_FLOOR). B is counted only when gate_ok is True and
-    a separate coherence/predictability gate passes: length-rhythm alone is forgeable by
-    re-punctuation (re-pointing periods swings B_n by more than 1 with zero word change),
-    so this guard never gates on its own.
+    = ok and reliable (n >= RELIABILITY_FLOOR). A use that selects text by B_n should require
+    gate_ok and a separate quality gate: B_n alone is forgeable by re-punctuation
+    (re-pointing periods swings B_n by more than 1 with zero word change), so neither B_n
+    nor this guard should select text on its own.
 
     Flags:
       outlier_driven    : dropping the single longest sentence swings B_n > loo_delta
@@ -352,8 +352,8 @@ def burstiness_pp(text: str) -> dict:
 
     Burstiness B = [B_n (= B_corrected), M]; Gini is the robustness check; multiscale
     gives the temporal profile. Segmentation diversity is a separate axis
-    (segmentation_entropy); predictability (mean_surprisal, fluc) is a reported
-    covariate, not computed here; var_L is a diagnostic. ``reliable`` is False below
+    (segmentation_entropy); predictability (mean_surprisal, fluc) is kept outside the
+    construct, not computed here; var_L is a diagnostic. ``reliable`` is False below
     RELIABILITY_FLOOR sentences.
     """
     from experiments.burstiness_metrics import sentence_lengths

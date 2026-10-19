@@ -98,7 +98,7 @@ variance and the standard deviation of sentence length, grow with the mean, and
 the scale-free ratio \citet{onan2025you} use is not corrected for the few
 sentences a document has. The aim of this paper is to give the sentence-length
 reading a statistic that is both scale-free and corrected, and to use it to
-benchmark the prompting techniques people already rely on.
+benchmark five prompting techniques.
 
 \paragraph{A definition.}
 We treat sentence boundaries as a point process in word-time and score the
@@ -329,7 +329,7 @@ headline block itself.
 Scaffolding sits outside the construct: $B_n$ is defined over the sentence
 lengths of prose, and a markdown header or an echoed dateline is not a sentence of the article.
 Scoring it credits formatting as dispersion, the same class of inflation the Goodhart
-guard rejects (Section~\ref{sec:formalizing}), so normalization is a
+guard flags (Section~\ref{sec:formalizing}), so normalization is a
 corpus-level Goodhart correction, applied uniformly to every leg. Its size is measurable on the
 audited leg (Qwen3.6-27B): scored raw, instruction-mode $B_n$ is
 \val{qwenraw.Bn.instruction.eqphrase} ($\val{qwenraw.Bn.instruction.d}$, CI
@@ -373,7 +373,7 @@ $2.5$th and $97.5$th percentiles of the medians of $2{,}000$ resamples of the ma
 Significance and equivalence are separate verdicts: a delta can differ significantly from zero
 and still sit inside a margin, and the text reports both. We say a prompt closes a model's gap
 when its cell is both not significantly different from the human articles and equivalent at a
-pre-specified margin. For scale, the $200$ human articles have
+pre-specified margin: equivalence alone would count a significant gap as closed. For scale, the $200$ human articles have
 median $B_n = \val{human.median}$ with standard deviation $\val{human.sd}$, so the three margins are
 $\val{human.margin0.03.sd}$, $\val{human.margin0.05.sd}$ and $\val{human.margin0.08.sd}$ of a human
 standard deviation.
@@ -481,13 +481,13 @@ significantly and still be equivalent at a margin. DeepSeek V4 Pro closes a sign
 rank-biserial $\val{deepseek.Bn.control.rb}$, $\val{deepseek.Bn.control.p}$) to
 $\val{deepseek.Bn.instruction.d}$ (contrast $\val{con.deepseek.instruction-control.d}$,
 $\val{con.deepseek.instruction-control.p}$) with CI $\val{deepseek.Bn.instruction.ci}$
-($m^{*}=\val{deepseek.Bn.instruction.mstar}$), a landing the same alias did not reproduce at its
-18 October snapshot (DeepSeek V4 Pro$^{\dagger}$), where the same wording lands significantly past the human articles
+($m^{*}=\val{deepseek.Bn.instruction.mstar}$) on the July snapshot, whereas the 18 October snapshot, a different checkpoint behind the same
+alias (DeepSeek V4 Pro$^{\dagger}$), lands significantly past the human articles under the same wording
 ($\val{deepseek1018.Bn.instruction.d}$, $\val{deepseek1018.Bn.instruction.p}$,
 \val{deepseek1018.Bn.instruction.eqphrase}; Appendix~\ref{sec:protocoldetail}); Kimi K2.6 closes $\val{kimi.Bn.control.d}$
 ($\val{kimi.Bn.control.rb}$) to $\val{kimi.Bn.instruction.d}$ (contrast
 $\val{con.kimi.instruction-control.d}$, $\val{con.kimi.instruction-control.p}$) with CI
-$\val{kimi.Bn.instruction.ci}$ ($m^{*}=\val{kimi.Bn.instruction.mstar}$). The DeepSeek landing is
+$\val{kimi.Bn.instruction.ci}$ ($m^{*}=\val{kimi.Bn.instruction.mstar}$). The July DeepSeek landing is
 on dispersion only: its instructed leg overshoots the human articles on segmentation entropy
 ($\val{deepseek.seg.instruction.d}$, rank-biserial $\val{deepseek.seg.instruction.rb}$,
 $\val{deepseek.seg.instruction.p}$) and on memory ($\val{deepseek.M.instruction.d}$,
@@ -537,7 +537,7 @@ reaches equivalence on one model moves the next a different amount and sometimes
 \end{enumerate}
 
 \paragraph{Sentence-length dispersion as a detection signal.}
-Sentence-length dispersion is one reading of the feature detectors use, and the benchmark says where its flatness signature holds and where it inverts. For detection, the instructed flatness signature persists in \val{inst.flat.w} of nine models, but \val{anypast.names} each write significantly more dispersed text than the human articles under at least one prompted mode, where a flatness threshold fires in the wrong direction, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. The strong detector signal, surprisal, stays outside the construct.
+Sentence-length dispersion is the everyday reading of burstiness, and the benchmark says where its flatness signature holds and where it inverts. For a dispersion-based detector, the instructed flatness signature persists in \val{inst.flat.w} of nine models, but \val{anypast.names} each write significantly more dispersed text than the human articles under at least one prompted mode, where a flatness threshold would fire in the wrong direction, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. The strong detector signal, surprisal, stays outside the construct.
 
 \section{Limitations}\label{sec:limitations}
 
@@ -565,7 +565,7 @@ months later writes significantly more dispersed text than it did in July in all
 (Appendix~\ref{sec:protocoldetail}), so the gaps we measure should not be read as constants of
 nature. One fixed wording per mode risks measuring one model's reading of one
 prompt, and neither an explicit instruction to vary sentence length nor a per-model calibration
-was tested, so the benchmark covers the prompts people already use, not every prompt. Replication across nine
+was tested, so the results show how the prompts tested move the gap, not that no prompt can close it. Replication across nine
 models removes part of the wording risk, since few-shot output is significantly flatter than
 instruction output in \val{con.fslt.phrase}. A paraphrase probe samples the other part on one
 model, the 18 October DeepSeek snapshot, where the canonical wording lands
@@ -575,8 +575,7 @@ per brief, $\val{para.n.min}$ briefs each) land that snapshot $\val{para.ad.lo}$
 $\val{para.ad.hi}$ past, \val{para.past.w} of three significantly, so no wording we tried returns it
 to the human level and none, the canonical one included, is equivalent at $0.03$ or $0.05$.
 Paired on the same headlines, the paraphrases sit $\val{para.con.d.min}$ to $\val{para.con.d.max}$
-beyond the canonical wording (\val{para.con.sig.w} of three significant), a wording effect
-smaller than the tightest margin. The July snapshot's $0.05$ equivalence could not be re-probed:
+beyond the canonical wording (\val{para.con.sig.w} of three significant). The July snapshot's $0.05$ equivalence could not be re-probed:
 by October the alias served a later snapshot (Appendix~\ref{sec:protocoldetail}).
 
 Decoding is not matched across providers (of the nine models' legs, four do not honor a temperature setting,
@@ -596,7 +595,7 @@ mode the probe did not cover, and the probe did not cover Kimi K2.6 or Grok 4.5 
 
 \section{Conclusion}
 Burstiness is measured everywhere under two readings, and the sentence-length one has lacked a
-statistic that is both scale-free and corrected for document length. This paper gives it one,
+statistic that is both scale-free and corrected for the number of sentences. This paper gives it one,
 reproducible and model-free. Its first use is the aim
 problem: on uniformly normalized text, \val{ctrl.flat.w} of nine models write significantly
 flatter than the human articles uninstructed. The same instruction leaves \val{inst.flat.w}
@@ -789,7 +788,7 @@ $\val{qwen.gini.control.rb}$). On segmentation entropy ($\val{qwen.seg.control.d
 $\val{qwen.seg.control.p}$) and memory ($\val{qwen.M.control.d}$, $\val{qwen.M.control.p}$) the
 control mode shows no significant difference. The control-mode authorship gap is significant only on the dispersion dimensions; the memory and
 entropy intervals ($\val{qwen.M.control.ci}$ and $\val{qwen.seg.control.ci}$) each clear only
-the $0.08$ margin, so neither is a match.
+the $0.08$ margin.
 
 A plain instruction raises dispersion significantly relative to the bare brief (paired contrast
 $\val{con.qwen.instruction-control.d}$, $\val{con.qwen.instruction-control.p}$) and does not close
@@ -852,8 +851,8 @@ import re
 from statistics import fmean, pstdev
 from typing import List, Optional, Sequence
 
-# Below this many sentences, B_n and M estimates are noisy and biased; the
-# entry point reports ``reliable = False`` rather than trusting them.
+# Below this many sentences, a single document's B_n and M estimates are
+# noisy; the entry point reports ``reliable = False``.
 RELIABILITY_FLOOR = 10
 
 # --------------------------------------------------------------------------
@@ -998,7 +997,7 @@ def multiscale_burstiness(text: str, scales: Sequence[int] = (1, 2, 4)) -> dict:
 
 
 # --------------------------------------------------------------------------
-# Goodhart guard: reject degenerate texts that reach the score by gaming it
+# Goodhart guard: flag degenerate texts that reach the score by gaming it
 # --------------------------------------------------------------------------
 
 def _trigram_diversity(text: str) -> float:
@@ -1023,10 +1022,10 @@ def gaming_flags(text, *, loo_delta=0.25, m_floor=-0.5, m_ceiling=0.7,
     """Flag texts that reach a high dispersion score through degenerate patterns.
 
     Returns {"ok", "gate_ok", "flags", "detail"}. ``ok`` means no gaming pattern
-    fired; ``gate_ok`` means ok AND reliable (n >= RELIABILITY_FLOOR). B_n should
-    be counted only when gate_ok is True and a separate coherence gate also
-    passes: re-punctuating a fixed text can swing B_n across much of its range,
-    so length-rhythm must never select generations on its own.
+    fired; ``gate_ok`` means ok AND reliable (n >= RELIABILITY_FLOOR). A use that
+    selects text by B_n should require gate_ok and a separate quality gate:
+    re-punctuating a fixed text can swing B_n across much of its range, so B_n
+    must never select generations on its own.
 
     Flags: outlier_driven (dropping the longest sentence swings B_n > loo_delta),
     low_len_diversity (distinct-length ratio < distinct_len_min at n >= 8, which
