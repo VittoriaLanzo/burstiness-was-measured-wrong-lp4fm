@@ -19,7 +19,7 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl (revision 3f27ce645ce4f21aa91bd9b8b52a9ca33214fdee, sha256 fa73bffe8b2a312ae0902a90a3b3e72b07de74ddbc8a3dd49134c39377859ed6)"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl (revision 3f27ce645ce4f21aa91bd9b8b52a9ca33214fdee, sha256 fa73bffe8b2a312ae0902a90a3b3e72b07de74ddbc8a3dd49134c39377859ed6)"
   },
   "design": {
     "modes": [
@@ -36,7 +36,7 @@
     "prompts": "identical to the July leg: every first-stage request matches bench/prompts.py on the frozen briefs, and the critique and rewrite requests use the FEEDBACK and REWRITE templates"
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/deepseek-v4-news-gen",
+    "hf_dataset": "burstiness-engine/deepseek-v4-news-gen",
     "raw_generations": "benchmark/new-run-2026-10-18/deepseek-v4.jsonl (revision e35f0b872b489151fc2e430b879499b20092884c)",
     "attempts_and_requests": "benchmark/new-run-2026-10-18/ (attempts.jsonl, stage-requests.jsonl, manifests, SHA256SUMS)",
     "companion_paraphrase_run": "paraphrase/new-run-2026-10-18/ (revision 69dc8a31412b45bf06848b3b1f0ec53cfc37af34)"

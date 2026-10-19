@@ -15,7 +15,7 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl"
   },
   "design": {
     "modes": [
@@ -36,7 +36,7 @@
     "effect": "raw scoring understated the authorship gap (markdown scaffolding inflated variance): control B_n delta +0.022 (rb 0.21) raw vs +0.069 (rb 0.58) normalized. Raw scoring archived beside the normalized eval on the dataset."
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/gemma3-news-gen",
+    "hf_dataset": "burstiness-engine/gemma3-news-gen",
     "raw_generations": "data/gemma-3-27b.jsonl",
     "normalized_generations": "data/gemma-3-27b.normalized.jsonl",
     "scored_eval": "eval/seed_avg_paired_gemma-3-27b.json",

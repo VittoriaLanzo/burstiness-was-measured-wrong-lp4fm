@@ -1,16 +1,16 @@
 # Can Prompting Reliably Close the Sentence-Length Dispersion Gap? Code and evaluation artifacts
 
-Private artifact repository for the paper "Can Prompting Reliably Close the
+Artifact repository for the paper "Can Prompting Reliably Close the
 Sentence-Length Dispersion Gap?" (LP4FM @ NeurIPS 2026). Every script and
 evaluation artifact the paper relies on, in source-repository layout, so the
 scripts run from this directory as the working root.
 
 ## Paper source
 
-- paper/lp4fm/main.tex: the unified LaTeX source of the submission (single assembled
+- paper/lp4fm/main.tex: the unified LaTeX source of the camera-ready (single assembled
   file), with paper/lp4fm/references.bib, paper/lp4fm/neurips_2026.sty, and
-  paper/lp4fm/build.sh (tectonic) alongside. Figures 1 and 2 are PDF plots under
-  paper/lp4fm/figures/; paper/lp4fm/make_lp4fm_figures.py redraws them.
+  paper/lp4fm/build.sh (tectonic) alongside. Figure 1 is a PDF plot under
+  paper/lp4fm/figures/; paper/lp4fm/make_lp4fm_figures.py redraws it from the result JSONs.
 
 ## Code (mirrors repository paths)
 
@@ -73,11 +73,11 @@ scripts run from this directory as the working root.
   reviewed version reported are kept in july-2026/).
 - experiments/results/review_analyses.json: the supplementary analyses output.
 - experiments/results/contamination_probe.json: the n-gram probe output.
-- hf-datasets.zip: mirror of the HuggingFace datasets the pipeline consumes,
-  masked ids restored by path. Contains the frozen human baseline
+- hf-datasets.zip: mirror of the HuggingFace datasets the pipeline consumes
+  (organization burstiness-engine), one folder per dataset id. Contains the frozen human baseline
   (prompts_200_human.jsonl, 200 paired Wikinews articles), the ablation-corpus
   pairs, the raw generations of all nine benchmark legs, the 18 October 2026
-  DeepSeek replication and its paraphrase run (released post-scrub revisions).
+  DeepSeek re-run and its paraphrase run (reasoning traces removed).
   See the README inside the zip.
 - research-db.zip: the SQLite research corpus behind the literature curation
   (papers with verified arXiv ids, queries, findings, learnings, session

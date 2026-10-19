@@ -15,7 +15,7 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl"
   },
   "design": {
     "modes": [
@@ -31,7 +31,7 @@
     "excluded": "none: zero empty/truncated cells in the entire run; 23 stream-timeout intermediates retried to success (never recorded)"
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/grok43-news-gen",
+    "hf_dataset": "burstiness-engine/grok43-news-gen",
     "raw_generations": "data/grok-4.3.jsonl",
     "scored_eval": "eval/seed_avg_paired_grok-4.3.json"
   },
