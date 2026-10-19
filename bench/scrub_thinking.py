@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-"""Split a bench output JSONL into clean rows and thinking-truncation casualties.
+"""Split a bench output JSONL into clean rows and thinking-truncation rows.
 
-A cell is DIRTY when the model's reasoning overran max_tokens without ever emitting the
-closing </think>, so strip_think had nothing to strip and the recorded text IS truncated
-reasoning (v2 run 2026-07-03: 120/3000 cells). The rule is deliberately conservative and
-documented: the text starts with a known reasoning scaffold marker, or it is longer than
---max-chars (default 8000; real articles run 1.0-3.5k chars, truncated 6k-token reasoning
-runs ~20k). Stdlib only.
+A cell is dirty when the model's reasoning overran max_tokens without emitting the closing
+</think>, so strip_think had nothing to strip and the recorded text is truncated reasoning.
+The rule: the text starts with a known reasoning scaffold marker, or it is longer than
+--max-chars (default 8000; articles run 1.0-3.5k chars, truncated 6k-token reasoning runs
+about 20k). Stdlib only.
 
     python3 -m bench.scrub_thinking out/qwen3.6-27b.jsonl              # report only
     python3 -m bench.scrub_thinking out/qwen3.6-27b.jsonl --in-place   # move dirty rows out
 
---in-place moves the dirty rows to <file>.dirty-<utcstamp>.jsonl next to the input (the
-CommitScheduler mirrors that sidecar to the HF dataset, so nothing is ever lost) and keeps
-only clean rows in the main file, so gen_vllm's append-only resume re-queues exactly the
-dirty cells on the next run: a self-healing rerun.
+--in-place moves the dirty rows to <file>.dirty-<utcstamp>.jsonl next to the input (gen_vllm's
+CommitScheduler mirrors that sidecar to the HF dataset along with the output folder) and keeps
+only clean rows in the main file, so gen_vllm's append-only resume re-queues exactly the dirty
+cells on the next run.
 """
 from __future__ import annotations
 

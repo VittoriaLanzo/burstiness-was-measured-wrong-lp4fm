@@ -15,7 +15,7 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl"
   },
   "design": {
     "modes": [
@@ -28,15 +28,15 @@
     "seeds": 3,
     "cells_total": 3000,
     "cells_completed": 3000,
-    "excluded": "2 empty-output cells, both self_refine (s79 seed 2, s185 seed 0); scorer seed-averages over remaining seeds per protocol. Headline control/instruction stats unaffected."
+    "excluded": "2 empty-output cells, both self_refine (s79 seed 2, s185 seed 0); the scorer seed-averages over the remaining seeds."
   },
   "normalization": {
     "script": "experiments/ablation/normalize_generation.py",
-    "why": "generation hygiene flagged 94% markdown and 100% title lines (formatting the plain-prose human baseline lacks; guard: experiments/ablation/generation_hygiene.py). Uniform R1-6 protocol: every leg is normalized before scoring.",
+    "why": "generation hygiene flagged 94% markdown and 100% title lines (formatting the plain-prose human baseline lacks; guard: experiments/ablation/generation_hygiene.py). Every leg is normalized before scoring.",
     "effect": "scored on normalized text; raw scoring archived beside the normalized eval on the HF dataset."
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/grok45-news-gen",
+    "hf_dataset": "burstiness-engine/grok45-news-gen",
     "raw_generations": "data/grok-4.5.jsonl",
     "normalized_generations": "data/grok-4.5.normalized.jsonl",
     "scored_eval": "eval/seed_avg_paired_grok-4.5.json",
@@ -44,16 +44,14 @@
   },
   "scoring": {
     "script": "experiments/ablation/seed_avg_paired.py",
-    "metric_revision": "post-R1-5 (typographic-quote-normalized segmentation entropy, PR #21)",
+    "metric_revision": "typographic-quote-normalized segmentation entropy",
     "test": "one paired Wilcoxon signed-rank per (mode, metric) over 200 seed-averaged headline pairs, delta = human - model"
   },
   "generation": {
-    "driver": "bench/run.py (openai_compat provider, api.x.ai/v1, max_tokens 16000, checkpoint-resumable JSONL)",
-    "repo_ref": "bench/grok45-gemini-legs branch"
+    "driver": "bench/run.py (openai_compat provider, api.x.ai/v1, max_tokens 16000, checkpoint-resumable JSONL)"
   },
   "run_date": "2026-07-10",
   "duration": "~2h30m API run (8 workers), single-cell resume for 1 transient error",
   "cost_usd": "$17.50 actual from telemetry: 3,073,396 in @ $2/M + 1,892,744 out @ $6/M (grok-4.5 launch pricing)",
-  "headline_finding": "First family where the dispersion gap INVERTS: under instruction, Grok 4.5 text is significantly MORE dispersed than human (B_n delta -0.025 p=0.015, Gini -0.014 p=0.012), and its segmentation entropy exceeds human in both modes (control -0.249, rb -0.74). The human-AI burstiness gap is not monotone across frontier generations.",
-  "provenance": "Generated via the xAI API against pinned prompts; hygiene-gated, normalized (R1-6 uniform protocol), and scored locally against the frozen human baseline on the post-R1-5 metric; compiled eval carried into the repo as SSOT."
+  "provenance": "Generated via the xAI API against pinned prompts; normalized and scored against the frozen human baseline; the compiled eval is the file in this directory."
 }

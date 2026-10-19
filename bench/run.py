@@ -1,25 +1,27 @@
 """Driver. Generates every cell of the (mode x model x brief x iteration) array and
-checkpoints each output, so a long paid run is resumable and loss-proof.
+checkpoints each output, so a long run is resumable without losing earlier cells.
 
 A "mode" is a prompting condition (bench/prompts.py MODES): a function (gen, brief) -> final
 article text, where gen(user) is one model completion. Most modes make one call; self_refine
 makes three (draft, critique, rewrite). The 200 briefs are the news headlines from the frozen
 HF dataset (prompts.load_briefs).
 
-Failure handling is loud, not happy-path-only:
-  - --check runs a no-API preflight (SDK importable? key set?) per leg.
-  - A leg with a missing SDK/key is clearly SKIPPED (distinct from failure).
-  - A cell that errors prints the full traceback + leg context; the cell is not recorded
-    (so it retries next run).
+Failure handling:
+  - --check runs a no-API preflight (SDK importable, key set) per leg.
+  - A leg with a missing SDK/key is skipped, which is distinct from failure.
+  - A cell that errors prints the full traceback and leg context; the cell is not recorded,
+    so it retries on the next run.
+  - A provider content-filter rejection is recorded as an empty cell with usage.refusal set
+    and does not count toward fail-fast.
   - If a leg errors FAIL_FAST times before any success, it is declared broken and stopped.
-  - An empty output is WARNed (refusal/truncation) but still recorded for inspection.
+  - An empty output is warned about (refusal/truncation) but still recorded for inspection.
   - The end-of-run summary distinguishes ok / ok-with-errors / FAILED / skipped, and the
     process exits non-zero if any leg failed.
 
     python -m bench.run --check                # preflight, no API calls, no cost
     python -m bench.run --dry-run              # plan + first rendered cell, no API calls
-    python -m bench.run --smoke                # one real cell per ready leg (needs --force while draft)
-    python -m bench.run --force                # real run (prompts not finalized -> needs --force)
+    python -m bench.run --smoke                # one real cell per ready leg
+    python -m bench.run --models KEY[,KEY]     # real run (resumable); --all-legs runs every enabled leg
 """
 from __future__ import annotations
 
@@ -143,11 +145,10 @@ def run(models, limit=None, smoke=False, force=False, workers=1):
                 try:
                     text, usages = fut.result()
                 except Exception as e:
-                    # Provider-side content moderation (e.g. Moonshot 400 content_filter on
-                    # violent-news headlines) is a REFUSAL, not a harness fault: record the
-                    # cell empty (the scorer's protocol already excludes empties, and the
-                    # refusal rate is itself reportable) instead of retry-looping into
-                    # fail-fast on a block of filtered headlines.
+                    # A provider content-filter rejection (e.g. Moonshot's 400 content_filter
+                    # on violent-news headlines) is a refusal, not a harness fault: the cell is
+                    # recorded empty (the scorer excludes empties, and the refusal rate is
+                    # itself reportable) instead of counting toward fail-fast.
                     if "content_filter" in str(e) or "high risk" in str(e):
                         empties += 1
                         print(f"   WARN {m['key']} {mode} s{bid} it{it}: provider content filter "
@@ -241,9 +242,9 @@ def main():
             print("=" * 72)
             print(f"REFUSING TO RUN ALL {len(enabled)} LEGS: no --models filter was given.")
             print(f"This would spend on EVERY ready provider: {', '.join(enabled)}.")
-            print("A pasted command that line-breaks before --models silently becomes this")
-            print("(2026-07-10 near-miss). Name legs with --models key1,key2 or pass")
-            print("--all-legs if the full-registry run is genuinely intended.")
+            print("A pasted command that line-breaks before --models silently becomes this.")
+            print("Name legs with --models key1,key2 or pass --all-legs if the full-registry")
+            print("run is intended.")
             print("=" * 72)
             sys.exit(2)
         run(models, limit=a.limit, smoke=a.smoke, force=a.force, workers=a.workers)

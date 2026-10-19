@@ -15,7 +15,7 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl"
   },
   "design": {
     "modes": [
@@ -28,15 +28,15 @@
     "seeds": 3,
     "cells_total": 3000,
     "cells_completed": 3000,
-    "excluded": "36 silent-refusal empty cells (HTTP 200, empty output), concentrated on politically sensitive headlines: s167 Hong Kong protests (12), s166 Greta Thunberg (11), s139 China term limits (10), s163 Carrie Lam post-protest speech (2), s75 COVID-19 naming (1). Recorded and excluded by the seed-averaging protocol; see knowledge/PROVIDER-REFUSAL-AUDIT.md. Contrast: xAI/Google/DeepSeek generated all 200 headlines."
+    "excluded": "36 silent-refusal empty cells (HTTP 200, empty output), concentrated on politically sensitive headlines: s167 Hong Kong protests (12), s166 Greta Thunberg (11), s139 China term limits (10), s163 Carrie Lam post-protest speech (2), s75 COVID-19 naming (1). Recorded and excluded by the seed-averaging protocol."
   },
   "normalization": {
     "script": "experiments/ablation/normalize_generation.py",
-    "why": "hygiene guard: ~99% markdown / 100% title lines vs the plain-prose human baseline. Uniform R1-6 protocol.",
+    "why": "hygiene guard: ~99% markdown / 100% title lines vs the plain-prose human baseline. Every leg is normalized before scoring.",
     "effect": "scored on normalized text; raw scoring archived on the HF dataset."
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/glm52-news-gen",
+    "hf_dataset": "burstiness-engine/glm52-news-gen",
     "raw_generations": "data/glm-5.2.jsonl",
     "normalized_generations": "data/glm-5.2.normalized.jsonl",
     "scored_eval": "eval/seed_avg_paired_glm-5.2.json",
@@ -44,16 +44,14 @@
   },
   "scoring": {
     "script": "experiments/ablation/seed_avg_paired.py",
-    "metric_revision": "post-R1-5 (typographic-quote-normalized segmentation entropy, PR #21)",
+    "metric_revision": "typographic-quote-normalized segmentation entropy",
     "test": "one paired Wilcoxon signed-rank per (mode, metric) over 200 seed-averaged headline pairs, delta = human - model"
   },
   "generation": {
-    "driver": "bench/run.py (openai_compat provider, api.z.ai/api/paas/v4, max_tokens 16000, checkpoint-resumable JSONL; content-filter refusals recorded per the 2026-07-11 harness patch)",
-    "repo_ref": "tier1/science-sweep branch"
+    "driver": "bench/run.py (openai_compat provider, api.z.ai/api/paas/v4, max_tokens 16000, checkpoint-resumable JSONL; content-filter refusals recorded as empty cells)"
   },
   "run_date": "2026-07-11",
-  "duration": "~4h30m wall (2 balance interruptions, checkpoint-resumed losslessly), ~600-1100 cells/h at 8 workers",
-  "cost_usd": "~$31 actual across top-ups: 2.23M in + 10.02M out (thinking included in output stream), reasoning_effort=max",
-  "headline_finding": "Replicates the gemini-3.1-pro anchor almost exactly: control B_n +0.126 (rb +0.85, p~0) vs gemini +0.128 (+0.85); instruction narrows (+0.061, rb +0.57) but does not close. Two independent frontier labs now anchor the strongest control-mode dispersion gaps measured. Second data point that frontier scale does not close the gap.",
-  "provenance": "Generated via the Z.ai API against pinned prompts; hygiene-gated, normalized (R1-6 uniform protocol), and scored locally against the frozen human baseline on the post-R1-5 metric."
+  "duration": "~4h30m wall at 8 workers (two balance interruptions, checkpoint-resumed)",
+  "cost_usd": "~$31: 2.23M input + 10.02M output tokens (thinking included in the output stream), reasoning_effort=max",
+  "provenance": "Generated via the Z.ai API against pinned prompts; normalized and scored against the frozen human baseline."
 }

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Multi-seed paired (matched-headline) test: bench generations vs the human corpus.
 
-Why this exists: the bench (bench/gen_vllm.py) generates N_SEEDS completions per
-(mode, headline). Pooling every seed as its own pair would reuse each human document
-N times (pseudo-replication: Wilcoxon assumes independent pairs, p-values come out
-overconfident). Per the G1 lesson (var(L) is noisy; always multi-seed), the sound
-design is: average each headline's metric vector ACROSS seeds first, then run one
-paired test on the n independent headline pairs. A per-seed rank-biserial consistency
-matrix for B_n is printed alongside, so seed-to-seed variation stays visible.
+The bench generates N_SEEDS completions per (mode, headline). Pooling every seed as its
+own pair would reuse each human document N times (pseudo-replication: Wilcoxon assumes
+independent pairs, so p-values would come out overconfident). Instead, each headline's
+metric vector is averaged across seeds first, then one paired test is run on the n
+independent headline pairs. Empty generations are skipped, so a headline with an empty
+seed is averaged over its remaining seeds. A per-seed rank-biserial consistency matrix
+for B_n is printed alongside, so seed-to-seed variation stays visible.
 
 Reuses metrics() and wilcoxon() from paired_test.py unchanged. Model-free, stdlib
-plus the repo. Bootstrap is seeded, so reruns reproduce the committed JSON exactly.
+plus the repo. The bootstrap is seeded, so reruns reproduce the committed JSON exactly.
 
     python -m experiments.ablation.seed_avg_paired HUMAN.jsonl GEN.jsonl [label]
 
@@ -71,7 +71,7 @@ def main():
             meds = sorted(st.median(random.choice(diffs) for _ in diffs) for _ in range(2000))
             out["dims"][dim][mode] = {
                 "n_pairs": len(diffs), "median_delta_h_minus_ai": round(st.median(diffs), 3),
-                "median_delta_95ci": [round(meds[50], 3), round(meds[1949], 3)],
+                "median_delta_95ci": [meds[50], meds[1949]],
                 "wilcoxon_z": z, "wilcoxon_p": p, "matched_rank_biserial": rb,
                 "paired_dz": round(dz, 3)}
             print(f"{dim:<12}{mode:<13}n={len(diffs):<5}median_d={st.median(diffs):>7.3f}  "

@@ -1,24 +1,17 @@
 #!/usr/bin/env python3
 """
-PROOF: the cross-model "segmentation-entropy split" is a Unicode-quote metric artifact.
+Audit of the typographic-quote effect on segmentation entropy.
 
-The overnight 3-model expansion reported a large seg_entropy deficit for the two API models
-(DeepSeek V4 Pro rank-biserial ~0.9, Grok 4.3 ~0.98 vs Qwen ~0.07) and it was queued to be
-named as a headline finding. It is not real. `segmentation_entropy` scores the entropy of the
-punctuation distribution using the regex `[.!?,;:\\-—()"\\']`, which counts ONLY straight
-quotes. Both API models overwhelmingly emit curly/smart quotes (" " ' '), so all their
-attribution quotes are invisible to the metric, collapsing their punctuation onto period+comma
-and deflating entropy. The human baseline and the self-hosted vLLM Qwen use straight quotes, so
-theirs are counted. Normalizing curly -> straight before scoring closes the entire gap.
+`segmentation_entropy` scores the entropy of the punctuation distribution over the symbol
+class `[.!?,;:\\-—()"\\']`, which contains only straight quotes. A model that emits curly
+quotes (" " ' ') has all its attribution quotes invisible to that class, which collapses its
+punctuation onto period and comma and deflates the entropy relative to a straight-quote
+human baseline. The metric now maps curly quotes to straight before counting
+(experiments/burstiness_pp.py); this script shows the size of the effect by scoring the
+control-mode generations of the listed legs raw and with the quotes normalized, and compares
+the result with the human value implied by each leg's committed seed_avg_paired.json.
 
-Tells that flagged it before this proof: the deficit is present at full strength in the
-`control` mode and is nearly mode-invariant (a fixed model/tokenizer property, not a prompting
-effect), it hits two independent API families identically, and B_n (the actual burstiness
-construct) is normal for all three models.
-
-Reads the local raw generations in bench/results/*.jsonl (no network). Requires the human
-baseline to confirm it uses straight quotes (arithmetic already implies it: normalized model
-seg_entropy ~= the SSOT-implied human value).
+Reads the local raw generations in bench/results/*.jsonl (no network).
 
 Run:
     python3 experiments/ablation/segentropy_quote_artifact.py
@@ -37,7 +30,7 @@ RESULTS = ROOT / "bench" / "results"
 BENCH = ROOT / "experiments" / "results" / "benchmark"
 CURLY = {"“": '"', "”": '"', "‘": "'", "’": "'"}
 
-SOURCES = {  # raw jsonl -> benchmark model_id (for the SSOT-implied human value)
+SOURCES = {  # raw jsonl -> benchmark model_id (for the committed-result-implied human value)
     "deepseek-v4.jsonl": "deepseek-v4-pro",
     "grok-4.3.jsonl": "grok-4.3",
 }
@@ -89,8 +82,7 @@ def main() -> int:
         print()
     print("Verdict: the seg_entropy deficit is a straight-quote-only regex missing smart quotes.")
     print("Fix: normalize curly->straight (or add “”‘’ to _PUNCT_SYMBOLS) before "
-          "scoring, then re-score ALL models. Do NOT headline the split. Needs author sign-off "
-          "(touches the metric SSOT).")
+          "scoring, then re-score ALL models. The fix is in experiments/burstiness_pp.py.")
     return 0
 
 

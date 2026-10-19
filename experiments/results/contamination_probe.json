@@ -66,5 +66,5 @@
       }
     }
   },
-  "note": "R1-4 memorization bound. matched = generation vs its paired human article; mismatched = vs a fixed other article (topical-register baseline). Memorization shows as matched >> mismatched or runaway per-generation maxima, especially at 13-grams."
+  "note": "Memorization bound. matched = generation vs its paired human article; mismatched = vs a fixed other article (topical-register baseline). Memorization shows as matched >> mismatched or runaway per-generation maxima, especially at 13-grams."
 }

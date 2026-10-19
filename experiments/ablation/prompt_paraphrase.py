@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""R1-3: is the instruction-mode result robust to the prompt's wording?
+"""Instruction-wording robustness probe.
 
-The benchmark uses ONE fixed wording per mode; R1-3 notes the mode ordering
-could be an artifact of those particular sentences. This harness reruns the
-instruction condition under three independent paraphrases of the VOICE+TAIL
-pair (same Persona Pattern, same metric-free constraint: no naming of sentence
-length, variation, rhythm, or any measured axis) on one model family, one
-seed, all 200 briefs, and scores each variant with the same paired machinery.
+The benchmark uses one fixed wording per mode, so the mode ordering could be an
+artifact of those particular sentences. This harness reruns the instruction
+condition under three independent paraphrases of the VOICE+TAIL pair (same
+Persona Pattern and the same constraint as the canonical VOICE/TAIL: no mention
+of sentence length, rhythm, or any number) on one model family, one seed, all
+200 briefs, and scores each variant with the same paired machinery. If the
+instruction-mode deltas agree in sign and rough magnitude across paraphrases,
+the mode result is about the condition, not the sentence.
 
-If the instruction-mode deltas agree in sign and rough magnitude across
-paraphrases, the mode result is about the CONDITION, not the sentence.
-
-Checkpoint-resumable per variant. Usage:
+Checkpoint-resumable per variant (a run stops after 5 failed cells; rerun to
+resume). Usage:
   python3 -m experiments.ablation.prompt_paraphrase --model deepseek-v4 \
       --outdir <dir> [--limit N] [--workers 8]
 Then score each <dir>/variant_<k>.jsonl with experiments.ablation.seed_avg_paired.
@@ -30,7 +30,7 @@ from bench.config import MODELS
 from bench.providers import generate
 
 # Three independent paraphrases of (VOICE, TAIL). Persona Pattern preserved;
-# metric-free by construction (no measured axis is ever named).
+# like the canonical pair, none names the statistic, sentence length, or rhythm.
 VARIANTS = {
     "v1": (
         "You are a veteran newspaper reporter. Write the story the way an experienced "

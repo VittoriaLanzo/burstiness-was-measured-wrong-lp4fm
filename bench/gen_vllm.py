@@ -1,51 +1,48 @@
 #!/usr/bin/env python3
-"""Offline batched generation of the prompt-ceiling benchmark on a local vLLM (2x A40).
+"""Offline batched generation of the prompt-ceiling benchmark on a local vLLM.
 
 Runs every (mode, brief, seed) cell for the 5 prompting modes through a locally served
-Qwen3.6 model via vLLM offline batching (max GPU throughput on a fixed prompt set), and
-checkpoints to append-only JSONL that mirrors bench/storage.py's fields, so scoring downstream
-is unchanged. ALL wording comes from bench/prompts.py (single source of truth): the modes, the
-brief builder, and the self_refine templates. This file is only the batch orchestration.
+open-weights model (default Qwen3.6-27B) with vLLM offline batching, and checkpoints to an
+append-only JSONL that mirrors bench/storage.py's fields, so scoring downstream is unchanged.
+All wording comes from bench/prompts.py: the modes, the brief builder, and the self_refine
+templates. This file is only the batch orchestration.
 
-Why this shape (verified: A40 = Ampere, PCIe, no FP8 tensor cores):
-  - Model Qwen3.6-27B (dense, bf16, Apache-2.0): its ~54GB bf16 weights exceed one 48GB A40, so
-    tensor_parallel_size=2 is required (2 data-parallel replicas impossible at bf16). Dense over
-    the 35B-A3B MoE (decided 2026-07-02): 27B active params write stronger prose than ~3B-active
-    MoE, MoE routing adds seed-to-seed metric variance, and the MoE hangs CUDA-graph capture on
-    Ampere (vLLM #40124, confirmed on 2xA40), which forced eager mode and erased its speed edge.
-  - Offline llm.chat(list) beats the OpenAI server for a fixed batch (continuous batching
-    saturates both GPUs with no client-side concurrency to manage). It applies the chat template,
-    which a raw generate() would skip -- required for an instruct model.
-  - enable_prefix_caching + the shared prefix (VOICE, and for fewshot the exemplars) kept FIRST
-    and byte-identical: the long shared prefix is prefilled once and reused across all cells.
-  - self_refine batches ACROSS items in staged passes (all drafts, then all critiques, then all
-    rewrites), so every pass keeps the batch full.
+Design:
+  - Qwen3.6-27B (dense, bf16) has about 54 GB of weights, more than one 48 GB GPU holds, so
+    tensor_parallel_size=2 is the default. The dense model is used rather than the 35B-A3B
+    MoE: MoE routing adds seed-to-seed metric variance, and the MoE hangs CUDA-graph capture on
+    Ampere GPUs (vLLM issue #40124), which forces eager mode and removes its speed advantage.
+  - Offline llm.chat(list) rather than the OpenAI-compatible server: continuous batching
+    saturates the GPUs with no client-side concurrency to manage, and it applies the chat
+    template, which a raw generate() would skip and which an instruct model requires.
+  - enable_prefix_caching, with the shared prefix (VOICE, and for fewshot the exemplars) first
+    and byte-identical, so the long shared prefix is prefilled once and reused across cells.
+  - self_refine is batched across items in staged passes (all drafts, then all critiques, then
+    all rewrites), so every pass keeps the batch full.
 
-Thinking: ON by default for parity with the frontier models (they run at max reasoning); we strip
-the <think> block and score only the article. Set BENCH_THINKING=0 to disable.
+Thinking is on by default, for parity with the API models, which run at maximum reasoning; the
+<think> block is stripped and only the article is scored. Set BENCH_THINKING=0 to disable.
 
-Context-overflow safety (check_prompts): exemplars are corpus-capped (120-500 words) and each
-stage's output is capped by max_tokens, so the longest prompt stays ~3-4K tokens, far under
-MAX_MODEL_LEN=16384. check_prompts asserts prompt+out <= the limit before any GPU spend; vLLM also
-errors (never silently truncates) on an over-length prompt.
+Context overflow (check_prompts): exemplars are corpus-capped (120-500 words) and each stage's
+output is capped by max_tokens, so the longest prompt stays around 3-4K tokens, well under
+MAX_MODEL_LEN=16384. check_prompts asserts prompt + output <= the limit before any GPU time is
+spent; vLLM itself errors rather than silently truncating an over-length prompt.
 
-Checkpoint + resume (RunPod-interruption-proof):
-  - LOCAL is the crash-safety: each cell is appended + fsync'd to JSONL on a Network Volume
-    (survives pod termination) as its batch completes, so a crash loses at most CHUNK cells and a
-    restart skips everything already written (idempotent resume). Set CHUNK to the loss window you
-    want (default 50). NB: if CHUNK < the GPU's saturation concurrency the batch underfills and
-    throughput drops -- check GPU util in --smoke and raise CHUNK if it is not saturated at 50.
-  - HF mirror is the backup + final artifact: CommitScheduler pushes the folder every ~5 min on a
-    background thread (its recommended cadence; count-based pushes every 50 would spam commits, and
-    the Network Volume already gives the <=CHUNK crash-safety).
+Checkpoint and resume:
+  - Each cell is appended and fsync'd to the JSONL as its batch completes, so a crash loses at
+    most CHUNK cells and a restart skips everything already written. CHUNK (default 50) is also
+    the batch size: below the GPU's saturation concurrency the batch underfills and throughput
+    drops.
+  - With BENCH_HF_REPO set, a CommitScheduler pushes the output folder to that HF dataset every
+    5 minutes on a background thread, as backup and final artifact.
 
-Errors are surfaced loudly (expensive pod): each batch is wrapped; the first batch failing with 0
-successes aborts (likely OOM/config, do not burn pod time); a later batch error logs the traceback
-+ context and is skipped (its cells retry next run); empty outputs are WARNed and counted; a final
-summary reports made/errors/empty. vLLM's own logs: VLLM_LOGGING_LEVEL (default INFO here).
+Errors: each batch is wrapped; if the first batch fails with 0 successes the run aborts (likely
+OOM or a config problem); a later batch error logs the traceback and context and is skipped
+(its cells retry on the next run); empty outputs are warned about and counted; a final summary
+reports made/errors/empty. vLLM's own log level is VLLM_LOGGING_LEVEL (default INFO here).
 
     python -m bench.gen_vllm --check-prompts   # tokenizer-only overflow preflight; no model load, no GPU
-    python -m bench.gen_vllm --smoke           # 2 briefs end-to-end + HF push, then exit (paid-run gate)
+    python -m bench.gen_vllm --smoke           # 2 briefs end-to-end (+ HF push), then exit
     python -m bench.gen_vllm                    # full run (resumable)
 """
 from __future__ import annotations
@@ -64,13 +61,14 @@ from pathlib import Path
 
 from . import prompts
 
-# Set before vllm imports (which are lazy, inside main): verbose logs + the RunPod 2-GPU TP init fix.
+# Set before the (lazy, inside main) vllm imports: log level, and the spawn start method for the
+# tensor-parallel worker processes.
 os.environ.setdefault("VLLM_LOGGING_LEVEL", "INFO")
 os.environ.setdefault("VLLM_WORKER_MULTIPROC_METHOD", "spawn")
 
-# Any hang anywhere in the run: when bootstrap's outer `timeout` SIGTERMs a stuck process, dump
-# every thread's stack first so the teed log names the exact line (timeout's -k SIGKILL follows).
-# Unix-only API; the offline smoke also runs on dev boxes without it.
+# On SIGTERM (e.g. from an outer `timeout` wrapper killing a stuck run), dump every thread's
+# stack first so the log names the hung line. faulthandler.register is Unix-only; the module
+# still imports where it is absent.
 if hasattr(faulthandler, "register"):
     faulthandler.register(signal.SIGTERM, all_threads=True)
 
@@ -80,47 +78,44 @@ MAX_MODEL_LEN = int(os.environ.get("BENCH_MAX_MODEL_LEN", "16384"))
 GPU_MEM_UTIL = float(os.environ.get("BENCH_GPU_MEM_UTIL", "0.90"))  # capture needs headroom; alloc fails inside capture can deadlock
 MAX_NUM_SEQS = int(os.environ.get("BENCH_MAX_NUM_SEQS", "256"))
 N_SEEDS = int(os.environ.get("BENCH_ITERATIONS", "3"))
-CHUNK = int(os.environ.get("BENCH_CHUNK", "50"))      # checkpoint + crash-loss window (raise if GPU underfilled)
-TEMPERATURE = 0.7                                      # locked decoding (prompts.py); top_p a std default
+CHUNK = int(os.environ.get("BENCH_CHUNK", "50"))      # batch size, checkpoint and crash-loss window
+TEMPERATURE = 0.7                                      # decoding held constant across modes (see prompts.py)
 TOP_P = float(os.environ.get("BENCH_TOP_P", "0.95"))
 THINKING = os.environ.get("BENCH_THINKING", "1") == "1"
-# Per-stage output caps. THINKING shares this budget: Qwen3.6 spends 1-4k tokens reasoning
-# BEFORE the article, so an undersized cap truncates mid-reasoning and no article ever appears
-# (the v1 run burned its whole 1024 on thinking in 87% of cells). Mirrors config.py's
-# _MAX_TOKENS note for the frontier models. Overridable per stage.
+# Per-stage output caps. With THINKING on, the cap is shared with the reasoning: Qwen3.6 spends
+# 1-4k tokens reasoning before the article, so an undersized cap truncates mid-reasoning and no
+# article appears (compare the _MAX_TOKENS note in config.py). Overridable per stage.
 MAX_TOK = {"article": int(os.environ.get("BENCH_MAX_TOK_ARTICLE") or ("6144" if THINKING else "1024")),
            "critique": int(os.environ.get("BENCH_MAX_TOK_CRITIQUE") or ("2048" if THINKING else "512"))}
-# enforce_eager disables CUDA graphs. The dense 27B graph path works on Ampere/A40, so leave OFF
-# (eager tanks throughput). Confirmed 2026-07-02: the 35B-A3B MoE hangs CUDA-graph CAPTURE on
-# Ampere (vLLM #40124; 100% util spin, init never returns -- the BENCH_INIT_TIMEOUT_S watchdog
-# catches it). If you point BENCH_VLLM_MODEL back at a hybrid-MoE on Ampere, set this to 1.
-# bf16 already avoids the FP8/TurboQuant silent-wrong-numbers half of #40124.
+# enforce_eager disables CUDA graphs, which costs throughput. The dense 27B graph path works on
+# Ampere (A40), so the default is off. The 35B-A3B MoE hangs CUDA-graph capture on Ampere (vLLM
+# issue #40124: 100% utilization spin, init never returns; the BENCH_INIT_TIMEOUT_S watchdog
+# catches it), so a hybrid-MoE model on Ampere needs BENCH_ENFORCE_EAGER=1.
 ENFORCE_EAGER = os.environ.get("BENCH_ENFORCE_EAGER", "0") == "1"
-# vLLM's custom all-reduce uses direct CUDA IPC P2P and IGNORES NCCL_P2P_DISABLE. On virtualized
-# PCIe pairs with broken P2P (RunPod A40s) the small decode all-reduces replayed inside CUDA graphs
-# take its one-shot IPC path and spin at 100% GPU forever, while the profile run passes because its
-# large all-reduces exceed the custom kernel's size cap and route to NCCL over SHM (pinned
-# 2026-07-02, third smoke: capture finished in 4s, first replay never returned). Default OFF: TP
-# collectives go through NCCL/SHM, which works here. Costs a little latency; correctness first.
+# vLLM's custom all-reduce uses direct CUDA IPC peer-to-peer and ignores NCCL_P2P_DISABLE. On a
+# virtualized PCIe GPU pair with broken P2P, the small decode all-reduces replayed inside CUDA
+# graphs take its one-shot IPC path and spin at 100% GPU indefinitely, while the profile run
+# passes because its large all-reduces exceed the custom kernel's size cap and go to NCCL over
+# shared memory. Default: custom all-reduce disabled, so tensor-parallel collectives go through
+# NCCL/SHM, at a small latency cost.
 DISABLE_CUSTOM_AR = os.environ.get("BENCH_DISABLE_CUSTOM_AR", "1") == "1"
-# Engine-init watchdog: LLM() can wedge forever before KV-cache allocation when NCCL's first
-# collective hangs on broken GPU P2P (seen 2026-07-02 on a RunPod PCIe A40 pair: weights loaded,
-# 0% GPU, whole 1h smoke cap burned). bootstrap.sh pre-downloads the snapshot, so this window
-# times weight load + profile + graph capture only; capture over PCIe/SHM can be legitimately
-# slow, hence 1800. 0 disables. On fire it dumps all thread stacks (faulthandler) before exit.
+# Engine-init watchdog: LLM() can hang indefinitely before KV-cache allocation when NCCL's first
+# collective hangs on broken GPU P2P (weights loaded, 0% GPU). The window covers weight load,
+# profiling and graph capture with the model snapshot already downloaded; capture over PCIe/SHM
+# can be slow, hence 1800 s. 0 disables. When it fires, all thread stacks are dumped
+# (faulthandler) before exit.
 INIT_TIMEOUT_S = int(os.environ.get("BENCH_INIT_TIMEOUT_S", "1800"))
 OUT_DIR = Path(os.environ.get("BENCH_OUT_DIR", "/workspace/out"))
-HF_REPO = os.environ.get("BENCH_HF_REPO")             # e.g. "ANONYMIZED/qwen36-news-gen"; unset -> no HF mirror
+HF_REPO = os.environ.get("BENCH_HF_REPO")             # e.g. "burstiness-engine/qwen36-news-gen"; unset -> no HF mirror
 MODEL_KEY = os.environ.get("BENCH_MODEL_KEY", "qwen3.6-27b")
 SINGLE_CALL = ["control", "instruction", "fewshot", "plan"]
 _THINK = re.compile(r"^\s*<think>.*?</think>\s*", re.S)
 
 
 def strip_think(text):
-    """Drop the model's reasoning so we score only the article. Handles BOTH shapes: a tagged
+    """Drop the model's reasoning so only the article is scored. Handles both shapes: a tagged
     <think>...</think> block, and the Qwen3 chat-template shape where the opening tag is part
-    of the PROMPT so the output starts mid-reasoning and only the closing tag appears (the
-    2026-07-02 v1 dataset was contaminated by exactly this: nothing matched, reasoning scored)."""
+    of the prompt, so the output starts mid-reasoning and only the closing tag appears."""
     text = text or ""
     if "</think>" in text:
         text = text.split("</think>", 1)[1]
@@ -129,9 +124,8 @@ def strip_think(text):
 
 def visible(text):
     """The scoreable article from a raw completion, or None when thinking overran max_tokens
-    without closing. Recording truncated reasoning as if it were an article is how v2 run 1
-    got its 120 casualties; a None cell is DROPPED (never written), so done_ids never contains
-    it and the append-only resume regenerates it on the next run."""
+    without closing. A None cell is dropped (never written), so done_ids never contains it and
+    the append-only resume regenerates it on the next run."""
     if THINKING and "</think>" not in (text or ""):
         return None
     return strip_think(text)
@@ -149,11 +143,11 @@ def single_prompt(mode, brief):
 def check_prompts(tok, briefs):
     """Assert no prompt + its capped output exceeds MAX_MODEL_LEN. Tokenizer only; no GPU."""
     worst, where = 0, ""
-    # The stubs bound the VISIBLE text a later stage embeds in its prompt (drafts/critiques are
-    # stripped articles, instruction-bounded at ~300 words), NOT the generation cap: with THINKING
-    # the cap is mostly reasoning that never reaches the next prompt, so using the raw cap here
-    # spuriously overflows (8192-cap regen sweep, 2026-07-03). The +MAX_TOK output term below
-    # keeps using the full cap, which is what the engine can actually emit.
+    # The stubs bound the visible text a later stage embeds in its prompt (drafts and critiques
+    # are stripped articles, instruction-bounded at about 300 words), not the generation cap:
+    # with THINKING the cap is mostly reasoning that never reaches the next prompt, so using the
+    # raw cap here would overflow spuriously. The +MAX_TOK output term below keeps the full cap,
+    # which is what the engine can emit.
     stub_a, stub_c = min(MAX_TOK["article"], 1024), min(MAX_TOK["critique"], 512)
     draft_stub, crit_stub = "word " * stub_a, "word " * stub_c
     for b in briefs:
@@ -186,10 +180,11 @@ def chat(llm, prompts_list, max_tokens, seed):
 
 
 def run_chunked(label, items, max_tokens, seed, sink, chat_fn, stats, chunk=CHUNK):
-    """items: list of (payload, prompt). Generate in `chunk` batches, loudly, and sink each output.
+    """items: list of (payload, prompt). Generate in `chunk` batches and sink each output.
 
-    Module-level (not nested in main) so the smoke can drive the error paths -- mid-run skip-and-retry
-    and the first-batch fail-fast -- with a mock chat_fn. `stats` (made/errors/empty) is mutated in place.
+    Module-level (not nested in main) so the error paths (mid-run skip-and-retry and the
+    first-batch fail-fast) can be exercised with a mock chat_fn. `stats` (made/errors/empty) is
+    mutated in place.
     """
     nchunks = -(-len(items) // chunk) if items else 0
     for i in range(0, len(items), chunk):
@@ -204,7 +199,7 @@ def run_chunked(label, items, max_tokens, seed, sink, chat_fn, stats, chunk=CHUN
             traceback.print_exc()
             if stats["made"] == 0:
                 print("\n!! FAIL-FAST: first batch failed with 0 successes -- likely OOM/config. "
-                      "Stopping to save pod time.\n", flush=True)
+                      "Stopping.\n", flush=True)
                 sys.exit(1)
             print("   skipping this batch; its cells retry on the next run.\n", flush=True)
             continue
@@ -251,8 +246,8 @@ def main():
     def _init_wedged():  # daemon Timer thread: only fires if LLM() overruns the watchdog
         import faulthandler
         print(f"\n!! FAIL-FAST: engine init exceeded BENCH_INIT_TIMEOUT_S={INIT_TIMEOUT_S}s -- wedged, "
-              "not slow. If the log ends in NCCL init, GPU P2P is the usual culprit (bootstrap.sh "
-              "exports NCCL_P2P_DISABLE=1; check `nvidia-smi topo -m` in the log). If it ends in "
+              "not slow. If the log ends in NCCL init, GPU P2P is the usual culprit (set "
+              "NCCL_P2P_DISABLE=1 and check `nvidia-smi topo -m`). If it ends in "
               "CUDA graph capture, retry with BENCH_ENFORCE_EAGER=1 (vLLM #40124). All thread "
               "stacks follow. os._exit because the wedge sits in non-Python threads that ignore "
               "SystemExit.", flush=True)

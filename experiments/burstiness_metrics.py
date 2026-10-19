@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Burstiness metric vector B over a text document (stdlib-only).
+"""Sentence segmentation, punctuation helpers, and the raw-moment baseline (stdlib-only).
 
-This module implements the *operational definition of burstiness* that the
-Burstiness Engine paper proposes as a replacement for the un-formalized
-GPTZero/Tian (2023) blog definition. See knowledge/EXPERIMENT-DESIGN.md
-("Metric foundation") and knowledge/SYNTHESIS.md (Thesis + Q7).
+sentence_lengths() and _PUNCT_SYMBOLS are the segmenter every metric in this repo uses
+(experiments/burstiness_pp.py imports them). The rest of the module is the earlier raw-moment
+vector, kept as the diagnostic baseline the paper compares against; var(L) here is the
+length-confounded statistic that B_n replaces. It is not the paper's construct.
 
-Burstiness B is defined as a VECTOR, not a scalar:
+The earlier vector:
 
     B = [ var(L), kurt(L), fluc(S), punct_entropy ]
 
@@ -16,28 +16,16 @@ where
     kurt(L)      = excess kurtosis of sentence length  -- tail / burst behavior
     fluc(S)      = surprisal fluctuation across the doc (DivEye-style, 2509.18880)
     punct_entropy= Shannon entropy of the punctuation / segmentation pattern
-                   (Q7 timing-free proxy; see Onegin symbolic time-series 2604.20221)
+                   (timing-free proxy; see Onegin symbolic time-series 2604.20221)
 
 Human writing has rhythm: sentence length and complexity vary in bursts.
 LLM text is rhythmically flat ("average prosody" for text). var(L), kurt(L)
 and fluc(S) all collapse toward small values for flat text. punct_entropy
 collapses when segmentation becomes monotone (every sentence ends in '.').
 
-IMPORTANT -- fluc(S) is a PROXY here.
-    The DivEye-style fluc(S) defined in the design requires per-token
-    *surprisal* (negative log-probability) from a language model. This module
-    is deliberately stdlib-only so the harness runs WITHOUT torch/transformers
-    installed (the activation pilot, experiments/activation_pilot.py, owns the
-    real model path). To keep the metric vector dense and runnable today, we
-    compute a MODEL-FREE PROXY for fluc(S): the standard deviation of the
-    first-differences of sentence length, normalized by mean length. This
-    captures "how much does the local rhythm jump from sentence to sentence",
-    which is the same intuition surprisal fluctuation measures at the token
-    level. Every output dict carries `fluc_S_is_proxy: True` and a
-    `fluc_S_note` so no downstream consumer mistakes the proxy for the real
-    DivEye surprisal-fluctuation number. When a model is wired in (see
-    activation_pilot.extract_activations / a future surprisal helper), replace
-    fluc_S_proxy with the true per-token surprisal fluctuation.
+fluc(S) here is a model-free proxy (stdev of sentence-length first-differences / mean
+length); the real DivEye quantity needs per-token surprisal from a model, which this module
+deliberately does not load.
 
 CLI:
     python3 experiments/burstiness_metrics.py --text "Some text here."
@@ -69,8 +57,15 @@ _ABBREVIATIONS = {
 # followed by closing quotes/brackets, then whitespace before the next char.
 _SENT_SPLIT = re.compile(r'([.!?]+["\')\]]?)\s+')
 
-# Symbols counted for the punctuation/segmentation entropy (Q7 proxy).
-_PUNCT_SYMBOLS = re.compile(r'[.!?,;:\-—()"\']')
+# Symbols counted for the punctuation/segmentation entropy.
+_PUNCT_SYMBOLS = re.compile(r'[.!?,;:\-\u2014()"\']')
+
+# Typographic quotes are mapped to ASCII before segmentation. The split pattern's
+# closing-quote class is ASCII-only, so without the mapping a sentence ending in a curly
+# closing quote (.” followed by a space) is not split from the next one. The human
+# baseline uses straight quotes while several API models emit curly ones, so the mapping
+# keeps segmentation identical on both sides.
+_TYPO_QUOTES = str.maketrans({"\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'"})
 
 
 def sentence_lengths(text: str) -> List[int]:
@@ -90,6 +85,7 @@ def sentence_lengths(text: str) -> List[int]:
     """
     if not text or not text.strip():
         return []
+    text = text.translate(_TYPO_QUOTES)
 
     sentences: List[str] = []
     last = 0
@@ -150,21 +146,21 @@ def kurt_L(lengths: List[int]) -> float:
 
 
 def fluc_S_proxy(lengths: List[int]) -> float:
-    """MODEL-FREE proxy for DivEye-style surprisal fluctuation fluc(S).
+    """Model-free proxy for DivEye-style surprisal fluctuation fluc(S).
 
-    The real fluc(S) (knowledge/EXPERIMENT-DESIGN.md, DivEye 2509.18880) is the
-    fluctuation of per-token surprisal (negative log-prob) across the document,
-    and REQUIRES a language model. This harness is stdlib-only, so we compute a
-    proxy from the rhythm signal we already have: the standard deviation of the
-    first-differences of sentence length, normalized by mean sentence length.
+    The real fluc(S) (DivEye, arXiv:2509.18880) is the fluctuation of per-token
+    surprisal (negative log-prob) across the document, and requires a language
+    model. This module is stdlib-only, so the proxy is computed from the rhythm
+    signal already available: the standard deviation of the first-differences of
+    sentence length, normalized by mean sentence length.
 
         d_i = L_{i+1} - L_i      (how much the rhythm jumps between sentences)
         fluc_S_proxy = stdev(d) / mean(L)
 
-    This is "how violently does the local rhythm change", which is the same
-    intuition surprisal fluctuation captures one level down at the token scale.
-    It is a PROXY -- see the module docstring. Returns 0.0 with fewer than two
-    sentences (no first-difference is defined).
+    This measures how much the local rhythm changes, the same intuition surprisal
+    fluctuation captures at the token scale. It is a proxy (see the module
+    docstring). Returns 0.0 with fewer than two sentences (no first-difference is
+    defined).
     """
     if len(lengths) < 2:
         return 0.0
@@ -181,8 +177,8 @@ def fluc_S_proxy(lengths: List[int]) -> float:
 def punct_entropy(text: str) -> float:
     """Shannon entropy (bits) over punctuation / segmentation symbols.
 
-    This is the Q7 timing-free burstiness proxy (knowledge/SYNTHESIS.md Gap,
-    Onegin symbolic time-series 2604.20221). Human prose mixes commas,
+    This is the timing-free segmentation proxy (cf. the Onegin symbolic time-series work,
+    arXiv:2604.20221). Human prose mixes commas,
     semicolons, dashes, question and exclamation marks; flat LLM prose tends
     toward a monotone '.'-only segmentation. We count the distribution of
     punctuation symbols and return its Shannon entropy:
@@ -227,17 +223,16 @@ def burstiness_vector(text: str, surprisal_fn=None) -> dict:
         }
 
     The ``var_L`` / ``kurt_L`` / ``fluc_S`` / ``punct_entropy`` keys are the
-    operational burstiness vector B = [var(L), kurt(L), fluc(S), punct_entropy]
-    from the design doc. The quality gate (2504.12522) is applied OUTSIDE this
-    function: B is only counted for a generation that has already passed a
-    coherence threshold, so high-variance gibberish never wins.
+    raw-moment burstiness vector B = [var(L), kurt(L), fluc(S), punct_entropy].
+    The quality gate (2504.12522) is applied outside this function: B is only
+    counted for a generation that has already passed a coherence threshold, so
+    high-variance gibberish never wins.
 
     ``surprisal_fn``: optional callable ``str -> float`` returning the real
     DivEye-style surprisal fluctuation of the document. When given, ``fluc_S``
     holds that real value and ``fluc_S_is_proxy`` is False. When omitted, the
     function stays pure standard library and ``fluc_S`` falls back to the
-    model-free proxy. See ``experiments/surprisal.py`` for a transformers-backed
-    ``surprisal_fn`` (``make_surprisal_fluc_fn``).
+    model-free proxy. Any callable str -> float can be passed (none ships with this repo).
     """
     lengths = sentence_lengths(text)
     proxy = fluc_S_proxy(lengths)
@@ -251,7 +246,7 @@ def burstiness_vector(text: str, surprisal_fn=None) -> dict:
         fluc, is_proxy, note = proxy, True, (
             "Model-free proxy (stdev of sentence-length first-differences / "
             "mean length). Real DivEye fluc(S) needs per-token surprisal from "
-            "a model; pass surprisal_fn (see experiments/surprisal.py)."
+            "a model; pass surprisal_fn."
         )
     return {
         "var_L": var_L(lengths),

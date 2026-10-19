@@ -15,10 +15,16 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl"
   },
   "design": {
-    "modes": ["control", "instruction", "fewshot", "plan", "self_refine"],
+    "modes": [
+      "control",
+      "instruction",
+      "fewshot",
+      "plan",
+      "self_refine"
+    ],
     "seeds": 3,
     "cells_total": 3000,
     "cells_completed": 3000,
@@ -26,12 +32,11 @@
   },
   "normalization": {
     "script": "experiments/ablation/normalize_generation.py",
-    "why": "generation hygiene flagged 100% markdown and 97% headline-echo title lines (formatting the plain-prose human baseline lacks; guard: experiments/ablation/generation_hygiene.py). The normalizer drops the echoed headline block and unwraps markdown syntax, preserving every word of article prose. Quote style is untouched (the metric normalizes typographic quotes, R1-5).",
-    "effect": "load-bearing: raw scoring understated the authorship gap (markdown scaffolding inflated variance): control B_n delta +0.022 (rb 0.21) raw vs +0.069 (rb 0.58) normalized. Raw scoring archived beside the normalized eval on the HF dataset.",
-    "note": "deepseek-v4-pro (23-38% title lines) and grok-4.3 (47% markdown) are scored raw; a uniform normalization re-score across all legs is an open protocol decision (S4)."
+    "why": "generation hygiene flagged 100% markdown and 97% headline-echo title lines (formatting the plain-prose human baseline lacks; guard: experiments/ablation/generation_hygiene.py). The normalizer drops the echoed headline block and unwraps markdown syntax, preserving every word of article prose. Quote style is untouched (the metric maps typographic quotes to ASCII).",
+    "effect": "raw scoring understated the authorship gap (markdown scaffolding inflated variance): control B_n delta +0.022 (rb 0.21) raw vs +0.069 (rb 0.58) normalized. Raw scoring archived beside the normalized eval on the dataset."
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/gemma3-news-gen",
+    "hf_dataset": "burstiness-engine/gemma3-news-gen",
     "raw_generations": "data/gemma-3-27b.jsonl",
     "normalized_generations": "data/gemma-3-27b.normalized.jsonl",
     "scored_eval": "eval/seed_avg_paired_gemma-3-27b.json",
@@ -39,17 +44,16 @@
   },
   "scoring": {
     "script": "experiments/ablation/seed_avg_paired.py",
-    "metric_revision": "post-R1-5 (typographic-quote-normalized segmentation entropy, PR #21)",
+    "metric_revision": "typographic-quote-normalized segmentation entropy",
     "test": "one paired Wilcoxon signed-rank per (mode, metric) over 200 seed-averaged headline pairs, delta = human - model"
   },
   "generation": {
-    "driver": "bench/gen_vllm.py via bench/reproducibility-scripts/ (2x A40, TP=2, vLLM offline batching, BENCH_THINKING=0)",
-    "model_weights": "google/gemma-3-27b-it (gated; license accepted 2026-07-10)",
-    "max_tokens": "1024/article, 512/critique (non-thinking caps)",
-    "repo_ref": "3fcd241"
+    "driver": "bench/gen_vllm.py (2x A40, TP=2, vLLM offline batching, BENCH_THINKING=0)",
+    "model_weights": "google/gemma-3-27b-it (gated)",
+    "max_tokens": "1024/article, 512/critique (non-thinking caps)"
   },
   "run_date": "2026-07-10",
   "duration": "1h37m full run (+12m smoke)",
   "cost_usd": "~2.30 total pod time",
-  "provenance": "Generated on RunPod (volume ssmlzb42af, pod gemma3-burstiness-full) at pinned repo ref 3fcd241; hygiene-gated, normalized, and scored locally against the frozen human baseline on the post-R1-5 metric; compiled eval carried into the repo as SSOT."
+  "provenance": "Generated on a rented 2x A40 pod with bench/gen_vllm.py; normalized and scored against the frozen human baseline; the compiled eval is the file in this directory."
 }

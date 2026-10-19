@@ -2,13 +2,16 @@
 """Paired (matched-headline) human-vs-AI test on burstiness_pairs.jsonl.
 
 Per dimension: paired delta = metric(human) - metric(ai); Wilcoxon signed-rank
-(normal approx, tie-corrected), sign test, paired dz, median delta + bootstrap CI.
-The matched design (same headline/era/register, vary only authorship) is the most
-powerful version of the ablation. Model-free; M bias-corrected.
+(normal approximation, tie-corrected), sign test, paired dz, median delta with a
+seeded 2,000-resample bootstrap CI. The matched design (same headline/era/register,
+only authorship varies) is the most powerful version of the ablation. Model-free;
+M is bias-corrected by adding 1/(n-1).
 
-Reproduces the paired ablation table (paper sec:ablation, tab:wikinews-paired).
-The corpus is the private HF dataset ANONYMIZED-ablation-corpus; point at it with
-BURST_PAIRS=/path/to/burstiness_pairs.jsonl or drop it in ./data/.
+metrics() and wilcoxon() are also the scorer used by seed_avg_paired.py and
+review_analyses.py. The corpus is the private HF dataset burstiness-engine/burstiness-engine-ablation;
+hf-datasets.zip carries it as ablation-corpus/burstiness_pairs.jsonl. Point at it with
+BURST_PAIRS=/path/to/burstiness_pairs.jsonl or place it in ./data/.
+Writes paired_test_results.json next to the corpus.
 """
 from __future__ import annotations
 import json, math, os, random, statistics as st, sys
@@ -16,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # repo root on path for `experiments`
 from experiments.burstiness_metrics import sentence_lengths
-from experiments.burstiness_pp import burstiness_B_corrected, gini, memory_M, segmentation_entropy
+from experiments.burstiness_pp import burstiness_B_corrected, gini, memory_M_corrected, segmentation_entropy
 
 random.seed(0)
 
@@ -28,14 +31,13 @@ def _corpus_path():
     if not Path(p).exists():
         raise SystemExit(
             f"paired corpus not found at {p}. Download burstiness_pairs.jsonl from the HF dataset "
-            "ANONYMIZED-ablation-corpus into experiments/ablation/data/ (or set BURST_PAIRS)."
+            "burstiness-engine/burstiness-engine-ablation into experiments/ablation/data/ (or set BURST_PAIRS)."
         )
     return p
 
 
 def m_corr(L):
-    m = memory_M(L)
-    return None if m is None else m + 1.0 / (len(L) - 1)
+    return memory_M_corrected(L)
 
 
 def metrics(text):

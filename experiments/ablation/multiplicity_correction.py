@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 """
-Family-wise / FDR correction over the 20 prompt-ceiling significance tests.
+Family-wise / FDR correction over the 20 prompt-ceiling significance tests of one model.
 
-Addresses reviewer remark R1-1: the paper runs 20 nominal Wilcoxon tests (5 modes x 4 metrics)
-with no multiplicity correction, so the p<0.05-only effects are fragile. This applies
-Holm-Bonferroni (controls the family-wise error rate) and Benjamini-Hochberg (controls the
-false discovery rate) to all 20 raw p-values from the committed SSOT and reports which
-effects survive at alpha=0.05.
+Each model's grid holds 20 Wilcoxon tests (5 modes x 4 metrics). This applies Holm-Bonferroni
+(controls the family-wise error rate) and Benjamini-Hochberg (controls the false discovery
+rate) to the 20 raw p-values from the committed seed_avg_paired.json and reports which effects
+survive at alpha=0.05. A test with 0.01 <= p < 0.05 is marked fragile.
 
-Stdlib only. Emits experiments/results/benchmark/qwen3.6-27b/multiplicity.json.
-
-Proposal for the authors: the durable, defensible reading is BH at q=0.05 (standard for a
-benchmark table of this size). Needs author sign-off before the paper adopts it.
+Stdlib only. Emits experiments/results/benchmark/<model>/multiplicity.json. The paper reports
+BH at q=0.05 within each family's twenty-cell grid, with Holm alongside.
 
 Run:
-    python3 experiments/ablation/multiplicity_correction.py
+    python3 experiments/ablation/multiplicity_correction.py --model <model_id>
 """
 from __future__ import annotations
 

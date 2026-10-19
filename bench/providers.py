@@ -1,16 +1,16 @@
 """Provider adapters behind one call: generate(model, system, user) -> (text, reasoning, usage).
 
-Four backends cover the six models:
-  - anthropic         : Opus 4.8           (streamed; adaptive thinking + effort=max)
-  - openai_responses  : GPT-5.5            (Responses API; reasoning effort=xhigh; streamed)
-  - openai_compat     : Kimi / DeepSeek / GLM (OpenAI chat API at a custom base_url; streamed)
-  - google            : Gemini 3.1 Pro     (google-genai; thinking_level=high)
+Four backends cover the registry:
+  - anthropic         : Claude            (streamed; adaptive thinking + the registry effort)
+  - openai_responses  : GPT-5.5           (Responses API; reasoning effort=xhigh; streamed)
+  - openai_compat     : Kimi / DeepSeek / Grok / GLM / Fugu (OpenAI chat API at a custom
+                        base_url; streamed)
+  - google            : Gemini 3.1 Pro    (google-genai; thinking_level=high)
 
-SDKs are imported lazily, so you only need the libraries for the models you run. A missing
-SDK or key is surfaced as a clear, actionable message via preflight() (no API call) and as a
-RuntimeError with a pip hint at call time. Errors are NEVER swallowed here -- they propagate
-to the driver, which logs them verbosely and fails the leg loudly instead of pretending the
-happy path succeeded. An empty system prompt (the void control) is omitted, not sent blank.
+SDKs are imported lazily, so only the libraries for the models being run are needed. A
+missing SDK or key is reported by preflight() (no API call) and raised as a RuntimeError with
+a pip hint at call time. Errors are not caught here; they propagate to the driver, which logs
+them and fails the leg. An empty system prompt (the control mode) is omitted, not sent blank.
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def _imp(module: str, pip: str):
 
 
 def preflight(model: dict) -> list[str]:
-    """Problems that would stop this leg, found WITHOUT any API call: missing SDK / missing key."""
+    """Problems that would stop this leg, found without any API call: missing SDK / missing key."""
     problems: list[str] = []
     mod, pip = SDK.get(model["provider"], (None, None))
     if mod is None:
@@ -158,7 +158,7 @@ def _google(m, system, user):
     if um:
         usage = {"input_tokens": getattr(um, "prompt_token_count", None),
                  "output_tokens": getattr(um, "candidates_token_count", None),
-                 # billed but never returned as text; omitting this undercounted the
-                 # gemini-3.1-pro leg's real cost (thinking legs bill thought tokens)
+                 # thought tokens are billed but never returned as text; recorded so the
+                 # leg's cost is complete
                  "thoughts_tokens": getattr(um, "thoughts_token_count", None)}
     return (resp.text or ""), None, usage

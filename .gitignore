@@ -5,3 +5,10 @@ paper/lp4fm/main.pdf
 paper/lp4fm/main.log
 paper/lp4fm/main.blg
 *.synctex.gz
+
+# camera-ready working notes (local only)
+revision/
+paper/lp4fm/main.aux
+paper/lp4fm/main.fdb_latexmk
+paper/lp4fm/main.fls
+paper/lp4fm/main.out

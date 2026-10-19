@@ -7,12 +7,12 @@
   ],
   "by_metric": {
     "B_n": {
-      "median_delta": 0.061,
+      "median_delta": 0.064,
       "ci95": [
-        0.047,
-        0.082
+        0.047020519425852225,
+        0.0867521154148756
       ],
-      "tightest_equivalence_margin": 0.082,
+      "tightest_equivalence_margin": 0.0868,
       "equivalent_at": {
         "0.03": false,
         "0.05": false,
@@ -20,12 +20,12 @@
       }
     },
     "M": {
-      "median_delta": 0.076,
+      "median_delta": 0.078,
       "ci95": [
-        0.007,
-        0.134
+        0.014521809738203398,
+        0.13447797501449993
       ],
-      "tightest_equivalence_margin": 0.134,
+      "tightest_equivalence_margin": 0.1345,
       "equivalent_at": {
         "0.03": false,
         "0.05": false,
@@ -33,12 +33,12 @@
       }
     },
     "gini": {
-      "median_delta": 0.029,
+      "median_delta": 0.03,
       "ci95": [
-        0.014,
-        0.037
+        0.016036634144954945,
+        0.03767222989992951
       ],
-      "tightest_equivalence_margin": 0.037,
+      "tightest_equivalence_margin": 0.0377,
       "equivalent_at": {
         "0.03": false,
         "0.05": true,
@@ -48,10 +48,10 @@
     "seg_entropy": {
       "median_delta": 0.064,
       "ci95": [
-        0.011,
-        0.138
+        0.010896540517509212,
+        0.13750566604904768
       ],
-      "tightest_equivalence_margin": 0.138,
+      "tightest_equivalence_margin": 0.1375,
       "equivalent_at": {
         "0.03": false,
         "0.05": false,
@@ -60,8 +60,8 @@
     }
   },
   "parity_dim_tightest_margin": {
-    "B_n": 0.082,
-    "gini": 0.037,
-    "seg_entropy": 0.138
+    "B_n": 0.0868,
+    "gini": 0.0377,
+    "seg_entropy": 0.1375
   }
 }

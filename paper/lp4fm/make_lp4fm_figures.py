@@ -1,8 +1,9 @@
-"""Draw Figure 1 and appendix Figure 2 from the 45 Table 1 cells in skeleton.tex.
+"""Draw Figure 1 from the committed benchmark results.
 
-Hard-coded median Delta B_n values match the current \\addplot coordinates.
-Do not invent a 46th cell. Do not read experiments/results/figures_data.json.
+Every value is read from experiments/results/benchmark/<model>/seed_avg_paired.json;
+nothing is typed in. Rerun after any re-score, then rebuild the paper.
 """
+import json
 from pathlib import Path
 
 import matplotlib
@@ -15,6 +16,7 @@ from matplotlib.lines import Line2D
 HERE = Path(__file__).parent
 OUT = HERE / "figures"
 OUT.mkdir(exist_ok=True)
+BENCH = HERE.parents[1] / "experiments" / "results" / "benchmark"
 
 # Okabe-Ito, matching dest tikz.
 BLUE = (0 / 255, 114 / 255, 178 / 255)
@@ -22,27 +24,24 @@ VERMILLION = (213 / 255, 94 / 255, 0 / 255)
 GREEN = (0 / 255, 158 / 255, 115 / 255)
 BLACK = (0.0, 0.0, 0.0)
 
-# Same family order as Figure 1 in skeleton.tex.
-FAMILIES = [
-    "Gemini 3.1 Pro",
-    "GLM-5.2",
-    "Opus 4.8",
-    "Qwen3.6-27B",
-    "Kimi K2.6",
-    "Gemma 3 27B",
-    "DeepSeek V4",
-    "Grok 4.3",
-    "Grok 4.5",
-]
+# Same model order as Table 1: control-mode gap, the Grok pair last.
+MODEL_IDS = ["gemini-3.1-pro", "glm-5.2", "opus-4.8", "qwen3.6-27b", "kimi-k2.6",
+             "gemma-3-27b", "deepseek-v4-pro", "deepseek-v4-pro-1018", "grok-4.3", "grok-4.5"]
+# Table 1's model names.
+FAMILIES = ["Gemini 3.1 Pro", "GLM-5.2", "Claude Opus 4.8", "Qwen3.6-27B", "Kimi K2.6",
+            "Gemma 3 27B", "DeepSeek V4 Pro", r"DeepSeek V4 Pro$^{\dagger}$", "Grok 4.3", "Grok 4.5"]
+N = len(MODEL_IDS)
+_SSOT = {m: json.loads((BENCH / m / "seed_avg_paired.json").read_text(encoding="utf-8"))["dims"]["B_n"]
+         for m in MODEL_IDS}
 
-# Forty-five median Delta B_n cells from skeleton.tex \addplot lines.
-CONTROL = np.array([0.128, 0.126, 0.119, 0.097, 0.095, 0.069, 0.035, 0.027, -0.009])
-INSTRUCTION = np.array([0.071, 0.061, -0.037, 0.028, -0.006, 0.049, 0.000, 0.050, -0.025])
-FEWSHOT = np.array([0.169, 0.148, 0.039, 0.119, 0.123, 0.063, 0.029, 0.108, 0.077])
-PLAN = np.array([0.070, 0.080, -0.000, 0.045, 0.026, 0.061, 0.013, 0.061, -0.009])
-SELF_REFINE = np.array([0.039, 0.011, -0.065, 0.039, -0.070, 0.029, -0.018, 0.019, -0.059])
 
-assert len(CONTROL) + len(INSTRUCTION) + len(FEWSHOT) + len(PLAN) + len(SELF_REFINE) == 45
+def _col(mode):
+    return np.array([_SSOT[m][mode]["median_delta_h_minus_ai"] for m in MODEL_IDS])
+
+
+CONTROL, INSTRUCTION, FEWSHOT, PLAN, SELF_REFINE = (
+    _col("control"), _col("instruction"), _col("fewshot"), _col("plan"), _col("self_refine"))
+assert len(CONTROL) + len(INSTRUCTION) + len(FEWSHOT) + len(PLAN) + len(SELF_REFINE) == 5 * N
 
 # Tikz jitter: control 0.72, instruction 0.86, few-shot 1.00, plan 1.14, self-refine 1.28
 OFFSETS = {
@@ -77,14 +76,14 @@ def make_aimscatter():
     # Matches \includegraphics[width=0.95\textwidth,height=5.6cm] on ~5.5in NeurIPS text.
     fig_w, fig_h = 5.5 * 0.95, 5.6 / 2.54
     fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-    x = np.arange(1, 10, dtype=float)
+    x = np.arange(1, N + 1, dtype=float)
 
     ax.axhline(0.0, color=(0.55, 0.55, 0.55), linewidth=0.6, zorder=1)
     ax.text(
-        9.45,
+        0.55,
         0.006,
         "human level",
-        ha="right",
+        ha="left",
         va="bottom",
         fontsize=7,
         color=(0.35, 0.35, 0.35),
@@ -108,12 +107,12 @@ def make_aimscatter():
             kwargs.update(facecolors="none", edgecolors=[color], linewidths=lw)
         ax.scatter(x + dx, ys, **kwargs)
 
-    ax.set_xlim(0.45, 9.55)
+    ax.set_xlim(0.45, N + 0.55)
     ax.set_ylim(-0.095, 0.19)
     ax.set_xticks(x)
-    ax.set_xticklabels(FAMILIES, rotation=32, ha="right")
+    ax.set_xticklabels(FAMILIES, rotation=32, ha="right", rotation_mode="anchor")
     ax.set_yticks([-0.05, 0.0, 0.05, 0.1, 0.15])
-    ax.set_ylabel(r"Median $\Delta B_n$ (human $-$ model)")
+    ax.set_ylabel(r"Median $\Delta B_n$")   # human - model; the caption states the sign
     ax.yaxis.grid(True, linewidth=0.3, color=(0.88, 0.88, 0.88))
     ax.set_axisbelow(True)
     ax.tick_params(length=2.5, color=(0.6, 0.6, 0.6))
@@ -176,70 +175,18 @@ def make_aimscatter():
     ax.legend(
         handles=handles,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.42),
+        bbox_to_anchor=(0.5, -0.50),
         ncol=5,
         frameon=False,
         handletextpad=0.3,
         columnspacing=1.1,
         borderaxespad=0.0,
     )
-    fig.subplots_adjust(left=0.10, right=0.99, top=0.97, bottom=0.38)
+    fig.subplots_adjust(left=0.115, right=0.99, top=0.97, bottom=0.42)
     fig.savefig(OUT / "fig_aimscatter.pdf")
-    fig.savefig(OUT / "fig_aimscatter.png", dpi=200)
-    plt.close(fig)
-
-
-def make_landings():
-    _style()
-    fig_w, fig_h = 5.5 * 0.95, 4.6 / 2.54
-    fig, (ax_l, ax_r) = plt.subplots(1, 2, figsize=(fig_w, fig_h))
-
-    # Left: 32/8/5 census. Bottom-to-top: more dispersed, no difference, flatter.
-    left_vals = [5, 8, 32]
-    left_y = [1, 2, 3]
-    left_colors = [BLUE, GREEN, VERMILLION]
-    ax_l.barh(left_y, left_vals, height=0.45, color=left_colors, edgecolor="none")
-    for y, v in zip(left_y, left_vals):
-        ax_l.text(v + 0.6, y, str(v), va="center", ha="left", fontsize=8)
-    ax_l.set_xlim(0, 45)
-    ax_l.set_ylim(0.4, 3.6)
-    ax_l.set_xticks([0, 5, 8, 32, 45])
-    ax_l.set_yticks(left_y)
-    ax_l.set_yticklabels(["more dispersed", "no difference", "flatter"])
-    ax_l.set_xlabel("family-by-mode cells")
-    ax_l.set_title("Forty-five cells", fontsize=8, pad=3)
-    ax_l.xaxis.grid(True, linewidth=0.3, color=(0.88, 0.88, 0.88))
-    ax_l.set_axisbelow(True)
-
-    # Right: 4/2/1/2 instruction split. Bottom-to-top: past, further away, on, short.
-    right_vals = [2, 1, 2, 4]
-    right_y = [1, 2, 3, 4]
-    right_colors = [BLUE, BLACK, GREEN, VERMILLION]
-    ax_r.barh(right_y, right_vals, height=0.40, color=right_colors, edgecolor="none")
-    for y, v in zip(right_y, right_vals):
-        ax_r.text(v + 0.12, y, str(v), va="center", ha="left", fontsize=8)
-    ax_r.set_xlim(0, 9)
-    ax_r.set_ylim(0.4, 4.6)
-    ax_r.set_xticks([0, 1, 2, 4, 9])
-    ax_r.set_yticks(right_y)
-    ax_r.set_yticklabels(["past", "further away", "on the human\nlevel", "short"])
-    ax_r.set_xlabel("families")
-    ax_r.set_title("Same instruction", fontsize=8, pad=3)
-    ax_r.xaxis.grid(True, linewidth=0.3, color=(0.88, 0.88, 0.88))
-    ax_r.set_axisbelow(True)
-
-    for ax in (ax_l, ax_r):
-        ax.tick_params(length=2.5, color=(0.6, 0.6, 0.6))
-        for spine in ax.spines.values():
-            spine.set_color((0.25, 0.25, 0.25))
-
-    fig.subplots_adjust(left=0.20, right=0.98, top=0.88, bottom=0.22, wspace=0.55)
-    fig.savefig(OUT / "fig_landings.pdf")
-    fig.savefig(OUT / "fig_landings.png", dpi=200)
     plt.close(fig)
 
 
 if __name__ == "__main__":
     make_aimscatter()
-    make_landings()
-    print(f"Wrote {OUT / 'fig_aimscatter.pdf'} and {OUT / 'fig_landings.pdf'}")
+    print(f"Wrote {OUT / 'fig_aimscatter.pdf'}")

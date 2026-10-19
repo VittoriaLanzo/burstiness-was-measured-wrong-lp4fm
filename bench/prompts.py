@@ -1,16 +1,14 @@
 """Single source of truth for the benchmark prompts: the 200 titles and the 5 modes.
 
-##########################################################################
-#  Wording FINALIZED (PROMPTS_FINALIZED = True): the 5 modes are locked.  #
-#  Each mode is a cited method (provenance map below). Real runs proceed  #
-#  without --force; they still need API keys + SDKs (see README).         #
-##########################################################################
+The wording is finalized (PROMPTS_FINALIZED = True): the 5 modes are locked, and each mode
+is a cited method (provenance map below). Real runs proceed without --force; they need API
+keys and SDKs (see README).
 
-The benchmark is: fetch the 200 news headlines (frozen HF dataset) and generate an article
-under each of 5 non-overlapping prompting MODES. There is no scenario / EQ-Bench plumbing.
-A mode is a function (gen, brief) -> final article text, where gen(user) is one model
-completion; most modes make one call, self_refine makes three. Keeping every prompt here
-(and nowhere else) is what prevents train/eval prompt drift.
+The benchmark fetches the 200 news headlines (frozen HF dataset) and generates an article
+under each of 5 non-overlapping prompting modes. A mode is a function (gen, brief) -> final
+article text, where gen(user) is one model completion; most modes make one call, self_refine
+makes three. Every prompt lives in this module and nowhere else, so the generation lanes
+cannot drift apart.
 
 # --- LOCKED CONDITION SET: mechanism coverage + provenance ------------------
 # The 5 modes cover the 5 orthogonal mechanisms a prompt can use to move style, spanning all 6
@@ -27,8 +25,10 @@ completion; most modes make one call, self_refine makes three. Keeping every pro
 # (Goodhart). Report it only as a labeled, compute-matched upper bound.
 # Design support: Lost-in-the-Middle (Liu et al. 2024, arXiv 2307.03172) -> the TAIL re-anchor and
 # the exemplar ordering; Huang et al. 2024 (arXiv 2310.01798) -> the M4 self-leniency guard.
-# METRIC-FREE WORDING: never name the measured axis to the model (no B_n / dispersion, no
-# "vary sentence length", no clumping/M, no numbers) -- it teaches to the test. The metric is
+# METRIC-FREE WORDING: no prompt names the statistic or gives a target on it (no B_n /
+# dispersion, no "vary sentence length", no clumping/M, no numbers). The few-shot and
+# self-refine prompts do describe the style in plain words (rhythm, pacing, cadence), as a
+# user asking for human-sounding prose would; the self-check below enforces the stricter rule only. The metric is
 # model-free point-process burstiness B_n (Goh-Barabasi 2008 / Kim-Jo 2016); human news prose sits
 # at B_n ~ -0.4 and B_n is genre-relative, so the voice is a news journalist, not an essayist.
 # Decoding is held constant across modes (temp 0.7 where the API allows; see providers).
@@ -38,13 +38,13 @@ from __future__ import annotations
 import json
 import pathlib
 
-# Wording finalized 2026-07-01: 5 modes, each grounded in a cited method (see the map above).
+# The 5 modes are locked; each is grounded in a cited method (see the map above).
 PROMPTS_FINALIZED = True
 
 # --- data: the 200 titles ---------------------------------------------------
-HF_DATASET = "ANONYMIZED/paper-dataset"
+HF_DATASET = "burstiness-engine/paper-dataset"
 HF_FILE = "prompts_200_human.jsonl"
-HF_REVISION = None  # pin a commit sha here for the frozen run (reproducibility)
+HF_REVISION = "3f27ce645ce4f21aa91bd9b8b52a9ca33214fdee"  # prompts_200_human.jsonl sha256 fa73bffe...: the file every leg is scored against
 ROUND_TO = 25       # round the head-to-head length hint so it reads natural ("about 275 words")
 
 BRIEF = ("Write a news article with the following headline:\n\n"
@@ -71,7 +71,7 @@ def load_briefs():
     return briefs
 
 
-# --- prompt text (metric-free; news register; DRAFT, to be finalized) -------
+# --- prompt text (metric-free; news register) ---------------------------------
 VOICE = (  # Persona Pattern (White et al. 2023, arXiv:2302.11382); metric-free by construction
     "Act as a professional news journalist. Provide the article a seasoned staff reporter "
     "would write: concrete and specific, in a natural human voice, never flat or mechanical."
@@ -79,7 +79,7 @@ VOICE = (  # Persona Pattern (White et al. 2023, arXiv:2302.11382); metric-free 
 # TAIL re-anchors the directive near the end: instruction adherence decays over long outputs
 # (Liu et al. 2024, Lost in the Middle, arXiv:2307.03172).
 TAIL = "Keep that natural, human quality all the way through, including the closing paragraphs."
-# M3 plan-then-write / decomposition (Wang et al. 2023 Plan-and-Solve, arXiv:2305.04091); adapted
+# Plan-then-write / decomposition (Wang et al. 2023 Plan-and-Solve, arXiv:2305.04091); adapted
 # to journalism's 5 W's / inverted pyramid because no news-specific plan template exists.
 PLAN = (
     "Before you write, plan the article the way a reporter does: pick the lede (the single most "
@@ -95,12 +95,13 @@ FEWSHOT_TAIL = "\n</examples>"
 
 
 def _load_exemplars():
-    """The frozen M2 triple from bench/m2_exemplars.json (written by select_m2_exemplars).
+    """The frozen few-shot triple from bench/m2_exemplars.json (written by select_m2_exemplars).
 
     The exemplars are representative straight news reports, selected by register/topic and
-    MEDIAN-centered on the human B_n distribution -- NOT chosen for high burstiness, since selecting
-    shots by the measured axis would leak it into the few-shot condition (few-shot basis: Brown 2020
-    arXiv:2005.14165, Min 2022 arXiv:2202.12837). Empty until generated, keeping fewshot inert.
+    centered on the median of the human B_n distribution, not chosen for high burstiness, since
+    selecting shots by the measured axis would leak it into the few-shot condition (few-shot
+    basis: Brown 2020 arXiv:2005.14165, Min 2022 arXiv:2202.12837). Returns "" when the file
+    does not exist, which leaves the fewshot mode without exemplars.
     """
     p = pathlib.Path(__file__).parent / "m2_exemplars.json"
     if not p.exists():
@@ -110,10 +111,10 @@ def _load_exemplars():
 
 
 EXEMPLARS = _load_exemplars()
-# M4 feedback step (Madaan et al. 2023 Self-Refine, arXiv:2303.17651). We adopt the
-# init->feedback->refine structure but keep feedback QUALITATIVE: the paper's reference impl uses a
-# numeric 10-trait rubric, which we drop (it would introduce numeric targets). Forcing THREE named
-# weaknesses even on a strong draft is the self-leniency guard (cf. Huang et al. 2024, arXiv:2310.01798).
+# Feedback step (Madaan et al. 2023 Self-Refine, arXiv:2303.17651): the init->feedback->refine
+# structure with qualitative feedback. The reference implementation's numeric 10-trait rubric is
+# dropped because it would introduce numeric targets. Requiring three named weaknesses even on a
+# strong draft is the self-leniency guard (cf. Huang et al. 2024, arXiv:2310.01798).
 FEEDBACK = (
     "You are a demanding editor. Critique the draft below only on how naturally human its prose "
     "reads: its rhythm, pacing, and flow. Name at least THREE specific passages that read as "
@@ -189,7 +190,8 @@ def _selfcheck():
     calls = []
     self_refine(lambda u: calls.append(u) or "x", brief)
     assert len(calls) == 3, f"self_refine should make 3 calls, made {len(calls)}"
-    # metric-free guard: no measured-axis terms in any prompt text
+    # metric-free guard: no statistic or measured-axis term in any prompt text (plain style
+    # words such as "rhythm" or "pacing" are allowed and do appear: see the comment at the top)
     forbidden = ["sentence length", "sentence-length", "variance", "std", "b_n",
                  "clumping", "standard deviation", "burstiness"]
     blob = " ".join([VOICE, TAIL, PLAN, FEEDBACK, REWRITE, FEWSHOT_LEAD, BRIEF]).lower()

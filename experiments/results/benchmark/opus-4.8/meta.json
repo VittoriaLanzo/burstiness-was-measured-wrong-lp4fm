@@ -8,7 +8,7 @@
   "decoding": {
     "temperature": "not exposed; adaptive thinking with output_config.effort",
     "effort": "high",
-    "why_not_max": "effort=max is not runnable on this design. Anthropic bills thinking against max_tokens, and at max the self_refine rewrite (which carries the draft AND the critique in context) spends the entire budget reasoning and emits zero prose: stop_reason=max_tokens, content=['thinking'], no text. 15/15 self_refine cells came back empty at 16k, and 9/15 still truncated at 32k, at a mean of 38,533 output tokens per cell. effort=high is also what Gemini 3.1 Pro ran at (thinking_level=high), so this matches the other closed-source frontier flagship in the table."
+    "why_not_max": "At effort=max the self_refine rewrite (which carries the draft and the critique in context) spends the entire budget reasoning and emits no prose: stop_reason=max_tokens, content=['thinking'], no text. 15/15 self_refine cells came back empty at 16k and 9/15 still truncated at 32k, at a mean of 38,533 output tokens per cell. Anthropic bills thinking against max_tokens. effort=high is the level Gemini 3.1 Pro ran at (thinking_level=high)."
   },
   "corpus": {
     "name": "Wikinews",
@@ -34,19 +34,18 @@
   },
   "scoring": {
     "script": "experiments/ablation/seed_avg_paired.py",
-    "metric_revision": "post-R1-5 (typographic quote normalization)"
+    "metric_revision": "typographic quote normalization"
   },
   "generation": {
     "driver": "bench/run_batch.py (Anthropic Message Batches API, 50% of list price)",
     "max_tokens": 32000,
-    "why_32k": "2x the shared 16k. On Anthropic, max_tokens caps thinking AND text together, whereas Gemini never returns its thoughts and GLM/Kimi stream thinking into output but land far under the cap. A flat 16k therefore gives Opus strictly LESS room to WRITE than every other family. 32k restores parity of TEXT budget, not of raw cap. Disclosed in the protocol section.",
+    "why_32k": "2x the shared 16k. On Anthropic, max_tokens caps thinking and text together, whereas Gemini does not return its thoughts and GLM/Kimi stream thinking into output but stay far under the cap. A flat 16k gives Opus less room to write than every other leg; 32k restores a comparable text budget, not a comparable raw cap.",
     "waves": "3 sequential batches (single-shot modes + self_refine drafts; critiques; rewrites)"
   },
   "run_date": "2026-07-13",
-  "duration": "~3h across 3 batch waves; interrupted once by an account spend cap and checkpoint-resumed losslessly",
-  "cost_usd": "$47.36 computed from complete per-cell telemetry at the batched rate ($2.50/$12.50 per Mtok, half of the verified $5/$25 list). 3,539,934 in / 3,080,878 out. TRUSTWORTHY: Anthropic reports thinking INSIDE output_tokens, proven on 2026-07-13 when effort=max recorded 16,000 output_tokens with zero text. This leg does not have the prose-only accounting defect that made gemini-3.1-pro and grok-4.5 undercount their bills.",
+  "duration": "~3h across 3 batch waves (interrupted once by an account spend cap, checkpoint-resumed)",
+  "cost_usd": "$47.36 from per-cell telemetry at the batched rate ($2.50/$12.50 per Mtok, half the $5/$25 list): 3,539,934 input, 3,080,878 output tokens (thinking is included in output_tokens).",
   "empties": 0,
-  "excluded": "none: 3000/3000 clean. Zero empty, zero truncated, zero refused. The cleanest leg in the benchmark.",
-  "headline_finding": "The flagship overshoots, and it is the sharpest illustration of the aim problem in the study. Opus has one of the largest control gaps measured (B_n +0.119, rb +0.80) and yet under a plain instruction it lands significantly PAST the human articles (-0.037, p=0.002). Gemini (+0.128) and GLM (+0.126) start from control gaps within 0.009 of Opus's and, given the identical instruction, both remain significantly short (+0.071, +0.061). Same starting point, same prompt, opposite side of the human distribution. A model's uninstructed gap predicts nothing about where its instructed text lands. Opus alone spans the whole range across its five modes: it undershoots (control +0.119, fewshot +0.039), hits parity exactly (plan -0.000, p=0.86), and overshoots (instruction -0.037, self_refine -0.065).",
-  "provenance": "Generated via the Anthropic Message Batches API against pinned prompts; hygiene-gated, normalized (uniform R1-6), scored by the same paired script as every other leg."
+  "excluded": "none: 3000/3000 cells, zero empty, truncated or refused.",
+  "provenance": "Generated via the Anthropic Message Batches API against pinned prompts; normalized and scored by the same paired script as every other leg."
 }

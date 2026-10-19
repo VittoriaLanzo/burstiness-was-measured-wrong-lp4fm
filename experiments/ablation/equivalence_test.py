@@ -1,24 +1,20 @@
 #!/usr/bin/env python3
 """
-CI-based equivalence (TOST-style) assessment of the prompt-ceiling parity claims.
+CI-based equivalence (TOST-style) assessment of the prompt-ceiling parity results.
 
-Addresses reviewer remark R1-2: the paper's parity claims ("a plain instruction reaches
-parity on B_n, Gini, and segmentation entropy") are failures to reject a null, not
-demonstrated equivalence. This turns them into an actual equivalence statement using the
-committed 95% CIs on the paired median delta: a delta is *statistically equivalent to zero*
-at margin m when its two-sided 95% CI lies entirely inside [-m, +m] (the two-one-sided-tests
-logic, read off the interval).
+A non-significant paired delta is a failure to reject a null, not demonstrated equivalence.
+This script turns it into an equivalence statement using the committed 95% CIs on the paired
+median delta: a delta is statistically equivalent to zero at margin m when its two-sided 95%
+CI lies entirely inside [-m, +m] (the two-one-sided-tests logic, read off the interval).
 
 Because the equivalence margin m is a judgement about what sentence-length-rhythm difference
-is negligible on the bounded [-1, 1] coefficient, we do NOT hard-code one answer: we report,
-per (mode, metric), the tightest margin at which equivalence holds (m* = max|CI endpoint|)
-and evaluate a couple of candidate margins. m* is the number to argue about; pick m first,
-then read equivalence.
+is negligible on the bounded [-1, 1] coefficient, no single margin is hard-coded: per (mode,
+metric) the script reports the tightest margin at which equivalence holds (m* = max|CI
+endpoint|) and evaluates the candidate margins.
 
-NOTE (honesty): this reads the committed summary CIs (bootstrap CI of the paired median).
-A fully rigorous TOST on the raw 200 paired differences needs the per-headline scores
-(data/*.jsonl on HF scored via seed_avg_paired.py); the margin and the raw-data TOST both
-want author sign-off before going into the paper.
+Input: the committed summary CIs (percentile bootstrap CI of the paired median, 2,000
+resamples). The 95% interval is stricter than the 90% interval of a textbook alpha=0.05 TOST.
+Margins 0.03 / 0.05 / 0.08 are the pre-specified candidates; m* is reported alongside.
 
 Run:
     python3 experiments/ablation/equivalence_test.py
@@ -34,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BENCH = ROOT / "experiments" / "results" / "benchmark"
 DEFAULT_MODEL = "qwen3.6-27b"
 
-# The paper's parity claim is about the dispersion + segmentation marginals under instruction.
+# The parity dimensions: dispersion and segmentation marginals under instruction.
 PARITY_DIMS = ["B_n", "gini", "seg_entropy"]
 CANDIDATE_MARGINS = [0.03, 0.05, 0.08]
 

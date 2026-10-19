@@ -43,6 +43,6 @@
     "leak_threshold": 0.4,
     "order": "strongest B_n first and last (primacy/recency), weakest middle",
     "source": "malteos/wikinews via build_ablation_corpus",
-    "disjoint_from": "ANONYMIZED/paper-dataset"
+    "disjoint_from": "burstiness-engine/paper-dataset"
   }
 }
