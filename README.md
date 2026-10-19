@@ -1,7 +1,7 @@
-# Can Prompting Close the Sentence-Length Dispersion Gap? Code and evaluation artifacts
+# Can Prompting Reliably Close the Sentence-Length Dispersion Gap? Code and evaluation artifacts
 
-Private artifact repository for the paper "Can Prompting Close the Sentence-Length
-Dispersion Gap?" (LP4FM @ NeurIPS 2026). Every script and
+Private artifact repository for the paper "Can Prompting Reliably Close the
+Sentence-Length Dispersion Gap?" (LP4FM @ NeurIPS 2026). Every script and
 evaluation artifact the paper relies on, in source-repository layout, so the
 scripts run from this directory as the working root.
 
