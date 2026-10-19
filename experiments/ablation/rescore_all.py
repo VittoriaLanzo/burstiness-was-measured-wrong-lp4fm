@@ -8,7 +8,7 @@ experiments/results/benchmark/<model_id>/seed_avg_paired.json. Prints the before
 control-mode seg_entropy delta per model, so the effect of a metric change is visible.
 
 It needs:
-  - the human baseline JSONL (ANONYMIZED/paper-dataset :: prompts_200_human.jsonl)
+  - the human baseline JSONL (burstiness-engine/paper-dataset :: prompts_200_human.jsonl)
   - each model's generations JSONL (bench/results/*.jsonl locally, or from each HF dataset)
 
 Run:

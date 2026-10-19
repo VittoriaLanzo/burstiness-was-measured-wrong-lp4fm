@@ -15,7 +15,7 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl"
   },
   "design": {
     "modes": [
@@ -36,7 +36,7 @@
     "effect": "scored on normalized text; raw scoring archived on the HF dataset."
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/kimi26-news-gen",
+    "hf_dataset": "burstiness-engine/kimi26-news-gen",
     "raw_generations": "data/kimi-k2.6.jsonl",
     "normalized_generations": "data/kimi-k2.6.normalized.jsonl",
     "scored_eval": "eval/seed_avg_paired_kimi-k2.6.json",

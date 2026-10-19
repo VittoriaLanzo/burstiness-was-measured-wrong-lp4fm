@@ -42,7 +42,7 @@ from experiments.ablation.clean_wikinews import clean  # noqa: E402
 
 # --- configuration -----------------------------------------------------------
 SOURCE_REPO = "malteos/wikinews"
-ABLATION_REPO = "ANONYMIZED/ablation-corpus"
+ABLATION_REPO = "burstiness-engine/burstiness-engine-ablation"
 YEARS = list(range(2016, 2022))
 MIN_WORDS, MAX_WORDS = 120, 500
 MIN_SENTENCES = 10

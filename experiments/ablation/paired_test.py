@@ -8,8 +8,9 @@ only authorship varies) is the most powerful version of the ablation. Model-free
 M is bias-corrected by adding 1/(n-1).
 
 metrics() and wilcoxon() are also the scorer used by seed_avg_paired.py and
-review_analyses.py. The corpus is the private HF dataset ANONYMIZED-ablation-corpus;
-point at it with BURST_PAIRS=/path/to/burstiness_pairs.jsonl or place it in ./data/.
+review_analyses.py. The corpus is the private HF dataset burstiness-engine/burstiness-engine-ablation;
+hf-datasets.zip carries it as ablation-corpus/burstiness_pairs.jsonl. Point at it with
+BURST_PAIRS=/path/to/burstiness_pairs.jsonl or place it in ./data/.
 Writes paired_test_results.json next to the corpus.
 """
 from __future__ import annotations
@@ -30,7 +31,7 @@ def _corpus_path():
     if not Path(p).exists():
         raise SystemExit(
             f"paired corpus not found at {p}. Download burstiness_pairs.jsonl from the HF dataset "
-            "ANONYMIZED-ablation-corpus into experiments/ablation/data/ (or set BURST_PAIRS)."
+            "burstiness-engine/burstiness-engine-ablation into experiments/ablation/data/ (or set BURST_PAIRS)."
         )
     return p
 

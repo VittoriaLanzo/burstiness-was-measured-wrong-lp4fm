@@ -30,10 +30,15 @@
 
 \title{Can Prompting Reliably Close the\\ Sentence-Length Dispersion Gap?}
 
-\author{Anonymous Author(s)\\
-  Affiliation\\
-  Address\\
-  \texttt{email}}
+\author{%
+  Vittoria Lanzo\\
+  Independent Researcher\\
+  \texttt{lanzo.vittoria@gmail.com}
+  \And
+  Dico Angelo\\
+  Metaventions AI\\
+  \texttt{dicoangelo@metaventionsai.com}
+}
 
 \begin{document}
 \maketitle
@@ -223,7 +228,7 @@ nine-model benchmark where either difference is significant (Section~\ref{sec:pr
 agreement shows a result is not an estimator artifact.
 \item \textbf{Segmentation diversity, a separate axis.} The Miller--Madow-corrected Shannon entropy of
 the punctuation distribution measures how varied the segmentation symbols are, a distinct axis from
-length dispersion. Typographic quotes are mapped to ASCII before the punctuation count and, in this version, before
+length dispersion. Typographic quotes are mapped to ASCII before the punctuation count and before
 sentence splitting (Appendix~\ref{sec:protocoldetail}), so smart-quote typography registers neither
 as diversity nor as a missed boundary.
 \item \textbf{Memory, the order term.} The Goh--Barab\'asi memory coefficient
@@ -301,7 +306,7 @@ leg's $3{,}000$ cells,
 $2{,}996$ completed;
 we excluded the four that exceeded the reasoning budget rather than scoring their incomplete output. We average affected
 headlines over their remaining seeds, so every mode retains $200$ matched pairs. The entire run is
-scripted and reproducible from the released artifacts.\footnote{Scoring code, prompts, the metric implementation, per-model scored evaluations (normalized protocol, plus the audited leg's raw-protocol archive) and generation metadata accompany the paper; the full repository, with the raw generations of every leg and the research database, is at \url{https://anonymous.4open.science/r/burstiness-was-measured-wrong-lp4fm}.} Appendix~\ref{sec:prompts} lists the verbatim wording of every mode and the rule that composes them.
+scripted, and every reported number can be recomputed from the released artifacts.\footnote{Scoring code, prompts, the metric implementation, per-model scored evaluations (normalized protocol, plus the audited leg's raw-protocol archive) and generation metadata accompany the paper; the full repository, with the raw generations of every leg and the research database, is at \url{https://github.com/VittoriaLanzo/burstiness-was-measured-wrong-lp4fm}.} Appendix~\ref{sec:prompts} lists the verbatim wording of every mode and the rule that composes them.
 
 \subsection{Normalization: stripping the wrapper before scoring}
 \label{sec:normalization}
@@ -496,7 +501,7 @@ $\val{con.grok43.instruction-control.p}$), while for Grok 4.5 the same instructi
 dispersion the other way ($\val{con.grok45.instruction-control.d}$,
 $\val{con.grok45.instruction-control.p}$) and leaves it not significantly different from the
 human articles ($\val{grok45.Bn.instruction.d}$, $\val{grok45.Bn.instruction.p}$), the one
-instruction landing that the released segmenter and the guard-filtered re-scoring each place on
+instruction landing that the original segmenter and the guard-filtered re-scoring each place on
 the other side of the line (Appendix~\ref{sec:protocoldetail}).
 
 \val{fewshot.flat.W} of nine models undershoot significantly under few-shot, and few-shot output
@@ -596,6 +601,13 @@ significantly flatter, \val{inst.ns.w} not significantly different and \val{inst
 significantly more dispersed, and makes \val{con.widen.phrase} significantly flatter than its own
 bare brief.
 The gap is one that the prompts tested move but do not reliably close.
+
+\begin{ack}
+This work received no external funding, and the authors declare no competing interests. We disclose AI-assisted research per the venue
+policy: large language model assistants were used for copy-editing. The
+authors designed the study, made every analysis decision and take responsibility for all claims;
+every reported number can be recomputed from the released code and generations.
+\end{ack}
 
 \bibliographystyle{plainnat}
 \bibliography{references}
@@ -1150,7 +1162,7 @@ empty results, with every attempt journal released. One self-refine rewrite (sce
 below the scorer's five-sentence floor, is dropped from that headline's self-refine seed mean (the
 other two samples carry the headline). The paraphrase probe of Section~\ref{sec:limitations} ran
 on the same day through the same alias at the same settings, two of its $600$ cells after one
-retry; the reviewed version reported a July probe of the same design, re-run because its raw
+retry; the version of this paper reviewed on OpenReview reported a July probe of the same design, re-run because its raw
 generations could not be recovered for re-scoring with the corrected segmenter. Paired on the same
 headlines, the October leg is more dispersed than the July leg in every mode: $B_n$ deltas
 (October $-$ July) of $\val{rep.deepseek1018.d.min}$ to $\val{rep.deepseek1018.d.max}$,
@@ -1244,12 +1256,12 @@ articles on that statistic.}
 
 \subsection{Segmentation audit}
 The sentence segmenter splits on terminal punctuation followed by a space, optionally with an
-ASCII closing quote or bracket in between. The released version did not list typographic closing
+ASCII closing quote or bracket in between. The segmenter as first released did not list typographic closing
 quotes, so a sentence ending in \texttt{.}\textquotedblright{} followed by a space was not split from the next one.
 The human articles carry straight quotes and no such boundaries; several API models emit
 typographic quotes, with a leg mean of up to $1.3$ missed boundaries per generation on the DeepSeek V4 Pro,
-Gemma 3 27B and Grok 4.5 legs, merges that on net make the model look more dispersed. This
-version maps typographic quotes to ASCII before segmentation, and every benchmark number in this
+Gemma 3 27B and Grok 4.5 legs, merges that on net make the model look more dispersed. The
+current version maps typographic quotes to ASCII before segmentation, and every benchmark number in this
 paper is scored with the corrected segmenter; the correction moved median $\Delta B_n$ by
 $\val{segfix.shift.min}$ to $\val{segfix.shift.max}$ and changed \val{segfix.moved.w} of the
 forty-five landings (Table~\ref{tab:audit}). Abbreviations outside the guard list, \emph{U.S.}

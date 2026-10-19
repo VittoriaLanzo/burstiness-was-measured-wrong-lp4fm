@@ -106,7 +106,7 @@ DISABLE_CUSTOM_AR = os.environ.get("BENCH_DISABLE_CUSTOM_AR", "1") == "1"
 # (faulthandler) before exit.
 INIT_TIMEOUT_S = int(os.environ.get("BENCH_INIT_TIMEOUT_S", "1800"))
 OUT_DIR = Path(os.environ.get("BENCH_OUT_DIR", "/workspace/out"))
-HF_REPO = os.environ.get("BENCH_HF_REPO")             # e.g. "ANONYMIZED/qwen36-news-gen"; unset -> no HF mirror
+HF_REPO = os.environ.get("BENCH_HF_REPO")             # e.g. "burstiness-engine/qwen36-news-gen"; unset -> no HF mirror
 MODEL_KEY = os.environ.get("BENCH_MODEL_KEY", "qwen3.6-27b")
 SINGLE_CALL = ["control", "instruction", "fewshot", "plan"]
 _THINK = re.compile(r"^\s*<think>.*?</think>\s*", re.S)

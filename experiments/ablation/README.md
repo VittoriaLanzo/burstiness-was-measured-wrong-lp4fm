@@ -9,9 +9,9 @@ editing, and genre confounds of comparing machine text against older literature.
 Two corpora share the construction:
 
 - the 100-pair ablation corpus (`burstiness_pairs.jsonl`, private HF dataset
-  `ANONYMIZED-ablation-corpus`), scored by `paired_test.py`;
+  `burstiness-engine/burstiness-engine-ablation`, mirrored in hf-datasets.zip), scored by `paired_test.py`;
 - the 200-headline benchmark reference set (`prompts_200_human.jsonl`, HF dataset
-  `ANONYMIZED/paper-dataset`), against which every benchmark leg is scored by
+  `burstiness-engine/paper-dataset`), against which every benchmark leg is scored by
   `seed_avg_paired.py`.
 
 ## Data (not in this repo)

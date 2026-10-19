@@ -84,6 +84,6 @@ decimals. `M` carries the +1/(n-1) small-sample term (`memory_M_corrected`).
 
 Raw generations are not in git; the small scored `seed_avg_paired.json` is
 carried here so every published number traces to a committed artifact. Each
-model's `meta.json` gives the dataset refs (ids masked in this release); the
+model's `meta.json` gives the dataset refs; the
 top-level README describes the `hf-datasets.zip` mirror, which holds the raw
 generations of all nine legs.

@@ -15,7 +15,7 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl"
   },
   "design": {
     "modes": [
@@ -31,7 +31,7 @@
     "excluded": "4 cells exceeded the reasoning budget; affected headlines averaged over remaining seeds so every mode retains 200 matched pairs"
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/qwen36-news-gen",
+    "hf_dataset": "burstiness-engine/qwen36-news-gen",
     "raw_generations": "data/qwen3.6-27b.jsonl",
     "scored_eval": "eval/seed_avg_paired_qwen27b.json (raw protocol); the normalized-protocol eval is seed_avg_paired.json in this directory"
   },

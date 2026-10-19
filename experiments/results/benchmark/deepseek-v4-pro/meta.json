@@ -16,7 +16,7 @@
     "n_headlines": 200,
     "years": "2016-2021",
     "license": "CC BY 2.5",
-    "human_baseline": "ANONYMIZED/paper-dataset :: prompts_200_human.jsonl"
+    "human_baseline": "burstiness-engine/paper-dataset :: prompts_200_human.jsonl"
   },
   "design": {
     "modes": [
@@ -32,7 +32,7 @@
     "excluded": "none in the final set: 70 damaged intermediate generations (runaway max-effort reasoning at the 16K/32K caps, plus timeouts) were quarantined to the dirty archive and regenerated until all 3000 cells were clean"
   },
   "released_artifacts": {
-    "hf_dataset": "ANONYMIZED/deepseek-v4-news-gen",
+    "hf_dataset": "burstiness-engine/deepseek-v4-news-gen",
     "raw_generations": "data/deepseek-v4.jsonl",
     "dirty_archive": "data/deepseek-v4.dirty-16kcap.jsonl",
     "scored_eval": "eval/seed_avg_paired_deepseek-v4.json"

@@ -25,7 +25,7 @@ completion. They cover 5 orthogonal prompting mechanisms (The Prompt Report, Sch
 | `self_refine` | fix after writing: draft, critique, rewrite | 3 |
 
 The 200 briefs come from the frozen HF dataset (`prompts.load_briefs`,
-`ANONYMIZED/paper-dataset`); each brief is a neutral headline plus a head-to-head length
+`burstiness-engine/paper-dataset`); each brief is a neutral headline plus a head-to-head length
 (the paired human article's word count). `best_of_N` (select) is not a mode: it optimizes
 the metric by sampling, so it could only be reported as a labeled, compute-matched upper bound.
 
