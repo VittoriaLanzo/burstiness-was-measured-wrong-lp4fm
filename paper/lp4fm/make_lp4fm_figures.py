@@ -27,8 +27,9 @@ BLACK = (0.0, 0.0, 0.0)
 # Same model order as Table 1: control-mode gap, the Grok pair last.
 MODEL_IDS = ["gemini-3.1-pro", "glm-5.2", "opus-4.8", "qwen3.6-27b", "kimi-k2.6",
              "gemma-3-27b", "deepseek-v4-pro", "deepseek-v4-pro-1018", "grok-4.3", "grok-4.5"]
-FAMILIES = ["Gemini 3.1 Pro", "GLM-5.2", "Opus 4.8", "Qwen3.6-27B", "Kimi K2.6",
-            "Gemma 3 27B", "DeepSeek V4", "DeepSeek V4*", "Grok 4.3", "Grok 4.5"]
+# Table 1's model names.
+FAMILIES = ["Gemini 3.1 Pro", "GLM-5.2", "Claude Opus 4.8", "Qwen3.6-27B", "Kimi K2.6",
+            "Gemma 3 27B", "DeepSeek V4 Pro", r"DeepSeek V4 Pro$^{\dagger}$", "Grok 4.3", "Grok 4.5"]
 N = len(MODEL_IDS)
 _SSOT = {m: json.loads((BENCH / m / "seed_avg_paired.json").read_text(encoding="utf-8"))["dims"]["B_n"]
          for m in MODEL_IDS}
@@ -79,10 +80,10 @@ def make_aimscatter():
 
     ax.axhline(0.0, color=(0.55, 0.55, 0.55), linewidth=0.6, zorder=1)
     ax.text(
-        N + 0.45,
+        0.55,
         0.006,
         "human level",
-        ha="right",
+        ha="left",
         va="bottom",
         fontsize=7,
         color=(0.35, 0.35, 0.35),
@@ -109,9 +110,9 @@ def make_aimscatter():
     ax.set_xlim(0.45, N + 0.55)
     ax.set_ylim(-0.095, 0.19)
     ax.set_xticks(x)
-    ax.set_xticklabels(FAMILIES, rotation=32, ha="right")
+    ax.set_xticklabels(FAMILIES, rotation=32, ha="right", rotation_mode="anchor")
     ax.set_yticks([-0.05, 0.0, 0.05, 0.1, 0.15])
-    ax.set_ylabel(r"Median $\Delta B_n$ (human $-$ model)")
+    ax.set_ylabel(r"Median $\Delta B_n$")   # human - model; the caption states the sign
     ax.yaxis.grid(True, linewidth=0.3, color=(0.88, 0.88, 0.88))
     ax.set_axisbelow(True)
     ax.tick_params(length=2.5, color=(0.6, 0.6, 0.6))
@@ -174,14 +175,14 @@ def make_aimscatter():
     ax.legend(
         handles=handles,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.42),
+        bbox_to_anchor=(0.5, -0.50),
         ncol=5,
         frameon=False,
         handletextpad=0.3,
         columnspacing=1.1,
         borderaxespad=0.0,
     )
-    fig.subplots_adjust(left=0.10, right=0.99, top=0.97, bottom=0.38)
+    fig.subplots_adjust(left=0.115, right=0.99, top=0.97, bottom=0.42)
     fig.savefig(OUT / "fig_aimscatter.pdf")
     plt.close(fig)
 

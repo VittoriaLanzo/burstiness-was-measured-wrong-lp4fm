@@ -3,7 +3,7 @@
 
 Outputs go to paper/lp4fm/generated/ and main.tex \\input's them:
   numbers.tex            \\val{key} macros for every number quoted in the prose
-  tab_ninefam.tex        Table 1: B_n, nine models x five modes, plus the starred replication row
+  tab_ninefam.tex        Table 1: B_n, nine models x five modes, plus the dagger-marked re-run row
   tab_family_grids.tex   Appendix B: one four-dimension grid per leg (Qwen first)
   tab_equivalence.tex    instruction-mode significance and equivalence, every leg
   tab_contrasts.tex      direct mode-vs-mode paired tests within a leg
@@ -35,7 +35,7 @@ FAMILIES = {
     "kimi-k2.6": ("kimi", "Kimi K2.6"),
     "gemma-3-27b": ("gemma", "Gemma 3 27B"),
     "deepseek-v4-pro": ("deepseek", "DeepSeek V4 Pro"),
-    "deepseek-v4-pro-1018": ("deepseek1018", "DeepSeek V4 Pro$^{\\ast}$"),
+    "deepseek-v4-pro-1018": ("deepseek1018", "DeepSeek V4 Pro$^{\\dagger}$"),
     "grok-4.3": ("grok43", "Grok 4.3"),
     "grok-4.5": ("grok45", "Grok 4.5"),
 }
@@ -229,6 +229,10 @@ def main() -> int:
         n_eq = sum(1 for m in MODELS
                    if max(map(abs, ssot[m]["dims"]["B_n"]["instruction"]["median_delta_95ci"])) <= mg)
         v.put(f"inst.eq{str(mg)[2:]}.w", word(n_eq))
+        n_eq_sig = sum(1 for m in MODELS
+                       if max(map(abs, ssot[m]["dims"]["B_n"]["instruction"]["median_delta_95ci"])) <= mg
+                       and ssot[m]["dims"]["B_n"]["instruction"]["wilcoxon_p"] < 0.05)
+        v.put(f"inst.eq{str(mg)[2:]}.sig.w", word(n_eq_sig))
     rb_top = sum(1 for m in MODELS if max(MODES, key=lambda md: ssot[m]["dims"]["B_n"][md[0]]["matched_rank_biserial"])[0] == "fewshot")
     med_top = sum(1 for m in MODELS if max(MODES, key=lambda md: ssot[m]["dims"]["B_n"][md[0]]["median_delta_h_minus_ai"])[0] == "fewshot")
     fs_gt_ctrl = sum(1 for m in MODELS if ssot[m]["dims"]["B_n"]["fewshot"]["median_delta_h_minus_ai"]

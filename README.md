@@ -1,7 +1,7 @@
-# Burstiness Was Measured Wrong, and Prompting Cannot Aim It: code and evaluation artifacts
+# Can Prompting Close the Sentence-Length Dispersion Gap? Code and evaluation artifacts
 
-Private artifact repository for the paper "Burstiness Was Measured Wrong, and
-Prompting Cannot Aim It" (LP4FM @ NeurIPS 2026 submission). Every script and
+Private artifact repository for the paper "Can Prompting Close the Sentence-Length
+Dispersion Gap?" (LP4FM @ NeurIPS 2026). Every script and
 evaluation artifact the paper relies on, in source-repository layout, so the
 scripts run from this directory as the working root.
 
@@ -69,7 +69,7 @@ scripts run from this directory as the working root.
 - experiments/results/benchmark/qwen3.6-27b/seed_avg_paired.raw-archive.json: the
   audited leg scored under the raw protocol (Section 4.2).
 - experiments/results/paraphrase_robustness/: the DeepSeek paraphrase probe evals
-  (18 October 2026 run, against the starred leg's snapshot; the July 2026 evals the
+  (18 October 2026 run, against the snapshot of the dagger-marked leg; the July 2026 evals the
   reviewed version reported are kept in july-2026/).
 - experiments/results/review_analyses.json: the supplementary analyses output.
 - experiments/results/contamination_probe.json: the n-gram probe output.

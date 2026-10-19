@@ -36,7 +36,7 @@ Models:
 | deepseek-v4-pro-1018 | DeepSeek, 18 October 2026 snapshot | api |
 
 `deepseek-v4-pro-1018` regenerated the DeepSeek leg on 18 October 2026 through the
-same API alias with the same prompts and briefs (the paper's starred row). It is in
+same API alias with the same prompts and briefs (the paper's dagger-marked row). It is in
 every table and figure and outside the nine-model counts; `review_analyses.json`
 carries its paired contrast against the July leg (`replication_contrasts_B_n`).
 
