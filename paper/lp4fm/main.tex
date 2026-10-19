@@ -4,11 +4,14 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\renewcommand{\ttdefault}{lmtt} % Latin Modern typewriter: Type 1 outlines for T1 \texttt
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Can Prompting Reliably Close the Sentence-Length Dispersion Gap?},
+  pdfauthor={Vittoria Lanzo, Dico Angelo}}
 \usepackage{xcolor}
 \usepackage{graphicx}
 \input{generated/numbers}
@@ -831,7 +834,7 @@ multiscale profile, and the Goodhart guard, whose thresholds are its default key
 It runs on any Python~3 interpreter with no third-party dependencies and no reference model.
 Three conventions the prose leaves to the listing: $\sigma$ in $r=\sigma/\mu$ is the population
 standard deviation, the Gini divides by $n(n-1)$, and segmentation entropy is in bits over the
-marks \texttt{. ! ? , ; : - ( ) " '} and the em dash, after typographic quotes are mapped to ASCII.
+marks \texttt{. ! ? , ; : - ( ) " \textquotesingle} and the em dash, after typographic quotes are mapped to ASCII.
 
 \begin{lstlisting}[language=Python]
 """Reference implementation of the burstiness measurement instrument.
