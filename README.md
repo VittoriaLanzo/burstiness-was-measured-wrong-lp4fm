@@ -5,6 +5,17 @@ Sentence-Length Dispersion Gap?" (LP4FM @ NeurIPS 2026). Every script and
 evaluation artifact the paper relies on, in source-repository layout, so the
 scripts run from this directory as the working root.
 
+## Dataset
+
+The human articles, the generations of every leg and of the paraphrase probe, and the
+18 October run records are released as one public dataset:
+https://huggingface.co/datasets/burstiness-engine/sentence-length-dispersion. Its card
+describes every file and gives the commands that re-score a leg into the evaluation JSON
+committed here; its MANIFEST.json gives each file's row count, source dataset, source
+revision and SHA-256. hf-datasets.zip in this repository is a copy of it. The dataset
+references in each experiments/results/benchmark/<family>/meta.json name the private
+source datasets these files were copied from.
+
 ## Paper source
 
 - paper/lp4fm/main.tex: the unified LaTeX source of the camera-ready (single assembled
@@ -73,12 +84,11 @@ scripts run from this directory as the working root.
   reviewed version reported are kept in july-2026/).
 - experiments/results/review_analyses.json: the supplementary analyses output.
 - experiments/results/contamination_probe.json: the n-gram probe output.
-- hf-datasets.zip: mirror of the HuggingFace datasets the pipeline consumes
-  (organization burstiness-engine), one folder per dataset id. Contains the frozen human baseline
-  (prompts_200_human.jsonl, 200 paired Wikinews articles), the ablation-corpus
-  pairs, the raw generations of all nine benchmark legs, the 18 October 2026
-  DeepSeek re-run and its paraphrase run (reasoning traces removed).
-  See the README inside the zip.
+- hf-datasets.zip: a copy of the dataset burstiness-engine/sentence-length-dispersion
+  (see Dataset above): the frozen human baseline (prompts_200_human.jsonl, 200 paired
+  Wikinews articles), the 100-pair ablation corpus, the raw generations of all nine
+  benchmark legs, and the 18 October 2026 DeepSeek re-run and paraphrase probe with their
+  run records; reasoning text is not included. See the README inside the zip.
 - research-db.zip: the SQLite research corpus behind the literature curation
   (papers with verified arXiv ids, queries, findings, learnings, session
   provenance), with its seed script and schemas. Cell-scrubbed and VACUUMed;

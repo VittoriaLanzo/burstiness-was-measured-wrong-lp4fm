@@ -38,7 +38,7 @@
   "released_artifacts": {
     "hf_dataset": "burstiness-engine/deepseek-v4-news-gen",
     "raw_generations": "benchmark/new-run-2026-10-18/deepseek-v4.jsonl (revision e35f0b872b489151fc2e430b879499b20092884c)",
-    "attempts_and_requests": "benchmark/new-run-2026-10-18/ (attempts.jsonl, stage-requests.jsonl, manifests, SHA256SUMS)",
+    "attempts_and_requests": "not released; the released run records are in burstiness-engine/sentence-length-dispersion under deepseek-v4-news-gen/benchmark-2026-10-18/provenance/",
     "companion_paraphrase_run": "paraphrase/new-run-2026-10-18/ (revision 69dc8a31412b45bf06848b3b1f0ec53cfc37af34)"
   },
   "scoring": {
