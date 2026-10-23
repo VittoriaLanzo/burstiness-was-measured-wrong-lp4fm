@@ -95,9 +95,9 @@ reading.
 Sentence-length dispersion has been a stylometric variable since
 \citet{yule1939sentence} and \citet{williams1940note}, but its natural statistics, the
 variance and the standard deviation of sentence length, grow with the mean, and
-the scale-free ratio \citet{onan2025you} use is not corrected for the few
-sentences a document has. The aim of this paper is to give the sentence-length
-reading a statistic that is both scale-free and corrected, and to use it to
+the scale-free ratio \citet{onan2025you} use has a range that shrinks in short
+documents. The aim of this paper is to give the sentence-length
+reading a statistic that is both scale-free and range-corrected, and to use it to
 benchmark five prompting techniques.
 
 \paragraph{A definition.}
@@ -147,7 +147,7 @@ the nine are equivalent within $\pm0.05$ and \val{inst.eq08.w} within $\pm0.08$,
 \val{inst.eq08.sig.w} of them while differing significantly (\val{inst.eq03.w} within $\pm0.03$), and
 for \val{con.widen.phrase} among the nine the instruction makes the text
 significantly flatter than its own uninstructed output; a model's uninstructed
-gap does not predict where it lands. Few-shot exemplars of typical human news
+gap is a weak guide to where it lands. Few-shot exemplars of typical human news
 prose produce text significantly flatter than the instruction alone in
 \val{con.fslt.phrase}.
 
@@ -179,8 +179,8 @@ document~\citep{gptzero2023burstiness}, and which recent attribution work uses a
 survey that cites it describes burstiness as variability in style, tone and
 vocabulary~\citep{arxiv2024detecting}. The sentence-length reading travels under the same name:
 \citet{onan2025you} define burstiness as the variance of sentence-level perplexities and compute
-it as the coefficient of variation of sentence lengths, a ratio that is scale-free but
-uncorrected for the number of sentences; Section~\ref{sec:formalizing} gives the corrected form.
+it as the coefficient of variation of sentence lengths, a scale-free ratio whose range
+shrinks in short documents; Section~\ref{sec:formalizing} gives the range-corrected form.
 DivEye~\citep{arxiv2025diveye} tracks how unpredictability fluctuates across a text, the nearest
 text-side analog to timing variation. Surveys~\citep{arxiv2024detecting} treat
 perplexity-burstiness as a standard pair and document detector vulnerability to paraphrasing.
@@ -211,7 +211,7 @@ finite-$n$ correction~\citep{kim2016measuring}: with $r = \sigma / \mu$ and $n$ 
 \[
 B_n = \frac{\sqrt{n+1}\,r - \sqrt{n-1}}{(\sqrt{n+1} - 2)\,r + \sqrt{n-1}},
 \]
-which reduces to $B = (r-1)/(r+1)$ as $n$ grows and removes the small-$n$ bias of $B$.
+which reduces to $B = (r-1)/(r+1)$ as $n$ grows and, unlike $B$, spans $[-1, 1]$ at every $n$.
 
 $B_n$ is \emph{scale-free}: it depends on the sentence lengths only through $r$ and $n$, so scaling
 every length by the same factor leaves it unchanged, and it measures variation \emph{relative} to
@@ -317,8 +317,8 @@ Model output does not arrive as plain prose. A generation-hygiene guard flagged 
 scaffolding and echoed headline blocks in every model we benchmark, from \val{hyg.deepseek.md} (markdown) and \val{hyg.deepseek.title} (title lines) of control-mode generations
 on one leg (DeepSeek V4 Pro) to \val{hyg.gemini.md} on another (Gemini 3.1 Pro,
 both features). All of it is formatting the
-plain-prose human baseline lacks. A segmenter fed raw output scores a markdown header or an echoed dateline as
-a short pseudo-sentence, and those fragments manufacture length dispersion and segmentation symbols
+plain-prose human baseline lacks. A segmenter fed raw output folds a markdown header or an echoed headline into
+the next sentence, or splits it off when it ends in terminal punctuation, and those pseudo-sentences manufacture length dispersion and segmentation symbols
 the article prose does not have. Every generated leg is therefore normalized before scoring:
 a deterministic script (\path{experiments/ablation/normalize_generation.py}) drops the echoed
 headline block and unwraps markdown syntax while preserving the article prose; the human baseline
@@ -327,7 +327,7 @@ $1.7\%$, and at most $7.4\%$ of a generation lost to normalization, that maximum
 headline block itself.
 
 Scaffolding sits outside the construct: $B_n$ is defined over the sentence
-lengths of prose, and a markdown header or an echoed dateline is not a sentence of the article.
+lengths of prose, and a markdown header or an echoed headline is not a sentence of the article.
 Scoring it credits formatting as dispersion, the same class of inflation the Goodhart
 guard flags (Section~\ref{sec:formalizing}), so normalization is a
 corpus-level Goodhart correction, applied uniformly to every leg. Its size is measurable on the
@@ -414,8 +414,8 @@ silently: $36$ of GLM-5.2's cells return an ordinary HTTP $200$ with empty outpu
 on the same cluster of politically sensitive headlines. The harness records both as empty cells
 and seed-averaging excludes them, so every paired statistic is computed over the headlines the
 model actually wrote (\val{glm.npairs.range} per mode for GLM-5.2, \val{kimi.npairs.range} for
-Kimi K2.6; Appendix~\ref{sec:familygrids}); a benchmark that does not audit empty outputs would silently absorb the second mechanism into its
-scores.
+Kimi K2.6; Appendix~\ref{sec:familygrids}); a benchmark that does not audit empty outputs would not see what the second mechanism
+removes.
 The remaining five legs, and DeepSeek V4 Pro$^{\dagger}$, generated all $200$ headlines in every mode.
 
 \begin{table}[tb]
@@ -523,16 +523,16 @@ rather than variance.
 The synthesis is the scatter. Across the forty-five model-by-mode cells, \val{census.flat.w} land
 significantly flatter than the human articles, \val{census.ns.w} show no significant difference,
 and \val{census.past.w} land significantly more dispersed. For the prompts tested, prompt-level control has poor aim: the gain and even the sign of an instruction are
-model-specific, and the uninstructed gap does not predict the landing, so the instruction that
+model-specific, and the uninstructed gap is a weak guide to the landing (Spearman $\rho = \val{rho.ctrl.inst}$ across the nine). The instruction that
 reaches equivalence on one model moves the next a different amount and sometimes the wrong way.
 
 \section{Discussion}\label{sec:discussion}
 
 \paragraph{Recommendations for evaluation practice.}
 \begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{4pt}
-\item Normalize before scoring: any segmenter-based feature computed on raw model output measures formatting as well as sentence-length dispersion, and the unreported choice can flip verdicts in both directions (Section~\ref{sec:normalization}).
+\item Normalize before scoring: any segmenter-based feature of raw model output measures formatting as well as sentence-length dispersion, and on the leg scored both ways normalizing reverses an equivalence verdict (Section~\ref{sec:normalization}).
 \item Sample multiple seeds and average within headline before testing: pooling seeds pseudo-replicates the human baseline and overstates significance (Section~\ref{sec:analysis}).
-\item Audit empty cells: silent provider moderation returns ordinary responses with empty output, and unlogged empties reshape scores invisibly (Section~\ref{sec:ninefam}).
+\item Audit empty cells: silent provider moderation returns ordinary responses with empty output, and unlogged empties change which headlines are compared (Section~\ref{sec:ninefam}).
 \item State parity as CI-bounded equivalence against pre-specified margins and report the smallest margin cleared; a failure to reject is not a match (Section~\ref{sec:analysis}).
 \end{enumerate}
 
@@ -543,13 +543,12 @@ Sentence-length dispersion is the everyday reading of burstiness, and the benchm
 
 \paragraph{Limits of the metric.}
 Statistical separation is not construct validity: significant paired
-differences show the coefficient separates authorship in matched news prose, and they leave open
+differences show the coefficient shifts with authorship in matched news prose, and they leave open
 whether it captures everything meant by rhythm.
 The coefficient $B_n$ inherits the weaknesses of the coefficient of variation it is built on
 (Section~\ref{sec:formalizing}): it is order-blind and shape-blind,
 scoring the dispersion of the length sequence while ignoring where the long and short sentences fall, and memory recovers only
-lag-1 order. Surprisal is model-relative, which is why it stays outside the construct and is
-not scored. The reference implementation flags documents under ten sentences; the benchmark scores from
+lag-1 order. At a fixed spread, sample $B_n$ still rises with sentence count, so generations with fewer sentences than their article score lower, those with more, higher (Appendix~\ref{sec:protocoldetail}). The reference implementation flags documents under ten sentences; the benchmark scores from
 five, and Appendix~\ref{sec:protocoldetail} reports the sensitivity. The metric is genre-relative:
 target bands do not transfer unchanged across registers. Guard thresholds are heuristic: they set a floor and prove nothing about
 strategies outside their list.
@@ -566,11 +565,11 @@ months later writes significantly more dispersed text than it did in July in all
 nature. One fixed wording per mode risks measuring one model's reading of one
 prompt, and neither an explicit instruction to vary sentence length nor a per-model calibration
 was tested, so the results show how the prompts tested move the gap, not that no prompt can close it. Replication across nine
-models removes part of the wording risk, since few-shot output is significantly flatter than
-instruction output in \val{con.fslt.phrase}. A paraphrase probe samples the other part on one
+models addresses the one-model part of that risk: few-shot output is significantly flatter than
+instruction output in \val{con.fslt.phrase}. A paraphrase probe samples the one-prompt part for the instruction on one
 model, the 18 October DeepSeek snapshot, where the canonical wording lands
 $\val{deepseek1018.Bn.instruction.ad}$ past the human level
-($\val{deepseek1018.Bn.instruction.p}$): three paraphrases of the same persona frame (one sample
+($\val{deepseek1018.Bn.instruction.p}$): three paraphrases of it (one sample
 per brief, $\val{para.n.min}$ briefs each) land that snapshot $\val{para.ad.lo}$ to
 $\val{para.ad.hi}$ past, \val{para.past.w} of three significantly, so no wording we tried returns it
 to the human level and none, the canonical one included, is equivalent at $0.03$ or $0.05$.
@@ -590,12 +589,12 @@ overlap below $0.001$, against a mismatched-article baseline of $0.0$ (per-model
 Appendix~\ref{sec:protocoldetail}). Verbatim reproduction therefore cannot explain the measured gaps on the
 probed models. Memorization would move dispersion toward the human level, so any unprobed
 effect, whether a deficit or an overshoot, is, if contaminated, an underestimate. The direction reverses for the equivalence landings:
-memorization would inflate instructed dispersion to the human level, so contamination could manufacture the equivalences we report. All of them fall in the instruction
+memorization would pull instructed dispersion toward the human level, so contamination could manufacture the equivalences. All of them fall in the instruction
 mode the probe did not cover, and the probe did not cover Kimi K2.6 or Grok 4.5 at all.
 
 \section{Conclusion}
 Burstiness is measured everywhere under two readings, and the sentence-length one has lacked a
-statistic that is both scale-free and corrected for the number of sentences. This paper gives it one,
+scale-free burstiness coefficient with its full range at any sentence count. This paper gives it one,
 reproducible and model-free. Its first use is the aim
 problem: on uniformly normalized text, \val{ctrl.flat.w} of nine models write significantly
 flatter than the human articles uninstructed. The same instruction leaves \val{inst.flat.w}

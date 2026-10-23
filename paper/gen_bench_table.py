@@ -216,6 +216,26 @@ def main() -> int:
         v.put(f"qwenraw.cons.{mode}.min", f"{min(its.values()):.2f}")
         v.put(f"qwenraw.cons.{mode}.max", f"{max(its.values()):.2f}")
 
+    # --- does the uninstructed gap order the instructed landings? (Section 4.4) --------------
+    def ranks(xs):
+        order = sorted(range(len(xs)), key=lambda k: xs[k])
+        r = [0.0] * len(xs)
+        i = 0
+        while i < len(order):
+            j = i
+            while j + 1 < len(order) and xs[order[j + 1]] == xs[order[i]]:
+                j += 1
+            for k in range(i, j + 1):
+                r[order[k]] = (i + j) / 2 + 1
+            i = j + 1
+        return r
+    gap = ranks([ssot[m]["dims"]["B_n"]["control"]["median_delta_h_minus_ai"] for m in MODELS])
+    land = ranks([ssot[m]["dims"]["B_n"]["instruction"]["median_delta_h_minus_ai"] for m in MODELS])
+    mg, ml = sum(gap) / len(gap), sum(land) / len(land)
+    rho = sum((x - mg) * (y - ml) for x, y in zip(gap, land)) / (
+        sum((x - mg) ** 2 for x in gap) * sum((y - ml) ** 2 for y in land)) ** 0.5
+    v.put("rho.ctrl.inst", f"{rho:.2f}")
+
     # --- census over the 45 B_n cells -----------------------------------------------------
     cells = {(m, mode): landing(ssot[m]["dims"]["B_n"][mode]) for m in FAMILIES for mode, _ in MODES}
     for cat in ("flat", "ns", "past"):
