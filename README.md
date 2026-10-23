@@ -18,6 +18,7 @@ source datasets these files were copied from.
 
 ## Paper source
 
+- paper/lp4fm/camera-ready.pdf: the camera-ready PDF, built from main.tex at this commit.
 - paper/lp4fm/main.tex: the unified LaTeX source of the camera-ready (single assembled
   file), with paper/lp4fm/references.bib, paper/lp4fm/neurips_2026.sty, and
   paper/lp4fm/build.sh (tectonic) alongside. Figure 1 is a PDF plot under
