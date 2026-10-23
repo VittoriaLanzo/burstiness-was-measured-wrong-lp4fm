@@ -54,11 +54,8 @@ source datasets these files were copied from.
   (Limitations), with test_contamination_probe.py.
 - experiments/ablation/generation_hygiene.py: the markdown and title-echo audit that
   motivated normalization (Section 4.2).
-- experiments/ablation/segentropy_quote_artifact.py: the smart-quote artifact audit
-  behind the uniform ASCII quote normalization (Section 3.2).
 - experiments/ablation/prompt_paraphrase.py: the instruction-wording robustness
   probe (Limitations).
-- experiments/ablation/rescore_all.py: rescores every leg raw and normalized.
 - experiments/ablation/review_analyses.py: the supplementary analyses (human B_n
   spread, mode contrasts, raw-variance baseline, guard rates, ten-sentence floor,
   lengths) behind the appendix tables; writes experiments/results/review_analyses.json.
@@ -90,10 +87,6 @@ source datasets these files were copied from.
   Wikinews articles), the 100-pair ablation corpus, the raw generations of all nine
   benchmark legs, and the 18 October 2026 DeepSeek re-run and paraphrase probe with their
   run records; reasoning text is not included. See the README inside the zip.
-- research-db.zip: the SQLite research corpus behind the literature curation
-  (papers with verified arXiv ids, queries, findings, learnings, session
-  provenance), with its seed script and schemas. Cell-scrubbed and VACUUMed;
-  author names masked as Author A / Author B. See the README inside the zip.
 
 The human-side corpus also regenerates deterministically from Wikinews wikitext
 via clean_wikinews.py; normalized generation variants regenerate from the raw

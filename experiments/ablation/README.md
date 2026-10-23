@@ -8,10 +8,10 @@ editing, and genre confounds of comparing machine text against older literature.
 
 Two corpora share the construction:
 
-- the 100-pair ablation corpus (`burstiness_pairs.jsonl`, private HF dataset
-  `burstiness-engine/burstiness-engine-ablation`, mirrored in hf-datasets.zip), scored by `paired_test.py`;
-- the 200-headline benchmark reference set (`prompts_200_human.jsonl`, HF dataset
-  `burstiness-engine/paper-dataset`), against which every benchmark leg is scored by
+- the 100-pair ablation corpus (`ablation-corpus/burstiness_pairs.jsonl` in the HF dataset
+  `burstiness-engine/sentence-length-dispersion`, also in hf-datasets.zip), scored by `paired_test.py`;
+- the 200-headline benchmark reference set (`paper-dataset/prompts_200_human.jsonl` in the same
+  dataset), against which every benchmark leg is scored by
   `seed_avg_paired.py`.
 
 ## Data (not in this repo)
@@ -40,12 +40,10 @@ needs `mwparserfromhell`, `huggingface_hub`, `pandas`, and `select_m2_exemplars.
 | `normalize_generation.py` | uniform normalization of every generated leg before scoring (with `test_normalize_generation.py`) |
 | `paired_test.py` | matched-headline Wilcoxon on the ablation corpus; also the `metrics()` / `wilcoxon()` used by every other scorer |
 | `seed_avg_paired.py` | seed-averaged paired test of a benchmark leg against the human reference set |
-| `rescore_all.py` | re-runs `seed_avg_paired.py` for every leg and writes the committed results |
 | `equivalence_test.py` | CI-bounded equivalence margins from a leg's committed CIs |
 | `multiplicity_correction.py` | BH and Holm census over a leg's 20 tests |
 | `review_analyses.py` | human spread, mode contrasts, variance baseline, guard rates, floor sensitivity, lengths |
 | `generation_hygiene.py` | smart-quote, markdown, and title-line rates in raw generations |
-| `segentropy_quote_artifact.py` | size of the typographic-quote effect on segmentation entropy |
 | `contamination_probe.py` | n-gram overlap probe (with `test_contamination_probe.py`) |
 | `prompt_paraphrase.py` | instruction-wording robustness probe |
 

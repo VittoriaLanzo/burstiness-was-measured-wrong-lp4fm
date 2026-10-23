@@ -20,8 +20,8 @@ Selection method:
   * Word count is whitespace-split; sentence count splits on [.!?] followed by whitespace
     (both rules reproduce the frozen human_words / human_n_sentences 100/100).
 
-Deps: mwparserfromhell (via clean_wikinews), huggingface_hub, pandas. The HF token is read
-from the standard cache (`huggingface-cli login`); the ablation dataset is private.
+Deps: mwparserfromhell (via clean_wikinews), huggingface_hub, pandas. Both sources are public:
+malteos/wikinews and the ablation corpus in burstiness-engine/sentence-length-dispersion.
 
 Usage:
   python -m experiments.ablation.build_ablation_corpus --validate
@@ -42,7 +42,9 @@ from experiments.ablation.clean_wikinews import clean  # noqa: E402
 
 # --- configuration -----------------------------------------------------------
 SOURCE_REPO = "malteos/wikinews"
-ABLATION_REPO = "burstiness-engine/burstiness-engine-ablation"
+ABLATION_REPO = "burstiness-engine/sentence-length-dispersion"
+ABLATION_FILE = "ablation-corpus/burstiness_pairs.jsonl"
+ABLATION_REVISION = "40c03dde536decc008740b000a020d49782a567a"
 YEARS = list(range(2016, 2022))
 MIN_WORDS, MAX_WORDS = 120, 500
 MIN_SENTENCES = 10
@@ -85,7 +87,7 @@ def load_pool():
 def load_existing():
     from huggingface_hub import hf_hub_download
 
-    p = hf_hub_download(ABLATION_REPO, "burstiness_pairs.jsonl", repo_type="dataset")
+    p = hf_hub_download(ABLATION_REPO, ABLATION_FILE, repo_type="dataset", revision=ABLATION_REVISION)
     return [json.loads(l) for l in Path(p).read_text(encoding="utf-8").splitlines() if l.strip()]
 
 

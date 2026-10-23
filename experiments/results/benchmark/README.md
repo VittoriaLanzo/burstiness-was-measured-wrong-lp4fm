@@ -44,8 +44,8 @@ The two open-weights legs were generated locally with `bench/gen_vllm.py`; the
 api legs with `bench/run.py` (`opus-4.8` with `bench/run_batch.py`). Every leg
 is scored under the normalized protocol (`normalize_generation.py`, then
 `seed_avg_paired.py`); `qwen3.6-27b` additionally carries its raw-protocol
-scoring as `seed_avg_paired.raw-archive.json`. `seed_avg_paired.pre-segfix.json` is
-the evaluation as reviewed, scored before the segmenter mapped typographic
+scoring as `seed_avg_paired.raw-archive.json`. `seed_avg_paired.pre-segfix.json` (the nine
+models' legs; the re-run leg postdates the fix) is the evaluation as reviewed, scored before the segmenter mapped typographic
 closing quotes to ASCII; the paper's segmentation audit compares the two.
 
 ## seed_avg_paired.json schema

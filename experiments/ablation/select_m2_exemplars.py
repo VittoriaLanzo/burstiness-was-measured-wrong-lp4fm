@@ -41,7 +41,8 @@ from experiments.burstiness_metrics import sentence_lengths  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "bench" / "m2_exemplars.json"
 CACHE = bac.DATA_DIR / "m2_pool_cache.jsonl"  # gitignored (experiments/ablation/data/)
-PAPER_REPO, PAPER_FILE = "burstiness-engine/paper-dataset", "prompts_200_human.jsonl"
+PAPER_REPO, PAPER_FILE = "burstiness-engine/sentence-length-dispersion", "paper-dataset/prompts_200_human.jsonl"
+PAPER_REVISION = "40c03dde536decc008740b000a020d49782a567a"
 PCTILE_LO, PCTILE_HI = 0.10, 0.90  # keep the representative middle; exclude only degenerate tails
 LEAK_THRESHOLD = 0.40              # max TF-IDF headline cosine allowed (vs targets, and between picks)
 # straight news reports only: drop interviews, opinion, galleries, obituaries, self-referential Wikinews
@@ -60,7 +61,7 @@ def _quantile(sorted_vals, p):
 
 def load_targets():
     from huggingface_hub import hf_hub_download
-    p = hf_hub_download(PAPER_REPO, PAPER_FILE, repo_type="dataset")
+    p = hf_hub_download(PAPER_REPO, PAPER_FILE, repo_type="dataset", revision=PAPER_REVISION)
     return [json.loads(l) for l in Path(p).read_text(encoding="utf-8").splitlines() if l.strip()]
 
 

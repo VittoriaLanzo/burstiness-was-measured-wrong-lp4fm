@@ -42,9 +42,9 @@ import pathlib
 PROMPTS_FINALIZED = True
 
 # --- data: the 200 titles ---------------------------------------------------
-HF_DATASET = "burstiness-engine/paper-dataset"
-HF_FILE = "prompts_200_human.jsonl"
-HF_REVISION = "3f27ce645ce4f21aa91bd9b8b52a9ca33214fdee"  # prompts_200_human.jsonl sha256 fa73bffe...: the file every leg is scored against
+HF_DATASET = "burstiness-engine/sentence-length-dispersion"
+HF_FILE = "paper-dataset/prompts_200_human.jsonl"
+HF_REVISION = "40c03dde536decc008740b000a020d49782a567a"  # prompts_200_human.jsonl sha256 fa73bffe...: the file every leg is scored against
 ROUND_TO = 25       # round the head-to-head length hint so it reads natural ("about 275 words")
 
 BRIEF = ("Write a news article with the following headline:\n\n"

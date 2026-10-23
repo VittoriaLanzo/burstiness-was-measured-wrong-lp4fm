@@ -284,8 +284,7 @@ def segmentation_entropy(text: str) -> float:
     # Typographic quotes are mapped to ASCII so quote style (curly vs straight) is not
     # scored as segmentation diversity: _PUNCT_SYMBOLS contains straight quotes only, so
     # without the mapping a text with curly quotes has all its quotation marks dropped from
-    # the count, deflating its entropy relative to a straight-quote baseline (see
-    # experiments/ablation/segentropy_quote_artifact.py).
+    # the count, deflating its entropy relative to a straight-quote baseline.
     counts = {}
     for ch in _PUNCT_SYMBOLS.findall((text or "").translate(_TYPO_QUOTES)):
         counts[ch] = counts.get(ch, 0) + 1
