@@ -84,7 +84,7 @@ text significantly flatter than the instruction alone in \val{con.fslt.phrase}.
 Burstiness is one of the signals most often cited to separate human writing
 from machine writing~\citep{arxiv2024detecting}, and the word carries two
 readings. In detector practice it means the variation of perplexity across a
-document, the sense GPTZero gives it~\citep{gptzero2023burstiness}. In everyday
+document, part of the sense GPTZero gave it~\citep{gptzero2023burstiness}. In everyday
 use it means the variation of sentence length, the mix of long and short
 sentences that gives prose its rhythm and that language models flatten toward a
 middle. The obvious statistic for that reading, the variance or standard
@@ -162,7 +162,7 @@ for any use that selects text by the score (Section~\ref{sec:formalizing}).
 uniform normalization before scoring, seed-averaging that avoids
 pseudo-replication, within-model multiplicity correction, equivalence only as a
 CI inside pre-specified margins, a contamination probe,
-and a moderation-refusal audit (Sections~\ref{sec:corpus}--\ref{sec:analysis}).
+and a moderation-refusal audit (Sections~\ref{sec:corpus}--\ref{sec:ninefam} and~\ref{sec:limitations}).
 \item The aim problem across nine models, five modes, three samples per cell:
 every mode-to-mode claim the text builds on carries a direct paired contrast
 with rankings marked descriptive, and
@@ -173,9 +173,9 @@ alone in \val{con.fslt.phrase} (Section~\ref{sec:promptceiling}).
 \section{Related work}\label{sec:related}
 
 \subsection{Burstiness in detection}
-In detector practice the term comes from GPTZero, which pairs perplexity with a burstiness
-scalar defined as the variation of perplexity across the document~\citep{gptzero2023burstiness}
-and which recent attribution work uses as a baseline detector~\citep{arxiv2025training}; the
+In detector practice the term comes from GPTZero, whose original detector paired perplexity with a
+burstiness scalar, the variation of writing patterns and perplexity across the
+document~\citep{gptzero2023burstiness}, and which recent attribution work uses as a baseline detector~\citep{arxiv2025training}; the
 survey that cites it describes burstiness as variability in style, tone and
 vocabulary~\citep{arxiv2024detecting}. The sentence-length reading travels under the same name:
 \citet{onan2025you} define burstiness as the variance of sentence-level perplexities and compute
@@ -186,16 +186,16 @@ text-side analog to timing variation. Surveys~\citep{arxiv2024detecting} treat
 perplexity-burstiness as a standard pair and document detector vulnerability to paraphrasing.
 
 \subsection{Stylistic variation and diversity}
-The stylistic-variation benchmark~\citep{arxiv2025benchmark} evaluates frontier models across
-prompt settings and scores how varied the output is, with no human reference distribution to
-score against. Effective semantic diversity~\citep{arxiv2025evaluating} gates diversity on
+The stylistic-variation benchmark~\citep{arxiv2025benchmark} compares frontier models'
+counterparts of human reference texts with those texts using Biber's multidimensional analysis, a
+register-level comparison rather than one of sentence-length dispersion. Effective semantic diversity~\citep{arxiv2025evaluating} gates diversity on
 quality; a gate of that kind is the condition we would attach to any use of $B_n$ that selects
 text, so that incoherent high-variance text is not rewarded.
 
 \section{Formalizing burstiness}\label{sec:formalizing}
 
 We give the sentence-length reading of burstiness (Section~\ref{sec:related}) a model-free,
-reproducible measurement instrument.
+reproducible instrument.
 
 \subsection{Burstiness as a point process}
 Let a document $D$ be segmented into sentences with word-length sequence $L = (l_1, \dots, l_n)$. We
@@ -314,9 +314,9 @@ scripted, and every reported number can be recomputed from the released artifact
 \subsection{Normalization: stripping the wrapper before scoring}
 \label{sec:normalization}
 Model output does not arrive as plain prose. A generation-hygiene guard flagged markdown
-scaffolding and echoed headline blocks in every model we benchmark, from 23--38\% of control-mode generations
-on one leg (DeepSeek V4 Pro: 23\% markdown, 38\% title lines) to 100\% on another (Gemma 3 27B
-markdown; headline echoes on the Grok 4.5 and Gemini 3.1 Pro legs). All of it is formatting the
+scaffolding and echoed headline blocks in every model we benchmark, from \val{hyg.deepseek.md} (markdown) and \val{hyg.deepseek.title} (title lines) of control-mode generations
+on one leg (DeepSeek V4 Pro) to \val{hyg.gemini.md} on another (Gemini 3.1 Pro,
+both features). All of it is formatting the
 plain-prose human baseline lacks. A segmenter fed raw output scores a markdown header or an echoed dateline as
 a short pseudo-sentence, and those fragments manufacture length dispersion and segmentation symbols
 the article prose does not have. Every generated leg is therefore normalized before scoring:
@@ -355,7 +355,7 @@ the matched pairs ($\val{npairs.min}$--$\val{npairs.max}$ per model and mode). M
 rank-biserial is reported as effect size. Each test compares one mode against the human articles;
 where the text compares two modes of the same model, it cites a direct paired contrast between
 them on the same headlines (Appendix~\ref{sec:protocoldetail}; contrast deltas are in the model's
-own $B_n$, so a negative value means the first mode is flatter).
+own $B_n$; negative means the first mode is flatter).
 
 Every model ran the identical twenty-cell grid (five modes by four dimensions), corrected within
 model with Benjamini--Hochberg at $q=0.05$, Holm reported alongside; the correction script and each
@@ -388,8 +388,8 @@ ignores a requested temperature and Kimi K2.6 rejects one); and Grok 4.5, Gemini
 Claude Opus 4.8 (closed APIs; Grok 4.5 exposes neither temperature nor top-$p$, Gemini 3.1 Pro ran
 at temperature $1.0$ with provider-managed thinking, and Claude Opus 4.8 exposes no temperature).
 Thinking modes, effort levels and output caps are recorded in each leg's released metadata and
-listed in Appendix~\ref{sec:protocoldetail}. Two of the nine models' API legs ran with a $32{,}000$-token cap instead of
-$16{,}000$: DeepSeek V4 Pro, after reasoning exhausted the smaller cap early in the run, and Claude Opus 4.8,
+listed in Appendix~\ref{sec:protocoldetail}. Two of the nine models' API legs used a $32{,}000$-token cap instead of
+$16{,}000$: DeepSeek V4 Pro from early in its run (Appendix~\ref{sec:caps}), after reasoning exhausted the smaller cap, and Claude Opus 4.8,
 because Anthropic bills reasoning against the cap, so at maximum effort the self-refine rewrite
 spent the whole budget reasoning and emitted no prose. That leg ran at effort high (Gemini 3.1
 Pro ran at thinking level high) and completed all $3{,}000$ cells with no truncated or empty
@@ -443,10 +443,10 @@ and outside their counts.}
 \caption{Median $\Delta B_n =$ human $-$ model for every model and prompting mode, the
 forty-five nine-model cells of Table~\ref{tab:ninefam} and the five cells of its DeepSeek V4 Pro$^{\dagger}$ row. Reading key: the gray line is the human dispersion
 level; markers above it are flatter than the human articles, markers below it more dispersed.
-Columns follow the order of Table~\ref{tab:ninefam}. Few-shot sits highest in \val{fewshot.medtop.w} of
+Few-shot sits highest in \val{fewshot.medtop.w} of
 nine models by median and is the largest-effect mode by rank-biserial in \val{fewshot.rbtop.w}, and
 instruction lands on both sides of the line, including across the three leftmost models whose
-control markers nearly coincide. Per-cell significance is in Table~\ref{tab:ninefam}.}
+control markers nearly coincide. Model order and significance: Table~\ref{tab:ninefam}.}
 \label{fig:aimscatter}
 \end{figure}
 
@@ -504,8 +504,8 @@ $\val{con.grok43.instruction-control.p}$), while for Grok 4.5 the same instructi
 dispersion the other way ($\val{con.grok45.instruction-control.d}$,
 $\val{con.grok45.instruction-control.p}$) and leaves it not significantly different from the
 human articles ($\val{grok45.Bn.instruction.d}$, $\val{grok45.Bn.instruction.p}$), the one
-instruction landing that the original segmenter and the guard-filtered re-scoring each place on
-the other side of the line (Appendix~\ref{sec:protocoldetail}).
+instruction landing that the original segmenter and the guard filter each make significant
+(Appendix~\ref{sec:protocoldetail}).
 
 \val{fewshot.flat.W} of nine models undershoot significantly under few-shot, and few-shot output
 is significantly flatter than instruction output in \val{con.fslt.phrase} (paired contrasts,
@@ -528,7 +528,7 @@ reaches equivalence on one model moves the next a different amount and sometimes
 
 \section{Discussion}\label{sec:discussion}
 
-\paragraph{What this audit prescribes for evaluation practice.}
+\paragraph{Recommendations for evaluation practice.}
 \begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{4pt}
 \item Normalize before scoring: any segmenter-based feature computed on raw model output measures formatting as well as sentence-length dispersion, and the unreported choice can flip verdicts in both directions (Section~\ref{sec:normalization}).
 \item Sample multiple seeds and average within headline before testing: pooling seeds pseudo-replicates the human baseline and overstates significance (Section~\ref{sec:analysis}).
@@ -537,7 +537,7 @@ reaches equivalence on one model moves the next a different amount and sometimes
 \end{enumerate}
 
 \paragraph{Sentence-length dispersion as a detection signal.}
-Sentence-length dispersion is the everyday reading of burstiness, and the benchmark says where its flatness signature holds and where it inverts. For a dispersion-based detector, the instructed flatness signature persists in \val{inst.flat.w} of nine models, but \val{anypast.names} each write significantly more dispersed text than the human articles under at least one prompted mode, where a flatness threshold would fire in the wrong direction, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. The strong detector signal, surprisal, stays outside the construct.
+Sentence-length dispersion is the everyday reading of burstiness, and the benchmark says where its flatness signature holds and where it inverts. For a dispersion-based detector, the instructed flatness signature persists in \val{inst.flat.w} of nine models, but \val{anypast.names} each write significantly more dispersed text than the human articles under at least one prompted mode, where a flatness threshold would miss them, and any segmenter-based feature computed on raw output inherits the formatting artifacts of Section~\ref{sec:normalization}. The strong detector signal, surprisal, stays outside the construct.
 
 \section{Limitations}\label{sec:limitations}
 
@@ -1156,7 +1156,7 @@ leg used (7 July). The alias was documented at the time as DeepSeek-V4-Pro-0813,
 13 August, after the July run; the July rows record only the bare alias, so the version they were
 served is not named. Settings: the same $200$ briefs and five prompts (every first-stage request
 matches \path{bench/prompts.py} on the frozen briefs), three samples per cell, thinking at
-reasoning effort maximum as in July, a $32{,}000$-token cap throughout (the July leg kept its early
+reasoning effort maximum as in July, a $32{,}000$-token cap throughout (the July leg kept most of its early
 cells generated at $16{,}000$, Appendix~\ref{sec:caps}), no temperature, top-$p$ or seed
 sent. All $3{,}000$ cells completed with a stop finish reason, some after retries of transport errors or
 empty results, documented in the released repair and continuation manifests~\citep{lanzo2026dataset}. One self-refine rewrite (scenario 93, sample
@@ -1191,9 +1191,9 @@ seed-averaged results.
 % Provenance: paper/main.tex lines 325--328
 \subsection{Scaffolding rates}
 A generation-hygiene guard flagged markdown scaffolding and echoed headline blocks in every
-model we benchmark, from 23--38\% of control-mode generations on one leg (DeepSeek V4 Pro:
-23\% markdown, 38\% title lines) to 100\% on another (Gemma 3 27B markdown; headline echoes on
-the Grok 4.5 and Gemini 3.1 Pro legs). All of it is formatting the plain-prose human baseline
+model we benchmark, from \val{hyg.deepseek.md} (markdown) and \val{hyg.deepseek.title} (title lines) of control-mode generations on one leg
+(DeepSeek V4 Pro) to \val{hyg.gemini.md} on another (Gemini 3.1 Pro, both
+features). All of it is formatting the plain-prose human baseline
 lacks.
 
 \subsection{Matching and lengths}

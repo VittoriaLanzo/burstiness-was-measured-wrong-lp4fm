@@ -1,0 +1,62 @@
+{
+ "qwen36-news-gen/qwen3.6-27b.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.137,
+  "markdown": 0.85,
+  "title_line": 0.875
+ },
+ "gemma3-news-gen/gemma-3-27b.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.978,
+  "markdown": 1.0,
+  "title_line": 0.972
+ },
+ "deepseek-v4-news-gen/deepseek-v4.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.782,
+  "markdown": 0.178,
+  "title_line": 0.402
+ },
+ "glm52-news-gen/glm-5.2.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.63,
+  "markdown": 0.963,
+  "title_line": 0.988
+ },
+ "kimi26-news-gen/kimi-k2.6.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.657,
+  "markdown": 0.84,
+  "title_line": 0.932
+ },
+ "grok43-news-gen/grok-4.3.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.962,
+  "markdown": 0.583,
+  "title_line": 0.765
+ },
+ "grok45-news-gen/grok-4.5.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.955,
+  "markdown": 0.998,
+  "title_line": 0.987
+ },
+ "gemini31-news-gen/gemini-3.1-pro.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.75,
+  "markdown": 1.0,
+  "title_line": 1.0
+ },
+ "opus48-news-gen/opus-4.8.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.0,
+  "markdown": 1.0,
+  "title_line": 0.977
+ },
+ "deepseek-v4-news-gen/benchmark-2026-10-18/deepseek-v4.jsonl": {
+  "n_control": 600,
+  "smart_quotes": 0.952,
+  "markdown": 0.507,
+  "title_line": 0.818
+ }
+}

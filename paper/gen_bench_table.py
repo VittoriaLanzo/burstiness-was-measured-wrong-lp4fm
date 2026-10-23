@@ -43,6 +43,16 @@ GROK_PAIR = ["grok-4.3", "grok-4.5"]
 # Later-snapshot replications of a leg already in the benchmark: in every table and figure,
 # outside the nine-model counts.
 REPLICATES = {"deepseek-v4-pro-1018": "deepseek-v4-pro"}
+# Each leg's generations in burstiness-engine/sentence-length-dispersion, as keyed in
+# experiments/results/generation_hygiene.json.
+HYGIENE_FILES = {
+    "gemini-3.1-pro": "gemini31-news-gen/gemini-3.1-pro.jsonl", "glm-5.2": "glm52-news-gen/glm-5.2.jsonl",
+    "opus-4.8": "opus48-news-gen/opus-4.8.jsonl", "qwen3.6-27b": "qwen36-news-gen/qwen3.6-27b.jsonl",
+    "kimi-k2.6": "kimi26-news-gen/kimi-k2.6.jsonl", "gemma-3-27b": "gemma3-news-gen/gemma-3-27b.jsonl",
+    "deepseek-v4-pro": "deepseek-v4-news-gen/deepseek-v4.jsonl",
+    "deepseek-v4-pro-1018": "deepseek-v4-news-gen/benchmark-2026-10-18/deepseek-v4.jsonl",
+    "grok-4.3": "grok43-news-gen/grok-4.3.jsonl", "grok-4.5": "grok45-news-gen/grok-4.5.jsonl",
+}
 MODELS = [m for m in FAMILIES if m not in REPLICATES]
 MODES = [("control", "Control"), ("instruction", "Instruction"), ("fewshot", "Few-shot"),
          ("plan", "Plan"), ("self_refine", "Self-refine")]
@@ -58,7 +68,7 @@ GRID_NOTES = {
     "glm-5.2": "Silent-refusal empty cells are excluded by the seed-averaging protocol (Section~\\ref{sec:ninefam}).",
     "kimi-k2.6": "Provider content-filter refusals are excluded by the seed-averaging protocol (Section~\\ref{sec:ninefam}).",
     "opus-4.8": "Ran at effort high with a 32{,}000-token cap (Section~\\ref{sec:ninefam}).",
-    "deepseek-v4-pro": "Ran with a 32{,}000-token cap (Section~\\ref{sec:ninefam}).",
+    "deepseek-v4-pro": "The leg's cap was raised from 16{,}000 to 32{,}000 tokens early in the run (Appendix~\\ref{sec:caps}).",
     "deepseek-v4-pro-1018": "The DeepSeek V4 Pro leg re-run on 18 October 2026 against the snapshot the API alias then "
                             "served, with the same prompts and briefs (Appendix~\\ref{sec:protocoldetail}); reported beside the "
                             "nine models and outside their counts.",
@@ -172,7 +182,20 @@ def main() -> int:
     ssot = {m: load(BENCH / m / "seed_avg_paired.json") for m in FAMILIES}
     mult = {m: load(BENCH / m / "multiplicity.json") for m in FAMILIES}
     review = load(RES / "review_analyses.json")
+    hygiene = load(RES / "generation_hygiene.json")
     v = Vals()
+
+    # --- generation hygiene: share of control-mode generations with each formatting feature --
+    hyg = {m: hygiene[HYGIENE_FILES[m]] for m in FAMILIES}
+    for m, (k, _) in FAMILIES.items():
+        for feat, fk in (("markdown", "md"), ("title_line", "title"), ("smart_quotes", "smart")):
+            v.put(f"hyg.{k}.{fk}", f"{round(100 * hyg[m][feat])}\\%")
+    # Section 4.2 and Appendix D.6: every model flagged on both features (above the guard's 5% warn
+    # rate), DeepSeek V4 Pro the least formatted of the nine, Gemini 3.1 Pro at 100% on both.
+    assert all(min(hyg[m]["markdown"], hyg[m]["title_line"]) > 0.05 for m in MODELS)
+    for feat in ("markdown", "title_line"):
+        assert min(MODELS, key=lambda m: hyg[m][feat]) == "deepseek-v4-pro", feat
+    assert hyg["gemini-3.1-pro"]["markdown"] == hyg["gemini-3.1-pro"]["title_line"] == 1.0
 
     # --- per-cell stats -------------------------------------------------------------------
     for m, (k, _) in FAMILIES.items():
